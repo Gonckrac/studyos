@@ -408,7 +408,7 @@
           <div class="tp-generate-prompt">
             <div style="font-size:22px;margin-bottom:8px">🧠</div>
             <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px">Explicación con IA</div>
-            <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6">Gemini va a generar una explicación completa del tema usando el programa de la materia y el material que hayas cargado. Incluye gráficos interactivos cuando aplica.</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6">La IA va a generar una explicación completa del tema usando el programa de la materia y el material que hayas cargado. Incluye gráficos interactivos cuando aplica.</div>
             <button class="tp-gen-btn" onclick="generateExplicacion()">✨ Generar explicación</button>
           </div>
         </div>
@@ -420,7 +420,7 @@
           <div class="tp-generate-prompt">
             <div style="font-size:22px;margin-bottom:8px">✏️</div>
             <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px">Ejercicios para practicar</div>
-            <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6">Gemini genera ejercicios basados en el programa y tu material cargado. Son para completar, no multiple choice. Si te equivocás, explica el procedimiento completo.</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6">La IA genera ejercicios basados en el programa y tu material cargado. Son para completar, no multiple choice. Si te equivocás, explica el procedimiento completo.</div>
             <button class="tp-gen-btn" onclick="generateEjercicios()">✨ Generar ejercicios</button>
           </div>
         </div>
@@ -442,7 +442,7 @@
       <div id="tp-feed" style="display:none">
         <div class="panel-section-title">Tu material para este tema</div>
         <div style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.6">
-          Pegá acá apuntes, texto de PPT del profe, guías de ejercicios, o lo que tengas. Gemini lo usa para generar explicaciones y ejercicios más fieles a tu cursada.
+          Pegá acá apuntes, texto de PPT del profe, guías de ejercicios, o lo que tengas. La IA lo usa para generar explicaciones y ejercicios más fieles a tu cursada.
         </div>
         <textarea id="tp-feed-text" placeholder="Pegá apuntes, texto de diapositivas, guías de ejercicios..." style="width:100%;min-height:180px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;color:var(--text);font-family:'Inter',sans-serif;font-size:12px;line-height:1.7;resize:vertical;outline:none;transition:border-color 0.15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
         <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
@@ -453,9 +453,9 @@
 
         <!-- Config API key -->
         <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border)">
-          <div class="panel-section-title">Configuración Gemini</div>
-          <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Tu API key de <a href="https://aistudio.google.com" target="_blank" style="color:var(--accent)">aistudio.google.com</a> — se guarda solo en este dispositivo</div>
-          <input id="gemini-key-input" type="password" placeholder="Pegá tu API key de Gemini acá"
+          <div class="panel-section-title">Configuración IA (Groq)</div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Tu API key de <a href="https://console.groq.com" target="_blank" style="color:var(--accent)">console.groq.com</a> — se guarda solo en este dispositivo</div>
+          <input id="gemini-key-input" type="password" placeholder="Pegá tu API key de Groq acá"
             style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-family:'Space Mono',monospace;font-size:11px;outline:none;transition:border-color 0.15s;margin-bottom:8px"
             onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"
           />
@@ -787,11 +787,11 @@ function renderMaterias(cid) {
 // ── PANEL LATERAL DE TEMA — GEMINI POWERED ──
 let panelTema=null, panelMateria=null, panelUnidad=null, examenPuntajes={};
 
-function getGeminiKey(){ return localStorage.getItem('gemini_api_key')||''; }
+function getGeminiKey(){ return localStorage.getItem('groq_api_key')||''; }
 function saveGeminiKey(){
   const k=document.getElementById('gemini-key-input').value.trim();
   if(!k){showToast('Pegá tu API key primero','var(--danger)');return;}
-  localStorage.setItem('gemini_api_key',k);
+  localStorage.setItem('groq_api_key',k);
   const s=document.getElementById('key-status');
   s.style.display='block';s.style.color='var(--accent3)';s.textContent='✅ Key guardada en este dispositivo';
   showToast('🔑 API key guardada');
@@ -823,14 +823,14 @@ function switchTab(tab){
 async function callGemini(prompt){
   const key=getGeminiKey();
   if(!key) throw new Error('NO_KEY');
-  const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+key,{
+  const r=await fetch('https://api.groq.com/openai/v1/chat/completions',{
     method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:8192,temperature:0.7}})
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+    body:JSON.stringify({model:'llama-3.3-70b-versatile',messages:[{role:'user',content:prompt}],max_tokens:8192,temperature:0.7})
   });
   const d=await r.json();
-  if(d.error) throw new Error(d.error.message);
-  return d.candidates?.[0]?.content?.parts?.[0]?.text||'';
+  if(d.error) throw new Error(d.error.message||JSON.stringify(d.error));
+  return d.choices?.[0]?.message?.content||'';
 }
 
 function renderMd(t){
@@ -863,8 +863,8 @@ function goToFeedTab(){switchTab('feed');}
 function noKeyError(area){
   var h='<div class="tp-generate-prompt">';
   h+='<div style="font-size:22px;margin-bottom:8px">🔑</div>';
-  h+='<div style="font-size:14px;font-weight:600;color:var(--danger);margin-bottom:8px">Falta la API key de Gemini</div>';
-  h+='<div style="font-size:12px;color:var(--text2);margin-bottom:16px">Andá a la tab Mi material y configurá tu key gratuita de aistudio.google.com</div>';
+  h+='<div style="font-size:14px;font-weight:600;color:var(--danger);margin-bottom:8px">Falta la API key de Groq</div>';
+  h+='<div style="font-size:12px;color:var(--text2);margin-bottom:16px">Andá a la tab Mi material y configurá tu key gratuita de console.groq.com</div>';
   h+='<button class="tp-gen-btn" onclick="goToFeedTab()">Configurar key →</button>';
   h+='</div>';
   area.innerHTML=h;
@@ -874,7 +874,7 @@ async function generateExplicacion(){
   const key=getGeminiKey();
   const area=document.getElementById('tp-ai-explain-area');
   if(!key){noKeyError(area);return;}
-  area.innerHTML='<div style="text-align:center;padding:40px 20px"><div style="display:inline-block;width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:12px"></div><div style="color:var(--text2);font-size:13px">Gemini está generando tu explicación...</div></div>';
+  area.innerHTML='<div style="text-align:center;padding:40px 20px"><div style="display:inline-block;width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:12px"></div><div style="color:var(--text2);font-size:13px">Generando tu explicación...</div></div>';
   const feed=getFeed();
   const feedCtx=feed?'\n\nMATERIAL DEL PROFE (prioridad máxima):\n'+feed:'';
   const prompt='Sos un tutor universitario experto en '+panelMateria.nombre+' para estudiantes de 1er año de Ingeniería Informática en Argentina (UCA).\n\nTEMA: "'+panelTema.nombre+'"\nDESCRIPCIÓN: "'+panelTema.desc+'"\nDIFICULTAD: '+panelTema.dificultad+'\nENTRA EN: '+panelTema.parcial+feedCtx+'\n\nGenerá una explicación COMPLETA con este formato:\n\n## ¿Qué es y para qué sirve?\n[Explicación clara, por qué importa, dónde se aplica]\n\n## Conceptos clave\n[Definiciones precisas con ejemplos]\n\n## Explicación paso a paso\n[Desarrollo progresivo, de lo simple a lo complejo]\n\n## Ejemplos resueltos\n[Mínimo 2 ejemplos completamente resueltos, cada paso explicado]\n\n## ⚠️ Errores comunes\n[Los 2-3 errores típicos y cómo evitarlos]\n\n## Para recordar antes del parcial\n[Resumen de 4-5 puntos clave concretos]\n\nSi el tema involucra funciones matemáticas o conceptos visualizables, agregá al final:\n\n## GRAFICO_INTERACTIVO\n[Código JavaScript puro que use Chart.js con canvas id="ai-chart". Si aplica, incluí sliders HTML en div id="ai-chart-controls". Solo código JS, sin tags HTML extra. Si no aplica: NO_GRAFICO]\n\nUsá lenguaje claro y natural, como si explicaras en persona en Argentina.';
