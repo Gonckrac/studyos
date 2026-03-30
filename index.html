@@ -262,6 +262,32 @@
   .no-entendi-btn { display:inline-flex; align-items:center; gap:8px; background:rgba(247,194,106,0.1); border:1px solid rgba(247,194,106,0.3); border-radius:var(--radius-sm); padding:8px 14px; font-size:12px; color:var(--accent2); cursor:pointer; margin-top:16px; transition:all 0.15s; font-family:'Inter',sans-serif; }
   .no-entendi-btn:hover { background:rgba(247,194,106,0.18); }
 
+  /* Página completa de tema */
+  .tema-page-header { margin-bottom:28px; }
+  .tema-page-name { font-family:'Syne',sans-serif; font-size:26px; font-weight:800; color:var(--text); margin-bottom:6px; line-height:1.2; }
+  .tema-page-meta { display:flex; gap:10px; flex-wrap:wrap; align-items:center; font-size:12px; color:var(--text2); margin-bottom:16px; }
+  .tema-page-tabs { display:flex; gap:0; border-bottom:2px solid var(--border); margin-bottom:28px; overflow-x:auto; }
+  .tema-page-tab { padding:12px 22px; font-size:13px; font-weight:600; color:var(--text2); cursor:pointer; border-bottom:3px solid transparent; margin-bottom:-2px; white-space:nowrap; transition:all 0.15s; }
+  .tema-page-tab:hover { color:var(--text); }
+  .tema-page-tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+  .tema-page-body { max-width:860px; }
+  .status-bar { display:flex; gap:10px; margin-bottom:24px; }
+  .status-bar-btn { flex:1; padding:11px; border-radius:var(--radius-sm); font-size:13px; font-weight:600; cursor:pointer; transition:all 0.15s; border:1px solid var(--border); background:var(--surface); color:var(--text2); font-family:'Inter',sans-serif; }
+  .status-bar-btn.active-studying { border-color:var(--accent); color:var(--accent); background:rgba(124,106,247,0.1); }
+  .status-bar-btn.active-done { border-color:var(--accent3); color:var(--accent3); background:rgba(106,247,194,0.1); }
+  .gen-card { background:var(--surface2); border:1px dashed var(--border); border-radius:var(--radius); padding:40px; text-align:center; }
+  .gen-card-icon { font-size:32px; margin-bottom:12px; }
+  .gen-card-title { font-family:'Syne',sans-serif; font-size:18px; font-weight:700; color:var(--text); margin-bottom:8px; }
+  .gen-card-sub { font-size:13px; color:var(--text2); line-height:1.6; margin-bottom:20px; max-width:480px; margin-left:auto; margin-right:auto; }
+  .gen-btn-large { background:var(--accent); color:#fff; border:none; border-radius:var(--radius-sm); padding:13px 28px; font-size:14px; font-weight:700; cursor:pointer; font-family:'Inter',sans-serif; transition:opacity 0.15s; }
+  .gen-btn-large:hover { opacity:0.85; }
+  .feed-section { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:24px; }
+  .feed-section textarea { width:100%; min-height:200px; background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; color:var(--text); font-family:'Inter',sans-serif; font-size:13px; line-height:1.7; resize:vertical; outline:none; transition:border-color 0.15s; margin-bottom:12px; }
+  .feed-section textarea:focus { border-color:var(--accent); }
+  .api-key-section { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-top:20px; }
+  .api-key-section input { width:100%; background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px; color:var(--text); font-family:'Space Mono',monospace; font-size:12px; outline:none; transition:border-color 0.15s; margin-bottom:10px; }
+  .api-key-section input:focus { border-color:var(--accent); }
+
   /* Racha */
   .streak-badge { display:inline-flex; align-items:center; gap:5px; background:rgba(247,194,106,0.1); border:1px solid rgba(247,194,106,0.25); border-radius:20px; padding:4px 10px; font-size:11px; font-weight:600; color:var(--accent2); margin-left:8px; }
 
@@ -370,6 +396,12 @@
   <div id="page-detalle" style="display:none">
     <button class="back-btn" id="back-btn">← Volver al dashboard</button>
     <div id="detalle-content"></div>
+  </div>
+
+  <!-- PÁGINA COMPLETA DE TEMA -->
+  <div id="page-tema" style="display:none">
+    <button class="back-btn" id="tema-back-btn">← Volver a la materia</button>
+    <div id="tema-page-content"></div>
   </div>
 
 </main>
@@ -799,17 +831,16 @@ function saveGeminiKey(){
 
 function getFeedKey(){ return panelTema?'feed_'+panelTema.id:''; }
 function saveFeed(){
-  const txt=document.getElementById('tp-feed-text').value.trim();
+  const ta=document.getElementById('tp-feed-text');
+  const txt=ta?ta.value.trim():'';
   if(getFeedKey()) localStorage.setItem(getFeedKey(),txt);
-  const s=document.getElementById('tp-feed-status');
-  s.style.display='block'; s.style.color='var(--accent3)'; s.textContent='✅ Material guardado — la próxima generación lo usará';
-  showToast('💾 Material guardado');
+  showToast('💾 Material guardado — la IA lo usará en la próxima generación');
 }
 function clearFeed(){
-  document.getElementById('tp-feed-text').value='';
+  const ta=document.getElementById('tp-feed-text');
+  if(ta) ta.value='';
   if(getFeedKey()) localStorage.removeItem(getFeedKey());
-  const s=document.getElementById('tp-feed-status');
-  s.style.display='block'; s.style.color='var(--text2)'; s.textContent='Material borrado';
+  showToast('🗑 Material borrado');
 }
 function getFeed(){ return getFeedKey()?localStorage.getItem(getFeedKey())||'':''; }
 
@@ -859,7 +890,7 @@ function loadChartJs(cb){
   s.onload=cb; document.head.appendChild(s);
 }
 
-function goToFeedTab(){switchTab('feed');}
+function goToFeedTab(){switchTemaTab('feed');}
 function noKeyError(area){
   var h='<div class="tp-generate-prompt">';
   h+='<div style="font-size:22px;margin-bottom:8px">🔑</div>';
@@ -1022,51 +1053,125 @@ function openTemaPanel(tId,mId){
   m&&m.temas.forEach(function(u){var f=u.items.find(function(x){return x.id===tId;});if(f){tema=f;unidad=u;}});
   if(!tema||!m)return;
   panelTema=tema; panelMateria=m; panelUnidad=unidad; examenPuntajes={};
-  
-  document.getElementById('tp-name').textContent=tema.nombre;
+
   const dc=tema.dificultad==='alta'?'🔴 Alta':tema.dificultad==='media'?'🟡 Media':'🟢 Baja';
   const meses2=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
   const dlStr=tema.deadline?' · 📅 listo para el '+tema.deadline.getDate()+' '+meses2[tema.deadline.getMonth()]:'';
-  document.getElementById('tp-meta').innerHTML='<span>'+dc+'</span><span style="margin:0 4px">·</span><span>'+tema.parcial+'</span><span style="margin:0 4px">·</span><span style="color:'+m.color+'">'+m.nombre+'</span><span style="color:var(--accent2);font-size:11px">'+dlStr+'</span>';
-  
-  const sr=document.getElementById('tp-status-row');
-  var stCls1=tema.estado==="studying"?"s-studying":"";
-  var stCls2=tema.estado==="done"?"s-done":"";
-  sr.innerHTML='<button class="panel-status-btn '+stCls1+'" onclick="setPanelStatus(\'studying\')">◑ Estudiando</button>'
-    +'<button class="panel-status-btn '+stCls2+'" onclick="setPanelStatus(\'done\')">✓ Visto</button>';
-  
-  switchTab('explicacion');
-  
-  document.getElementById('tp-ai-explain-area').innerHTML='<div class="tp-generate-prompt"><div style="font-size:22px;margin-bottom:8px">🧠</div><div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px">Explicación con Gemini</div><div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6">Gemini genera una explicación completa usando el programa y tu material. Incluye gráficos interactivos cuando aplica.</div><button class="tp-gen-btn" onclick="generateExplicacion()">✨ Generar explicación</button></div>';
-  document.getElementById('tp-ai-ejercicios-area').innerHTML='<div class="tp-generate-prompt"><div style="font-size:22px;margin-bottom:8px">✏️</div><div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px">Ejercicios para practicar</div><div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6">Ejercicios para completar — si te equivocás explica el procedimiento completo.</div><button class="tp-gen-btn" onclick="generateEjercicios()">✨ Generar ejercicios</button></div>';
-  document.getElementById('tp-ai-examen-area').innerHTML='<div class="tp-generate-prompt"><div style="font-size:22px;margin-bottom:8px">📝</div><div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px">Examen: '+( unidad?unidad.unidad:'esta unidad')+'</div><div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6">Examen completo de la unidad con nota y análisis. Estilo parcial universitario.</div><button class="tp-gen-btn" onclick="generateExamen()">📝 Tomar examen</button></div>';
-  
+  const stCls1=tema.estado==='studying'?'active-studying':'';
+  const stCls2=tema.estado==='done'?'active-done':'';
   const feedGuardado=getFeed();
-  document.getElementById('tp-feed-text').value=feedGuardado;
-  const fs=document.getElementById('tp-feed-status');
-  if(feedGuardado){fs.style.display='block';fs.style.color='var(--accent3)';fs.textContent='✅ Tenés material cargado ('+feedGuardado.length+' caracteres)';}
-  else{fs.style.display='none';}
-  
+  const feedStatus=feedGuardado?'<div style="font-size:11px;color:var(--accent3);margin-top:6px">✅ Tenés material cargado ('+feedGuardado.length+' caracteres)</div>':'';
   const existingKey=getGeminiKey();
-  const ks=document.getElementById('key-status');
-  if(existingKey){ks.style.display='block';ks.style.color='var(--accent3)';ks.textContent='✅ Key configurada';}
-  else{ks.style.display='none';}
-  
-  document.getElementById('tema-panel-overlay').classList.add('open');
+  const keyStatus=existingKey?'<div style="font-size:11px;color:var(--accent3);margin-top:6px">✅ Key configurada</div>':'';
+
+  const html=`
+    <div class="tema-page-header">
+      <div class="tema-page-name">${tema.nombre}</div>
+      <div class="tema-page-meta">
+        <span>${dc}</span><span>·</span><span>${tema.parcial}</span>
+        <span>·</span><span style="color:${m.color}">${m.nombre}</span>
+        <span style="color:var(--accent2)">${dlStr}</span>
+      </div>
+      <div class="status-bar">
+        <button class="status-bar-btn ${stCls1}" onclick="setTemaStatus('studying')">◑ Estudiando</button>
+        <button class="status-bar-btn ${stCls2}" onclick="setTemaStatus('done')">✓ Marcar como visto</button>
+      </div>
+    </div>
+
+    <div class="tema-page-tabs">
+      <div class="tema-page-tab active" id="tptab-explicacion" onclick="switchTemaTab('explicacion')">📖 Explicación</div>
+      <div class="tema-page-tab" id="tptab-ejercicios" onclick="switchTemaTab('ejercicios')">✏️ Ejercicios</div>
+      <div class="tema-page-tab" id="tptab-examen" onclick="switchTemaTab('examen')">📝 Examen unidad</div>
+      <div class="tema-page-tab" id="tptab-feed" onclick="switchTemaTab('feed')">📎 Mi material</div>
+    </div>
+
+    <div class="tema-page-body">
+      <div id="tppage-explicacion">
+        <div class="gen-card" id="tp-ai-explain-area">
+          <div class="gen-card-icon">🧠</div>
+          <div class="gen-card-title">Explicación con IA</div>
+          <div class="gen-card-sub">La IA genera una explicación completa usando el programa de la materia y tu material cargado. Incluye gráficos interactivos cuando aplica.</div>
+          <button class="gen-btn-large" onclick="generateExplicacion()">✨ Generar explicación</button>
+        </div>
+      </div>
+
+      <div id="tppage-ejercicios" style="display:none">
+        <div class="gen-card" id="tp-ai-ejercicios-area">
+          <div class="gen-card-icon">✏️</div>
+          <div class="gen-card-title">Ejercicios para practicar</div>
+          <div class="gen-card-sub">La IA genera ejercicios para completar basados en el programa. Si te equivocás, explica el procedimiento completo paso a paso.</div>
+          <button class="gen-btn-large" onclick="generateEjercicios()">✨ Generar ejercicios</button>
+        </div>
+      </div>
+
+      <div id="tppage-examen" style="display:none">
+        <div class="gen-card" id="tp-ai-examen-area">
+          <div class="gen-card-icon">📝</div>
+          <div class="gen-card-title">Examen: ${unidad?unidad.unidad:'esta unidad'}</div>
+          <div class="gen-card-sub">Examen completo de todos los temas de la unidad, con nota y análisis. Estilo parcial universitario argentino.</div>
+          <button class="gen-btn-large" onclick="generateExamen()">📝 Tomar examen</button>
+        </div>
+      </div>
+
+      <div id="tppage-feed" style="display:none">
+        <div class="feed-section">
+          <div class="section-title" style="margin-bottom:8px">Tu material para este tema</div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.6">Pegá apuntes, texto de PPT del profe, guías de ejercicios. La IA lo usa como contexto prioritario para generar explicaciones y ejercicios más fieles a tu cursada.</div>
+          <textarea id="tp-feed-text" placeholder="Pegá apuntes, texto de diapositivas, guías de ejercicios...">${feedGuardado}</textarea>
+          <div style="display:flex;gap:10px">
+            <button class="gen-btn-large" onclick="saveFeed()">💾 Guardar material</button>
+            <button onclick="clearFeed()" style="padding:11px 20px;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-family:'Inter',sans-serif;font-size:13px">🗑 Borrar</button>
+          </div>
+          ${feedStatus}
+        </div>
+        <div class="api-key-section">
+          <div class="section-title" style="margin-bottom:6px">Configuración IA (Groq)</div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Tu API key de <a href="https://console.groq.com" target="_blank" style="color:var(--accent)">console.groq.com</a> — se guarda solo en este dispositivo, nunca se sube a ningún lado</div>
+          <input id="gemini-key-input" type="password" placeholder="Pegá tu API key de Groq acá"/>
+          <button class="gen-btn-large" style="width:100%" onclick="saveGeminiKey()">🔑 Guardar key</button>
+          ${keyStatus}
+          <div id="key-status" style="font-size:11px;margin-top:6px;display:none"></div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('tema-page-content').innerHTML=html;
+
+  // Back button goes to materia detalle
+  document.getElementById('tema-back-btn').onclick=function(){
+    showDetalle(mId);
+  };
+
+  showPage('tema');
 }
 
-function closeTemaPanel(e){
-  if(e&&e.target!==document.getElementById('tema-panel-overlay'))return;
-  document.getElementById('tema-panel-overlay').classList.remove('open');
+function switchTemaTab(tab){
+  ['explicacion','ejercicios','examen','feed'].forEach(function(t){
+    var el=document.getElementById('tppage-'+t);
+    var tb=document.getElementById('tptab-'+t);
+    if(el) el.style.display=t===tab?'block':'none';
+    if(tb) tb.classList.toggle('active',t===tab);
+  });
 }
 
-function setPanelStatus(estado){
+// Keep old switchTab for compatibility (feed panel key config)
+function switchTab(tab){ switchTemaTab(tab); }
+
+function closeTemaPanel(e){ /* no-op, kept for compat */ }
+
+
+function setPanelStatus(estado){ setTemaStatus(estado); }
+function setTemaStatus(estado){
   if(!panelTema||!panelMateria)return;
   panelTema.estado=estado; saveProgress(); bumpStreak();
-  const sr=document.getElementById('tp-status-row');
-  sr.querySelectorAll('.panel-status-btn').forEach(function(b){b.classList.remove('s-studying','s-done');});
-  if(estado==='studying')sr.children[0].classList.add('s-studying');
-  if(estado==='done'){sr.children[1].classList.add('s-done');showToast('✅ Progreso guardado');}
+  // Update status buttons on the full page
+  document.querySelectorAll('.status-bar-btn').forEach(function(b){
+    b.classList.remove('active-studying','active-done');
+  });
+  var btns=document.querySelectorAll('.status-bar-btn');
+  if(estado==='studying'&&btns[0])btns[0].classList.add('active-studying');
+  if(estado==='done'){if(btns[1])btns[1].classList.add('active-done');showToast('✅ Progreso guardado');}
   updateStats();
   const row=document.getElementById('tr-'+panelTema.id);
   if(row){row.className='tema-row '+estado;const ck=row.querySelector('.tema-check');if(ck)ck.textContent=estado==='done'?'✓':estado==='studying'?'◑':'';}
@@ -1190,7 +1295,7 @@ function chkOp(btn,idx,cor){
 }
 
 // ── NAVEGACIÓN ──
-const PAGES=['dashboard','materias','fechas','semana','promociones','detalle'];
+const PAGES=['dashboard','materias','fechas','semana','promociones','detalle','tema'];
 function showPage(p){
   PAGES.forEach(x=>{const el=document.getElementById(`page-${x}`);if(el)el.style.display=x===p?'':'none';});
   document.querySelectorAll('.nav-item').forEach(el=>el.classList.toggle('active',el.getAttribute('onclick')?.includes(`'${p}'`)));
