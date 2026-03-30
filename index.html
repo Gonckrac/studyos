@@ -280,11 +280,15 @@
   .tema-page-tab:hover { color:var(--text); }
   .tema-page-tab.active { color:var(--accent); border-bottom-color:var(--accent); }
   .tema-page-body { width:100%; }
+  #tppage-explicacion { width:100%; }
+  #tppage-ejercicios { width:100%; }
+  #tppage-examen { width:100%; }
+  #tppage-feed { width:100%; }
   .status-bar { display:flex; gap:10px; margin-bottom:24px; }
   .status-bar-btn { flex:1; padding:11px; border-radius:var(--radius-sm); font-size:13px; font-weight:600; cursor:pointer; transition:all 0.15s; border:1px solid var(--border); background:var(--surface); color:var(--text2); font-family:'Inter',sans-serif; }
   .status-bar-btn.active-studying { border-color:var(--accent); color:var(--accent); background:rgba(124,106,247,0.1); }
   .status-bar-btn.active-done { border-color:var(--accent3); color:var(--accent3); background:rgba(106,247,194,0.1); }
-  .gen-card { background:var(--surface2); border:1px dashed var(--border); border-radius:var(--radius); padding:40px; text-align:center; max-width:600px; margin:0 auto; }
+  .gen-card { background:var(--surface2); border:1px dashed var(--border); border-radius:var(--radius); padding:40px; text-align:center; max-width:560px; margin:0 auto; }
   .gen-card-icon { font-size:32px; margin-bottom:12px; }
   .gen-card-title { font-family:'Syne',sans-serif; font-size:18px; font-weight:700; color:var(--text); margin-bottom:8px; }
   .gen-card-sub { font-size:13px; color:var(--text2); line-height:1.6; margin-bottom:20px; max-width:480px; margin-left:auto; margin-right:auto; }
@@ -917,7 +921,7 @@ async function generateExplicacion(){
   area.innerHTML='<div style="text-align:center;padding:40px 20px"><div style="display:inline-block;width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:12px"></div><div style="color:var(--text2);font-size:13px">Generando tu explicación...</div></div>';
   const feed=getFeed();
   const feedCtx=feed?'\n\nMATERIAL DEL PROFE (prioridad máxima):\n'+feed:'';
-  const prompt='Sos un tutor universitario experto en '+panelMateria.nombre+' para estudiantes de 1er año de Ingeniería Informática en Argentina (UCA). Tu objetivo es explicar el tema de manera COMPLETA, CLARA y EXTENSA, como si fuera la mejor clase que el alumno va a recibir.\n\nTEMA: "'+panelTema.nombre+'"\nDESCRIPCIÓN DEL PROGRAMA: "'+panelTema.desc+'"\nDIFICULTAD: '+panelTema.dificultad+'\nENTRA EN: '+panelTema.parcial+feedCtx+'\n\nGenerá una explicación MUY COMPLETA con este formato. Usá párrafos largos y bien desarrollados, NO listas de bullets para todo. Las listas usalas solo cuando sea una enumeración real (pasos, propiedades, etc). El texto principal debe fluir como una explicación real, no como una lista de definiciones.\n\n## ¿Qué es y para qué sirve?\nExplicación amplia y motivadora: qué es el tema, de dónde viene, por qué es importante en ingeniería y en la vida real. Al menos 3 párrafos sólidos. Conectá con ejemplos de la vida cotidiana.\n\n## Los conceptos fundamentales\nExplicá cada concepto clave en profundidad, con párrafos propios para cada uno. No una lista, sino texto que explique, compare y relacione los conceptos entre sí.\n\n## Explicación paso a paso\nDesarrollá el tema de lo más simple a lo más complejo. Construí la explicación como si nunca lo hubieran visto. Usá transiciones claras entre ideas.\n\n## Ejemplos resueltos en detalle\nMínimo 3 ejemplos completamente resueltos. Para cada uno: enunciado, desarrollo paso a paso con explicación de cada operación, y conclusión. Que sean ejemplos realistas y variados.\n\n## Los errores más comunes\nExplicá en detalle qué errores cometen los estudiantes, por qué los cometen, y cómo evitarlos. Párrafos, no bullets.\n\n## Para recordar antes del parcial\nUn resumen denso y útil: las 5-7 ideas más importantes, bien explicadas. Que sirva como repaso rápido antes del examen.\n\nSi el tema involucra funciones matemáticas, gráficos de funciones, derivadas, integrales, o cualquier concepto matemático visualizable, agregá al final:\n\n## GRAFICO_INTERACTIVO\nCódigo JavaScript puro (sin tags HTML extra) que use Chart.js (canvas id="ai-chart") para mostrar un gráfico interactivo del tema. Si aplica, usá sliders en div id="ai-chart-controls" para modificar variables y ver cómo cambia el gráfico en tiempo real. Si no aplica gráfico: NO_GRAFICO\n\nTono: claro, directo, universitario pero accesible. Como el mejor profe que tuviste.';
+  const prompt='Sos un tutor universitario para 1er año de Ingeniería Informática en Argentina. Explicá el tema de forma CLARA, VISUAL y FÁCIL DE ESCANEAR. El alumno tiene que poder entender el tema leyendo la explicación.\n\nTEMA: "'+panelTema.nombre+'"\nDESCRIPCIÓN: "'+panelTema.desc+'"\nDIFICULTAD: '+panelTema.dificultad+'\nENTRA EN: '+panelTema.parcial+feedCtx+'\n\nFORMATO OBLIGATORIO — seguilo exactamente:\n\n## 🎯 ¿Qué es esto y por qué importa?\n2-3 oraciones directas. Qué es, para qué sirve en la vida real y en ingeniería. Sin vueltas.\n\n## 🧩 Los conceptos clave\nPara CADA concepto importante: nombre en negrita, definición en una oración, ejemplo concreto en la siguiente línea. Máximo 3-4 líneas por concepto. Usá bullet points con →\n\n## 📐 Cómo funciona — paso a paso\nNumerado. Cada paso es una acción concreta. Corto y directo. Si hay una fórmula, ponela en una línea sola.\n\n## ✅ Ejemplo resuelto 1 — fácil\nEnunciado concreto. Solución numerada paso a paso. Cada paso con su explicación en una línea.\n\n## ✅ Ejemplo resuelto 2 — más difícil\nMismo formato. Que sea un caso que podría salir en el parcial.\n\n## ⚠️ Errores típicos\nBullet points cortos. Error → por qué está mal → cómo se hace bien.\n\n## 🔑 Para el parcial — recordá esto\n5-7 puntos clave. Una oración cada uno. Lo más importante que no podés olvidar.\n\nREGLAS:\n- Párrafos cortos, máximo 3 líneas\n- Bullet points para listas, nunca párrafos largos\n- Emojis en los títulos\n- Si hay algo matemático ponelo en una línea sola bien visible\n- Tono directo, como un compañero que sabe mucho\n\nSi el tema tiene funciones o gráficos matemáticos, agregá al final:\n## GRAFICO_INTERACTIVO\nCódigo JS puro con Chart.js (canvas id="ai-chart"), sliders en div id="ai-chart-controls" si aplica. Si no corresponde gráfico: NO_GRAFICO';
   try{
     const resp=await callGemini(prompt);
     const gMatch=resp.match(/## GRAFICO_INTERACTIVO[\s\S]*?\n([\s\S]*)$/);
@@ -929,6 +933,7 @@ async function generateExplicacion(){
       html+='<div class="grafico-wrap" style="margin-top:20px"><div class="grafico-title">📊 Gráfico interactivo</div><div id="ai-chart-controls"></div><canvas id="ai-chart" height="260"></canvas></div>';
     }
     area.innerHTML=html;
+    area.className=''; area.style.cssText='width:100%';
     try{localStorage.setItem('expl_'+panelTema.id,html);}catch(e){}
     if(gCode&&gCode!=='NO_GRAFICO'&&gCode.length>20){
       loadChartJs(function(){try{var fn=new Function(gCode);fn();}catch(e){var g=document.querySelector('.grafico-wrap');if(g)g.style.display='none';}});
@@ -969,7 +974,7 @@ async function generateEjercicios(){
       html+='<div class="ejercicio-card"><div class="ejercicio-num">EJERCICIO '+ej.num+' · <span style="color:'+dc+'">'+ej.dificultad.toUpperCase()+'</span></div><div class="ejercicio-enunciado">'+ej.enunciado+'</div><textarea class="ejercicio-input" id="ej-input-'+i+'" placeholder="Escribí tu respuesta acá..."></textarea><button class="ejercicio-check-btn" onclick="checkEjercicio('+i+')">✓ Verificar respuesta</button><div class="ejercicio-resultado" id="ej-res-'+i+'"></div></div>';
     });
     html+='<button class="tp-gen-btn" style="width:100%;margin-top:8px" onclick="generateEjercicios()">🔄 Nuevos ejercicios</button>';
-    area.innerHTML=html;
+    area.innerHTML=html; area.className=''; area.style.cssText='width:100%';
   }catch(e){
     area.innerHTML='<div class="tp-generate-prompt"><div style="font-size:22px;margin-bottom:8px">⚠️</div><div style="font-size:13px;color:var(--danger);margin-bottom:12px">'+e.message+'</div><button class="tp-gen-btn" onclick="generateEjercicios()">Reintentar</button></div>';
   }
@@ -1159,7 +1164,7 @@ function openTemaPanel(tId,mId){
     var saved=localStorage.getItem('expl_'+tema.id);
     var area=document.getElementById('tp-ai-explain-area');
     if(saved&&area){
-      area.innerHTML=saved;
+      area.innerHTML=saved; area.className=''; area.style.cssText='width:100%';
       loadChartJs(function(){});
     }
   },50);
