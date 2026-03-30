@@ -859,8 +859,15 @@ function loadChartJs(cb){
   s.onload=cb; document.head.appendChild(s);
 }
 
+function goToFeedTab(){switchTab('feed');}
 function noKeyError(area){
-  area.innerHTML='<div class="tp-generate-prompt"><div style="font-size:22px;margin-bottom:8px">🔑</div><div style="font-size:14px;font-weight:600;color:var(--danger);margin-bottom:8px">Falta la API key de Gemini</div><div style="font-size:12px;color:var(--text2);margin-bottom:16px">Andá a la tab "Mi material" → configurá tu key gratuita de aistudio.google.com</div><button class="tp-gen-btn" onclick="switchTab('feed')">Configurar key →</button></div>';
+  var h='<div class="tp-generate-prompt">';
+  h+='<div style="font-size:22px;margin-bottom:8px">🔑</div>';
+  h+='<div style="font-size:14px;font-weight:600;color:var(--danger);margin-bottom:8px">Falta la API key de Gemini</div>';
+  h+='<div style="font-size:12px;color:var(--text2);margin-bottom:16px">Andá a la tab Mi material y configurá tu key gratuita de aistudio.google.com</div>';
+  h+='<button class="tp-gen-btn" onclick="goToFeedTab()">Configurar key →</button>';
+  h+='</div>';
+  area.innerHTML=h;
 }
 
 async function generateExplicacion(){
