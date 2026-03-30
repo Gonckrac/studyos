@@ -1445,38 +1445,117 @@ function showPage(p){
 // Final el 3 de julio. Calculamos para atrás cuándo debe estar listo cada tema.
 const FINAL_DATE = new Date(2026, 6, 3); // 3 julio 2026
 
+function nextWeekday(d) {
+  // Advance past weekend
+  var r = new Date(d);
+  while(r.getDay()===0||r.getDay()===6) r.setDate(r.getDate()+1);
+  return r;
+}
+
+function distributeDeadlines(items, startDate, deadlineDate) {
+  // Distribute items evenly between start and deadline
+  // Give 3-day buffer before deadline so last item is done 3 days before exam
+  var bufferDays = 3;
+  var end = new Date(deadlineDate);
+  end.setDate(end.getDate() - bufferDays);
+  if(end <= startDate) end = new Date(deadlineDate); // no room, use deadline itself
+
+  var n = items.length;
+  if(n === 0) return;
+
+  var totalMs = end - startDate;
+  var totalDays = Math.max(n, Math.floor(totalMs / 86400000));
+  var step = totalDays / n;
+
+  items.forEach(function(item, i) {
+    var d = new Date(startDate);
+    d.setDate(startDate.getDate() + Math.round(step * i));
+    // Skip weekends
+    d = nextWeekday(d);
+    item.t.deadline = d;
+  });
+}
+
 function calcDeadlines() {
-  MATERIAS.forEach(m => {
-    // Recolectar todos los temas en orden
-    const allItems = [];
-    m.temas.forEach(u => u.items.forEach(t => allItems.push({t, u})));
-    const n = allItems.length;
-    if (n === 0) return;
+  var hoy = new Date(); hoy.setHours(0,0,0,0);
+  var start = new Date(Math.max(hoy, new Date(2026,2,31)));
+  start.setHours(0,0,0,0);
+  start = nextWeekday(start);
 
-    // Fecha inicio: hoy o 31 de marzo (lo que sea mayor)
-    const start = new Date(Math.max(new Date(), new Date(2026, 2, 31)));
-    start.setHours(0,0,0,0);
+  // Get all custom events that are parciales/finales with unidades
+  var eventos = getEventos ? getEventos() : [];
+  var examEvents = eventos.filter(function(ev){
+    return (ev.tipo==='parcial'||ev.tipo==='final'||ev.tipo==='recuperatorio') && ev.unidades && ev.unidades.length > 0;
+  });
 
-    // Si la materia tiene parcial conocido, usamos esa fecha como deadline intermedio
-    // Filosofía: parcial 3 jun. Resto: usamos el final 3 jul.
-    const deadline = m.proxParcial && m.proxParcial.includes('Jun') 
-      ? new Date(2026, 5, 1)  // 1 junio para tener margen antes del 3 jun
-      : new Date(FINAL_DATE);
-
-    // Días hábiles disponibles (lun-vie, saltamos finde)
-    const totalMs = deadline - start;
-    const totalDays = Math.floor(totalMs / 86400000);
-    const step = Math.max(1, Math.floor(totalDays / n));
-
-    allItems.forEach(({t}, i) => {
-      const d = new Date(start);
-      d.setDate(start.getDate() + step * i);
-      // Ajustar a lunes si cae en finde
-      const dow = d.getDay();
-      if (dow === 0) d.setDate(d.getDate() + 1);
-      if (dow === 6) d.setDate(d.getDate() + 2);
-      t.deadline = d;
+  MATERIAS.forEach(function(m) {
+    // Collect all pending items in order
+    var allItems = [];
+    m.temas.forEach(function(u) {
+      u.items.forEach(function(t) {
+        allItems.push({t:t, u:u});
+      });
     });
+    if(allItems.length === 0) return;
+
+    // Find events for this materia
+    var matEvents = examEvents.filter(function(ev){
+      return ev.materia === m.nombre;
+    }).sort(function(a,b){ return a.fecha > b.fecha ? 1 : -1; });
+
+    if(matEvents.length === 0) {
+      // No events: distribute all items toward final 3 julio
+      // Filosofía has known parcial 3 jun
+      var fallbackDeadline = (m.proxParcial && m.proxParcial.includes('Jun'))
+        ? new Date(2026,5,3)
+        : new Date(FINAL_DATE);
+      distributeDeadlines(allItems, start, fallbackDeadline);
+      return;
+    }
+
+    // Group items by which event they belong to (based on unidad name matching)
+    // Items not matched to any event go to the final deadline
+    var assigned = {}; // itemId -> deadline Date
+    var remainingItems = allItems.slice(); // start with all
+
+    matEvents.forEach(function(ev) {
+      var evDate = new Date(ev.fecha + 'T00:00:00');
+      // Find items whose unidad matches the event's unidades
+      var matchedItems = [];
+      var notMatchedItems = [];
+
+      remainingItems.forEach(function(item) {
+        var unidadNombre = item.u.unidad;
+        var matches = ev.unidades.some(function(evU) {
+          // Match if event unidad string is contained in item's unidad or vice versa
+          return unidadNombre.indexOf(evU.split('—')[0].trim()) >= 0 ||
+                 evU.indexOf(unidadNombre.split('—')[0].trim()) >= 0 ||
+                 unidadNombre === evU;
+        });
+        if(matches) matchedItems.push(item);
+        else notMatchedItems.push(item);
+      });
+
+      // Distribute matched items toward this event's date
+      if(matchedItems.length > 0) {
+        // Start from today or after last event
+        var segStart = new Date(start);
+        distributeDeadlines(matchedItems, segStart, evDate);
+      }
+
+      // Remaining items continue to next iteration
+      remainingItems = notMatchedItems;
+    });
+
+    // Items not matched to any event → distribute toward final
+    if(remainingItems.length > 0) {
+      var lastEvDate = new Date(matEvents[matEvents.length-1].fecha + 'T00:00:00');
+      var afterLast = new Date(lastEvDate);
+      afterLast.setDate(afterLast.getDate() + 1);
+      afterLast = nextWeekday(afterLast);
+      var finalDeadline = new Date(FINAL_DATE);
+      distributeDeadlines(remainingItems, afterLast, finalDeadline);
+    }
   });
 }
 
@@ -1625,12 +1704,13 @@ function renderEventosList() {
         +'<div class="evento-chip-meta">'+dsStr+unStr+'</div>'
       +'</div>'
       +'<div class="evento-chip-dias" style="'+diasCls+'">'+(dias===0?'HOY':dias===1?'MAÑANA':dias+' días')+'</div>'
-      +(canDel?'<button class="ev-delete" onclick="deleteEvento(''+ev.id+'')">✕</button>':'')
+      +(canDel?'<button class="ev-delete" onclick="deleteEvento(this)" data-id="'+ev.id+'">✕</button>':'')
     +'</div>';
   }).join('');
 }
 
-function deleteEvento(id) {
+function deleteEvento(btn) {
+  var id = btn.getAttribute ? btn.getAttribute('data-id') : btn;
   var evs = getEventos().filter(function(e){return e.id!==id;});
   saveEventos(evs);
   renderCal();
@@ -1706,8 +1786,13 @@ function saveEvent() {
   recalcQCY();
   showToast('✅ Fecha guardada');
   
-  // If parcial/final with unidades, recalc deadlines
-  if(unidades.length>0) calcDeadlines();
+  // Recalc all deadlines based on new event
+  calcDeadlines();
+  // Show confirmation with impact
+  if(unidades.length > 0) {
+    showToast('✅ Fecha guardada — plan de estudio actualizado', 'var(--accent3)');
+  }
+  recalcQCY();
 }
 
 // ══════════════════════════════════════
@@ -1811,20 +1896,42 @@ function renderQCY() {
       chips+='<span class="qcy-chip qcy-chip-event" style="background:'+color+';color:#fff;border-color:'+color+'">'+cfg.emoji+' '+cfg.label+' '+( ev.materia?ev.materia.split(' ')[0]:'')+'</span>';
     });
 
-    // Study chips - weekend lighter load
+    // Study chips: show temas whose deadline falls this week or is overdue
+    // Weekend = lighter (1 slot), weekday = 2 slots
     var isWeekend = (i===5||i===6);
-    var studySlots = isWeekend?1:2;
+    var studySlots = isWeekend ? 1 : 2;
 
-    if(!isPast){
-      var added=0;
-      var startIdx = (qcyWeekOffset*7+i)*studySlots % Math.max(allTemas.length,1);
-      for(var j=0;j<allTemas.length&&added<studySlots;j++){
-        var idx=(startIdx+j)%allTemas.length;
-        var item=allTemas[idx];
-        var m=item.materia;
-        chips+='<span class="qcy-chip" style="color:'+m.color+';border-color:'+m.color+'40;background:'+m.color+'12">'+m.icon+' '+m.nombre.split(' ')[0]+' · '+item.unidad.unidad.split('—')[0].trim()+'</span>';
-        added++;
+    if(!isPast) {
+      // Find temas that should be done by or around this day
+      // Show temas whose deadline is within the next 7 days from this day
+      var dayMs = d.getTime();
+      var urgentTemas = allTemas.filter(function(item){
+        if(!item.tema.deadline) return false;
+        var dl = item.tema.deadline.getTime();
+        // Show if deadline is within 8 days ahead of this day, or overdue
+        return dl >= dayMs - 86400000 && dl <= dayMs + 8*86400000;
+      });
+
+      // If not enough urgent temas, fill with next upcoming by deadline
+      var toShow = urgentTemas.slice(0, studySlots);
+      if(toShow.length < studySlots) {
+        var extras = allTemas.filter(function(item){
+          return toShow.indexOf(item) < 0;
+        }).slice(0, studySlots - toShow.length);
+        toShow = toShow.concat(extras);
       }
+
+      toShow.forEach(function(item){
+        var m = item.materia;
+        var dl = item.tema.deadline;
+        var daysLeft = dl ? Math.round((dl.getTime()-dayMs)/86400000) : null;
+        var urgentStyle = (daysLeft !== null && daysLeft <= 3) ? 'font-weight:700;' : '';
+        var urgentIcon = (daysLeft !== null && daysLeft <= 0) ? '⚠️ ' : '';
+        chips += '<span class="qcy-chip" style="'+urgentStyle+'color:'+m.color+';border-color:'+m.color+'40;background:'+m.color+'12">'
+          + urgentIcon + m.icon + ' ' + item.unidad.unidad.split('—')[0].trim()
+          + (dl ? ' <span style="font-size:10px;opacity:0.7">· hasta ' + dl.getDate()+'/'+(dl.getMonth()+1)+'</span>' : '')
+          + '</span>';
+      });
     }
 
     if(!dayEvs.length && isPast){
