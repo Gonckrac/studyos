@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>StudyOS — UCA Ingeniería Informática</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #1a1a24;
+    --border: #2a2a3a;
+    --accent: #7c6af7;
+    --accent2: #f7c26a;
+    --accent3: #6af7c2;
+    --danger: #f76a6a;
+    --text: #e8e8f0;
+    --text2: #8888a8;
+    --radius: 12px;
+    --radius-sm: 6px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; min-height: 100vh; overflow-x: hidden; }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  #app { display: flex; min-height: 100vh; }
+
+  #sidebar { width: 220px; min-width: 220px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 24px 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  .logo { padding: 0 20px 24px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+  .logo-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; color: var(--accent); letter-spacing: -0.5px; }
+  .logo-sub { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--text2); margin-top: 2px; }
+  .nav-section { padding: 0 12px; margin-bottom: 8px; }
+  .nav-label { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text2); padding: 0 8px; margin-bottom: 6px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: var(--radius-sm); cursor: pointer; color: var(--text2); transition: all 0.15s; font-size: 13px; border: 1px solid transparent; }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: rgba(124,106,247,0.15); color: var(--accent); border-color: rgba(124,106,247,0.2); }
+  .nav-icon { font-size: 15px; width: 18px; text-align: center; }
+  .sidebar-bottom { margin-top: auto; padding: 16px 12px 0; border-top: 1px solid var(--border); }
+  .cuatri-badge { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; font-family: 'Space Mono', monospace; font-size: 10px; color: var(--text2); line-height: 1.8; }
+  .cuatri-badge span { color: var(--accent2); font-weight: 700; }
+
+  #main { flex: 1; overflow-y: auto; padding: 32px; max-width: 1200px; }
+  .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 32px; }
+  .page-title { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
+  .page-title span { color: var(--accent); }
+  .page-date { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--text2); margin-top: 4px; }
+
+  .today-card { background: linear-gradient(135deg, rgba(124,106,247,0.12) 0%, rgba(106,247,194,0.06) 100%); border: 1px solid rgba(124,106,247,0.3); border-radius: var(--radius); padding: 20px 24px; margin-bottom: 28px; display: flex; align-items: center; gap: 20px; animation: fadeSlideIn 0.4s ease; }
+  .today-icon { font-size: 32px; }
+  .today-content { flex: 1; }
+  .today-label { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; }
+  .today-title { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .today-tasks { display: flex; gap: 8px; flex-wrap: wrap; }
+  .task-chip { background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; font-size: 12px; color: var(--text2); cursor: pointer; transition: all 0.15s; }
+  .task-chip:hover { border-color: var(--accent); color: var(--accent); }
+  .task-chip.done { text-decoration: line-through; opacity: 0.4; }
+
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; transition: border-color 0.2s; }
+  .stat-card:hover { border-color: var(--accent); }
+  .stat-label { font-size: 11px; color: var(--text2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.8px; }
+  .stat-value { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800; color: var(--text); }
+  .stat-value.accent { color: var(--accent); }
+  .stat-value.green { color: var(--accent3); }
+  .stat-value.yellow { color: var(--accent2); }
+  .stat-sub { font-size: 11px; color: var(--text2); margin-top: 3px; }
+
+  .section-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text2); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .materias-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 16px; margin-bottom: 32px; }
+  .materia-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; animation: fadeSlideIn 0.4s ease both; }
+  .materia-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--card-color, var(--accent)); }
+  .materia-card:hover { border-color: var(--card-color, var(--accent)); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+  .materia-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+  .materia-icon { font-size: 22px; }
+  .materia-status { font-size: 10px; padding: 3px 8px; border-radius: 20px; font-weight: 600; }
+  .status-pending { background: rgba(136,136,168,0.1); color: var(--text2); border: 1px solid rgba(136,136,168,0.2); }
+  .materia-name { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 4px; line-height: 1.2; }
+  .materia-code { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--text2); margin-bottom: 14px; }
+  .progress-wrap { margin-bottom: 10px; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--text2); margin-bottom: 5px; }
+  .progress-bar { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; background: var(--card-color, var(--accent)); transition: width 0.6s ease; }
+  .materia-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .parcial-info { font-size: 11px; color: var(--text2); }
+  .parcial-info span { color: var(--text); font-weight: 500; }
+  .temas-count { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--text2); }
+  .promo-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; padding: 3px 8px; border-radius: 10px; margin-top: 6px; }
+  .promo-posible { background: rgba(106,247,194,0.1); color: var(--accent3); border: 1px solid rgba(106,247,194,0.2); }
+  .promo-no { background: rgba(136,136,168,0.08); color: var(--text2); border: 1px solid var(--border); }
+
+  .back-btn { display: inline-flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 14px; font-size: 13px; color: var(--text2); cursor: pointer; margin-bottom: 24px; transition: all 0.15s; }
+  .back-btn:hover { color: var(--text); border-color: var(--accent); }
+  .detail-hero { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 24px; }
+  .detail-top { display: flex; gap: 20px; align-items: flex-start; margin-bottom: 16px; }
+  .detail-icon { font-size: 40px; }
+  .detail-name { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+  .detail-meta { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--text2); line-height: 1.6; margin-bottom: 8px; }
+  .detail-stats { display: flex; gap: 20px; flex-wrap: wrap; }
+  .detail-stat { text-align: center; }
+  .detail-stat-val { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; }
+  .detail-stat-lbl { font-size: 10px; color: var(--text2); text-transform: uppercase; }
+  .promo-box { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 16px; margin-top: 12px; }
+  .promo-box-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text2); margin-bottom: 6px; }
+  .promo-box-body { font-size: 12px; color: var(--text2); line-height: 1.6; }
+
+  .unidad-header { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; padding: 12px 0 8px; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
+  .tema-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: var(--radius-sm); cursor: pointer; transition: background 0.15s; border: 1px solid transparent; margin-bottom: 4px; }
+  .tema-row:hover { background: var(--surface2); }
+  .tema-row.active-row { background: rgba(124,106,247,0.1); border-color: rgba(124,106,247,0.2); }
+  .tema-check { width: 18px; height: 18px; border: 2px solid var(--border); border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 11px; transition: all 0.15s; }
+  .tema-row.done .tema-check { background: var(--accent3); border-color: var(--accent3); color: #000; }
+  .tema-row.studying .tema-check { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .tema-name { flex: 1; font-size: 13px; }
+  .tema-row.done .tema-name { text-decoration: line-through; color: var(--text2); }
+  .tema-dificultad { font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 600; flex-shrink: 0; }
+  .dif-alta { background: rgba(247,106,106,0.1); color: var(--danger); }
+  .dif-media { background: rgba(247,194,106,0.1); color: var(--accent2); }
+  .dif-baja { background: rgba(106,247,194,0.1); color: var(--accent3); }
+  .tema-parcial { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--text2); flex-shrink: 0; }
+  .tema-detail { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin: 4px 0 12px 30px; display: none; }
+  .tema-detail.open { display: block; animation: fadeSlideIn 0.2s ease; }
+  .tema-detail-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+  .tema-detail-body { font-size: 13px; color: var(--text2); line-height: 1.7; margin-bottom: 14px; }
+  .tema-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .btn { padding: 7px 14px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.15s; border: 1px solid var(--border); background: transparent; color: var(--text2); font-family: 'Inter', sans-serif; }
+  .btn:hover { color: var(--text); border-color: var(--text2); }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: white; }
+  .btn-primary:hover { opacity: 0.85; }
+  .btn-green { color: var(--accent3); border-color: rgba(106,247,194,0.3); }
+  .btn-green:hover { background: rgba(106,247,194,0.1); border-color: var(--accent3); }
+  .btn-yellow { color: var(--accent2); border-color: rgba(247,194,106,0.3); }
+  .btn-yellow:hover { background: rgba(247,194,106,0.1); }
+
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 100; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; width: 90%; max-width: 560px; max-height: 80vh; overflow-y: auto; animation: fadeSlideIn 0.25s ease; }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .modal-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; }
+  .modal-close { background: none; border: none; color: var(--text2); font-size: 20px; cursor: pointer; padding: 4px; }
+  .pregunta { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; margin-bottom: 12px; }
+  .pregunta-text { font-size: 13px; color: var(--text); margin-bottom: 12px; line-height: 1.5; }
+  .opciones { display: flex; flex-direction: column; gap: 6px; }
+  .opcion { padding: 8px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px; cursor: pointer; transition: all 0.15s; color: var(--text2); text-align: left; font-family: 'Inter', sans-serif; }
+  .opcion:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .opcion.correcta { border-color: var(--accent3); color: var(--accent3); background: rgba(106,247,194,0.05); }
+  .opcion.incorrecta { border-color: var(--danger); color: var(--danger); background: rgba(247,106,106,0.05); }
+
+  .week-plan { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 32px; }
+  .week-row { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border); gap: 14px; }
+  .week-row:last-child { border-bottom: none; }
+  .week-row.today-row { background: rgba(124,106,247,0.06); }
+  .week-dia { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--text2); width: 60px; flex-shrink: 0; }
+  .week-dia.hoy { color: var(--accent); font-weight: 700; }
+  .week-tasks-wrap { flex: 1; display: flex; gap: 6px; flex-wrap: wrap; }
+  .week-chip { font-size: 11px; padding: 3px 10px; border-radius: 10px; border: 1px solid var(--border); color: var(--text2); }
+  .week-time { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--text2); flex-shrink: 0; }
+
+  .fecha-item { display: flex; align-items: center; gap: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px; margin-bottom: 8px; }
+  .fecha-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .fecha-materia { font-size: 12px; color: var(--text2); width: 200px; flex-shrink: 0; }
+  .fecha-tipo { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; flex: 1; }
+  .fecha-dia { font-size: 12px; color: var(--text); flex-shrink: 0; margin-right: 8px; }
+  .dr-ok { background: rgba(106,247,194,0.1); color: var(--accent3); border-radius: 10px; padding: 2px 8px; font-family: 'Space Mono', monospace; font-size: 10px; }
+  .dr-warn { background: rgba(247,194,106,0.1); color: var(--accent2); border-radius: 10px; padding: 2px 8px; font-family: 'Space Mono', monospace; font-size: 10px; }
+  .dr-danger { background: rgba(247,106,106,0.1); color: var(--danger); border-radius: 10px; padding: 2px 8px; font-family: 'Space Mono', monospace; font-size: 10px; }
+
+  @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes toastIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+  /* Toast */
+  .toast { position:fixed; bottom:24px; right:24px; background:var(--surface2); border:1px solid var(--accent3); border-radius:var(--radius-sm); padding:10px 18px; font-size:13px; color:var(--accent3); z-index:999; animation:toastIn 0.3s ease; pointer-events:none; }
+
+  /* Panel lateral de tema */
+  .tema-panel-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); z-index:100; }
+  .tema-panel-overlay.open { display:block; }
+  .tema-panel { position:fixed; right:0; top:0; height:100vh; width:min(480px,100vw); background:var(--surface); border-left:1px solid var(--border); display:flex; flex-direction:column; transform:translateX(100%); transition:transform 0.3s ease; z-index:101; overflow:hidden; }
+  .tema-panel-overlay.open .tema-panel { transform:translateX(0); }
+  .tema-panel-head { padding:20px 22px; border-bottom:1px solid var(--border); display:flex; align-items:flex-start; gap:12px; }
+  .tema-panel-close { background:none; border:none; color:var(--text2); font-size:18px; cursor:pointer; padding:2px 6px; margin-left:auto; transition:color 0.15s; flex-shrink:0; }
+  .tema-panel-close:hover { color:var(--text); }
+  .tema-panel-name { font-family:'Syne',sans-serif; font-size:16px; font-weight:800; color:var(--text); line-height:1.3; }
+  .tema-panel-meta { font-size:11px; color:var(--text2); margin-top:4px; display:flex; gap:8px; flex-wrap:wrap; }
+  .tema-panel-body { flex:1; overflow-y:auto; padding:20px 22px; }
+  .tema-panel-desc { font-size:13px; color:var(--text2); line-height:1.8; margin-bottom:20px; background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px; }
+  .panel-section-title { font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--text2); margin-bottom:10px; }
+  .panel-actions { display:flex; flex-direction:column; gap:8px; margin-bottom:20px; }
+  .panel-btn { display:flex; align-items:center; gap:10px; padding:11px 14px; border-radius:var(--radius-sm); font-size:13px; cursor:pointer; transition:all 0.15s; border:1px solid var(--border); background:var(--surface2); color:var(--text2); text-align:left; font-family:'Inter',sans-serif; }
+  .panel-btn:hover { color:var(--text); border-color:var(--text2); }
+  .panel-btn-icon { font-size:16px; width:20px; text-align:center; }
+  .panel-btn-text { flex:1; }
+  .panel-btn-sub { font-size:10px; color:var(--text2); margin-top:1px; }
+  .panel-btn.accent { border-color:rgba(124,106,247,0.4); color:var(--accent); background:rgba(124,106,247,0.08); }
+  .panel-btn.accent:hover { background:rgba(124,106,247,0.15); }
+  .panel-btn.green { border-color:rgba(106,247,194,0.4); color:var(--accent3); background:rgba(106,247,194,0.06); }
+  .panel-btn.green:hover { background:rgba(106,247,194,0.12); }
+  .panel-btn.yellow { border-color:rgba(247,194,106,0.4); color:var(--accent2); background:rgba(247,194,106,0.06); }
+  .panel-btn.yellow:hover { background:rgba(247,194,106,0.12); }
+  .panel-status-row { display:flex; gap:8px; }
+  .panel-status-btn { flex:1; padding:9px; border-radius:var(--radius-sm); font-size:12px; font-weight:600; cursor:pointer; transition:all 0.15s; border:1px solid var(--border); background:transparent; color:var(--text2); font-family:'Inter',sans-serif; }
+  .panel-status-btn:hover { opacity:0.8; }
+  .panel-status-btn.s-studying { border-color:var(--accent); color:var(--accent); background:rgba(124,106,247,0.1); }
+  .panel-status-btn.s-done { border-color:var(--accent3); color:var(--accent3); background:rgba(106,247,194,0.1); }
+  .copy-prompt-area { background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; font-size:11px; color:var(--text2); line-height:1.7; font-family:'Space Mono',monospace; white-space:pre-wrap; word-break:break-word; max-height:120px; overflow-y:auto; margin-bottom:8px; }
+
+  /* Racha */
+  .streak-badge { display:inline-flex; align-items:center; gap:5px; background:rgba(247,194,106,0.1); border:1px solid rgba(247,194,106,0.25); border-radius:20px; padding:4px 10px; font-size:11px; font-weight:600; color:var(--accent2); margin-left:8px; }
+
+  @media (max-width: 768px) { #sidebar { display: none; } #main { padding: 16px; } .stats-row { grid-template-columns: repeat(2, 1fr); } .materias-grid { grid-template-columns: 1fr; } .today-card { flex-direction: column; } .tema-panel { width:100vw; } }
+</style>
+</head>
+<body>
+<div id="app">
+
+<nav id="sidebar">
+  <div class="logo">
+    <div class="logo-title">StudyOS</div>
+    <div class="logo-sub">// UCA · Ing. Informática</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Principal</div>
+    <div class="nav-item active" onclick="showPage('dashboard')"><span class="nav-icon">⬡</span> Dashboard</div>
+    <div class="nav-item" onclick="showPage('materias')"><span class="nav-icon">📚</span> Materias</div>
+    <div class="nav-item" onclick="showPage('fechas')"><span class="nav-icon">📅</span> Fechas clave</div>
+    <div class="nav-item" onclick="showPage('semana')"><span class="nav-icon">🗓</span> Esta semana</div>
+  </div>
+  <div class="nav-section" style="margin-top:8px">
+    <div class="nav-label">Herramientas</div>
+    <div class="nav-item" onclick="openExamen()"><span class="nav-icon">✍️</span> Simulacro</div>
+    <div class="nav-item" onclick="showPage('promociones')"><span class="nav-icon">🎯</span> Finales cortos</div>
+    <div class="nav-item" onclick="alert('Subí el PDF de la materia a NotebookLM → creá un notebook → linkeable desde acá')"><span class="nav-icon">🧠</span> NotebookLM</div>
+  </div>
+  <div class="sidebar-bottom">
+    <div class="cuatri-badge">
+      UCA · <span>2026</span> — 1° Sem.<br>
+      Ing. en Informática · <span>1° año</span><br>
+      Filosofía parcial: <span>3 Jun</span><br>
+      Recuperatorio: <span>17 Jun</span>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+
+  <div id="page-dashboard">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Buen día 👋</div>
+        <div class="page-date" id="fecha-hoy"></div>
+      </div>
+    </div>
+    <div class="today-card">
+      <div class="today-icon">⚡</div>
+      <div class="today-content">
+        <div class="today-label">Para hoy · marcá cuando termines</div>
+        <div class="today-title">Lunes de arranque — 3 bloques</div>
+        <div class="today-tasks">
+          <span class="task-chip" onclick="this.classList.toggle('done')">📐 Cálculo · Funciones (TP1)</span>
+          <span class="task-chip" onclick="this.classList.toggle('done')">💻 Informática · Python: variables y tipos</span>
+          <span class="task-chip" onclick="this.classList.toggle('done')">🧠 Filosofía · Frankl · Unidad I</span>
+        </div>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Materias activas</div>
+        <div class="stat-value accent">5</div>
+        <div class="stat-sub">+ Química (pronto)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Próxima fecha</div>
+        <div class="stat-value yellow" style="display:flex;align-items:baseline;gap:5px">
+          <span id="dias-prox">65</span><span style="font-size:14px;font-weight:400;color:var(--accent2)">días</span>
+        </div>
+        <div class="stat-sub" id="label-prox">Parcial Filosofía · 3 Jun</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Temas vistos</div>
+        <div class="stat-value green" id="temas-vistos">0</div>
+        <div class="stat-sub" id="temas-total">de — en total</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Finales cortos</div>
+        <div class="stat-value accent">3</div>
+        <div class="stat-sub">posibles si nota ≥7</div>
+      </div>
+    </div>
+    <div class="section-title">Materias</div>
+    <div class="materias-grid" id="materias-grid"></div>
+  </div>
+
+  <div id="page-materias" style="display:none">
+    <div class="page-header"><div><div class="page-title">Mis <span>Materias</span></div><div class="page-date">1° semestre 2026</div></div></div>
+    <div class="materias-grid" id="materias-grid-2"></div>
+  </div>
+
+  <div id="page-fechas" style="display:none">
+    <div class="page-header"><div><div class="page-title">Fechas <span>Clave</span></div><div class="page-date">Parciales · Recuperatorios · Finales</div></div></div>
+    <div class="section-title">Confirmadas</div>
+    <div id="fechas-confirmadas"></div>
+    <div class="section-title">Por confirmar</div>
+    <div style="background:var(--surface);border:1px dashed var(--border);border-radius:var(--radius);padding:20px;color:var(--text2);font-size:13px;line-height:1.8;">
+      📌 Las fechas de parciales de <strong style="color:var(--text)">Cálculo Elemental</strong>, <strong style="color:var(--text)">Informática General</strong> e <strong style="color:var(--text)">Intro a la Ingeniería</strong> aún no están disponibles.<br>
+      Cuando las tengas, pasámelas y las cargo con la cuenta regresiva.
+    </div>
+  </div>
+
+  <div id="page-semana" style="display:none">
+    <div class="page-header"><div><div class="page-title">Esta <span>Semana</span></div><div class="page-date">Plan de estudio sugerido · sem del 30/3</div></div></div>
+    <div class="week-plan" id="week-plan"></div>
+  </div>
+
+  <div id="page-promociones" style="display:none">
+    <div class="page-header"><div><div class="page-title">Finales <span>Cortos</span></div><div class="page-date">Condiciones de promoción por materia</div></div></div>
+    <div id="promo-content"></div>
+  </div>
+
+  <div id="page-detalle" style="display:none">
+    <button class="back-btn" id="back-btn">← Volver al dashboard</button>
+    <div id="detalle-content"></div>
+  </div>
+
+</main>
+</div>
+
+<!-- Panel lateral de tema -->
+<div class="tema-panel-overlay" id="tema-panel-overlay" onclick="closeTemaPanel(event)">
+  <div class="tema-panel" id="tema-panel">
+    <div class="tema-panel-head">
+      <div style="flex:1">
+        <div class="tema-panel-name" id="tp-name">—</div>
+        <div class="tema-panel-meta" id="tp-meta"></div>
+      </div>
+      <button class="tema-panel-close" onclick="closeTemaPanel()">✕</button>
+    </div>
+    <div class="tema-panel-body">
+      <div class="tema-panel-desc" id="tp-desc">—</div>
+
+      <div class="panel-section-title">Estado</div>
+      <div class="panel-status-row" style="margin-bottom:20px" id="tp-status-row"></div>
+
+      <div class="panel-section-title">Herramientas de estudio</div>
+      <div class="panel-actions" id="tp-actions"></div>
+
+      <div id="tp-prompt-wrap" style="display:none">
+        <div class="panel-section-title" style="margin-top:4px">Prompt copiado — pegalo en tu IA favorita</div>
+        <div class="copy-prompt-area" id="tp-prompt-text"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast" style="display:none"></div>
+
+<div class="modal-overlay" id="modal-examen">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">✍️ Simulacro</div>
+      <button class="modal-close" onclick="document.getElementById('modal-examen').classList.remove('open')">✕</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+
+<script>
+const MATERIAS = [
+  {
+    id:1, nombre:"Cálculo Elemental", codigo:"Ing. Informática · 1°sem 2026", icon:"📐", color:"#7c6af7",
+    progreso:0, status:"pending", proxParcial:"A confirmar", hsTotales:128,
+    notebooklm:"",
+    promocion:{ tiene:true, desc:"Promedio de los dos parciales ≥ 7 → final corto que evalúa solo Unidades 6, 7 y 8. Promedio 4–6 → todo el programa.", condicion:"Promedio parciales ≥ 7", beneficio:"Final solo U6 (Primitivas) + U7 (Integral) + U8 (Series)" },
+    evaluacion:{ p1:"Unidades 1–3 · SIN recuperatorio", p2:"Unidades 1–6 · CON recuperatorio · aprueba la cursada", final:"Escrito. Promedio ≥7 → solo U6-8. Promedio 4-6 → todo el programa." },
+    temas:[
+      {unidad:"U1 — Funciones", items:[
+        {id:101,nombre:"Variables, funciones, dominio e imagen",dificultad:"baja",parcial:"P1",estado:"pending",desc:"Variables y constantes. Dominio e imagen. Paridad e imparidad. Inyectividad, suryectividad y biyectividad. Función inversa. Uso de GeoGebra."},
+        {id:102,nombre:"Operaciones entre funciones",dificultad:"baja",parcial:"P1",estado:"pending",desc:"Suma, producto, cociente y composición de funciones. Crecimiento y decrecimiento."},
+        {id:103,nombre:"Funciones elementales",dificultad:"media",parcial:"P1",estado:"pending",desc:"Funciones trigonométricas. Función exponencial y función logaritmo. Graficar e interpretar con GeoGebra."},
+      ]},
+      {unidad:"U2 — Límite", items:[
+        {id:104,nombre:"Definición y tipos de límite",dificultad:"media",parcial:"P1",estado:"pending",desc:"Límite de una función en un punto y en infinito. Límites finitos e infinitos. Infinitésimos. Límites laterales."},
+        {id:105,nombre:"Operaciones con límites",dificultad:"media",parcial:"P1",estado:"pending",desc:"Operaciones algebraicas con límites. Indeterminaciones. Límites fundamentales."},
+      ]},
+      {unidad:"U3 — Continuidad", items:[
+        {id:106,nombre:"Definición y teoremas de continuidad",dificultad:"media",parcial:"P1",estado:"pending",desc:"Definición de continuidad en un punto y en un intervalo. Continuidad de operaciones entre funciones. Teorema del valor intermedio."},
+      ]},
+      {unidad:"U4 — Derivada: nociones básicas", items:[
+        {id:107,nombre:"Definición de derivada",dificultad:"media",parcial:"P2",estado:"pending",desc:"Definición y propiedades básicas. Noción geométrica: tangente a una curva. Recta tangente y normal."},
+        {id:108,nombre:"Reglas de derivación",dificultad:"media",parcial:"P2",estado:"pending",desc:"Derivada de las funciones elementales. Reglas de derivación (suma, producto, cociente). Regla de la cadena. Derivada de la función inversa."},
+      ]},
+      {unidad:"U5 — Derivada: aplicaciones", items:[
+        {id:109,nombre:"Extremos y Teoremas del valor medio",dificultad:"alta",parcial:"P2",estado:"pending",desc:"Extremos locales. Teorema de Fermat. Teoremas de Rolle, Lagrange y Cauchy."},
+        {id:110,nombre:"Taylor y L'Hospital",dificultad:"alta",parcial:"P2",estado:"pending",desc:"Aproximación lineal. Diferencial. Polinomio de Taylor. Regla de L'Hospital para límites indeterminados."},
+        {id:111,nombre:"Estudio completo de funciones",dificultad:"alta",parcial:"P2",estado:"pending",desc:"Crecimiento/decrecimiento, extremos, concavidad/convexidad, puntos de inflexión, asíntotas. Problemas de máximos y mínimos."},
+      ]},
+      {unidad:"U6 — Primitivas ⭐ (entra en final corto)", items:[
+        {id:112,nombre:"Función primitiva y métodos de integración",dificultad:"alta",parcial:"P2/Final",estado:"pending",desc:"Definición de función primitiva. Métodos de integración: sustitución, partes, fracciones parciales."},
+      ]},
+      {unidad:"U7 — Integral definida ⭐ (final corto)", items:[
+        {id:113,nombre:"Integral definida y Teorema Fundamental",dificultad:"alta",parcial:"Final",estado:"pending",desc:"Integral definida. Propiedades. Teorema Fundamental del Cálculo. Regla de Barrow. Integrales impropias."},
+        {id:114,nombre:"Aplicaciones geométricas y físicas",dificultad:"media",parcial:"Final",estado:"pending",desc:"Cálculo de áreas entre curvas. Otras aplicaciones físicas de la integral definida."},
+      ]},
+      {unidad:"U8 — Sucesiones y Series ⭐ (final corto)", items:[
+        {id:115,nombre:"Sucesiones y su límite",dificultad:"media",parcial:"Final",estado:"pending",desc:"Definición de sucesión, ejemplos. Límite de una sucesión. Sucesiones monótonas y acotadas."},
+        {id:116,nombre:"Series y criterios de convergencia",dificultad:"alta",parcial:"Final",estado:"pending",desc:"Series numéricas. Criterios de convergencia (ratio, raíz, comparación, integral)."},
+      ]},
+    ],
+    examenes:[
+      {pregunta:"¿Cuál es el dominio de f(x) = √(x−2)?",opciones:["x ≥ 2","x > 2","Todos los reales","x ≤ 2"],correcta:0},
+      {pregunta:"Una función f es continua en x=a si:",opciones:["El límite existe y es igual a f(a)","Solo si f(a) está definida","El límite lateral es finito","f'(a) existe"],correcta:0},
+      {pregunta:"La derivada de f(x) = x³ usando la regla de potencias es:",opciones:["3x²","x²","3x","x⁴/4"],correcta:0},
+    ]
+  },
+  {
+    id:2, nombre:"Informática General", codigo:"Ing. Informática · 1°sem 2026", icon:"💻", color:"#6af7c2",
+    progreso:0, status:"pending", proxParcial:"A confirmar", hsTotales:80, notebooklm:"",
+    promocion:{ tiene:false, desc:"Sin modalidad de final corto. Requiere dos parciales aprobados (o sus recuperatorios). El examen final incluye parte teórica (opción múltiple) y dos ejercicios prácticos integradores en Python.", condicion:"—", beneficio:"Sin final corto" },
+    evaluacion:{ p1:"Unidades 1–4 · con recuperatorio", p2:"Unidades 5–7 · con recuperatorio", final:"Escrito. Teórica: opción múltiple. Práctica: 2 ejercicios Python integradores. Aprueba con ≥4." },
+    temas:[
+      {unidad:"U1 — Introducción a la Programación", items:[
+        {id:201,nombre:"Computadora y etapas de resolución",dificultad:"baja",parcial:"P1",estado:"pending",desc:"Esquema: entrada, salida, procesador, memoria, almacenamiento. Etapas: análisis, diseño, algoritmo, codificación, compilación, ejecución, prueba."},
+        {id:202,nombre:"Sistemas numéricos y conversión",dificultad:"media",parcial:"P1",estado:"pending",desc:"Decimal, binario, hexadecimal, octal. Conversión entre bases. Método directo binario↔decimal."},
+        {id:203,nombre:"Python: variables, tipos y operadores",dificultad:"baja",parcial:"P1",estado:"pending",desc:"IDE Thonny. Palabras reservadas. Tipos: int, str, float, bool. Conversión de tipos. Operadores aritméticos y de concatenación."},
+      ]},
+      {unidad:"U2 — Funciones", items:[
+        {id:204,nombre:"Funciones propias: parámetros y retorno",dificultad:"media",parcial:"P1",estado:"pending",desc:"Declarar función propia. Pasaje de parámetros. Valores de retorno. Alcance de variables: locales, no locales y globales."},
+        {id:205,nombre:"Funciones booleanas y bibliotecas",dificultad:"media",parcial:"P1",estado:"pending",desc:"Función booleana (retorno bool). Bibliotecas y funciones built-in. Generación de números aleatorios."},
+      ]},
+      {unidad:"U3 — Condicionales", items:[
+        {id:206,nombre:"Lógica proposicional y condicionales",dificultad:"media",parcial:"P1",estado:"pending",desc:"Operadores lógicos y relacionales. Tabla de verdad. Condicionales simples, anidadas y múltiples. Control de flujo."},
+        {id:207,nombre:"Algoritmos de búsqueda con condicionales",dificultad:"media",parcial:"P1",estado:"pending",desc:"Búsquedas del máximo, mínimo y por igualdad. Funciones booleanas complejas."},
+      ]},
+      {unidad:"U4 — Ciclos de Repetición", items:[
+        {id:208,nombre:"for, while y range()",dificultad:"media",parcial:"P1",estado:"pending",desc:"Concepto de ciclos. Ciclos for y while. Función range(). Ciclos anidados."},
+        {id:209,nombre:"Algoritmos con ciclos",dificultad:"alta",parcial:"P1",estado:"pending",desc:"Máximo, mínimo, ciclos anidados, acumuladores, sumadores y banderas. Integración de algoritmos."},
+      ]},
+      {unidad:"U5 — Cadenas de Caracteres", items:[
+        {id:210,nombre:"Strings: acceso, slices y operaciones",dificultad:"media",parcial:"P2",estado:"pending",desc:"Concepto de cadena e inmutabilidad. Acceso por índice, slices. Recorrido con ciclos. Codificación ASCII."},
+        {id:211,nombre:"Algoritmos de procesamiento de strings",dificultad:"alta",parcial:"P2",estado:"pending",desc:"Procesamiento, modificación y búsqueda en strings."},
+      ]},
+      {unidad:"U6 — Colecciones", items:[
+        {id:212,nombre:"Listas, tuplas y diccionarios",dificultad:"alta",parcial:"P2",estado:"pending",desc:"Mutabilidad. Crear, obtener, agregar/insertar, eliminar. Recorrido y procesamiento. Algoritmos de búsqueda y ordenamiento."},
+        {id:213,nombre:"Matrices y listas de listas",dificultad:"alta",parcial:"P2",estado:"pending",desc:"Listas de listas para implementar matrices. Procesamiento de datos en colecciones."},
+      ]},
+      {unidad:"U7 — Archivos", items:[
+        {id:214,nombre:"Archivos de texto y CSV",dificultad:"media",parcial:"P2",estado:"pending",desc:"Archivos de texto y CSV. Apertura (escritura, lectura, apéndice), cierre. Recorrido y procesamiento. Carga de datos en colecciones."},
+      ]},
+    ],
+    examenes:[
+      {pregunta:"¿Cuál es el resultado de 5 // 2 en Python?",opciones:["2","2.5","3","1"],correcta:0},
+      {pregunta:"El alcance de una variable definida dentro de una función es:",opciones:["Local","Global","No local","Universal"],correcta:0},
+      {pregunta:"¿Qué imprime print([1,2,3][1:3])?",opciones:["[2, 3]","[1, 2]","[1, 2, 3]","[3]"],correcta:0},
+    ]
+  },
+  {
+    id:3, nombre:"Introducción a la Filosofía", codigo:"1° AM · 1°sem 2026", icon:"🧠", color:"#f7c26a",
+    progreso:0, status:"pending", proxParcial:"3 Jun 2026", notebooklm:"",
+    cronograma:[
+      {mes:"Marzo",unidades:"Unidad I"},
+      {mes:"Abril",unidades:"Unidad II"},
+      {mes:"Mayo",unidades:"Unidades III–IV"},
+      {mes:"Junio",unidades:"Unidad V + PARCIAL 3/6 + RECUP 17/6"},
+      {mes:"Julio/Dic/Feb",unidades:"EXÁMENES FINALES (8:30 hs)"},
+    ],
+    promocion:{ tiene:true, desc:"Nota >7 en el parcial sin haberlo recuperado → accedés a un coloquio integrador. Válido solo para el 1er turno de julio, dos llamados. Con 4–6 o habiendo recuperado → examen oral completo ante tribunal.", condicion:"Nota >7 en parcial, sin recuperar", beneficio:"Coloquio integrador (solo 1er turno Julio)" },
+    evaluacion:{ p1:"Parcial escrito individual · 3 Jun 2026 · preguntas conceptuales Unidades I–V · recuperatorio 17 Jun", p2:"Trabajo práctico grupal (estudio de caso) · exposición oral con soporte informático · a lo largo de toda la cursada", final:"Final oral ante tribunal (toda la materia). O coloquio integrador si nota >7 sin haber recuperado." },
+    temas:[
+      {unidad:"U I — El Hombre busca respuesta · Marzo", items:[
+        {id:301,nombre:"Viktor Frankl: sentido, libertad, responsabilidad (TP1)",dificultad:"media",parcial:"P1",estado:"pending",desc:"Situaciones límite. Vida de Frankl. Los tres pilares: Sentido (lógos), Libertad y Responsabilidad. Noodinámica. Vacío existencial y nihilismo. Comparación con las otras escuelas de Viena (Freud, Adler)."},
+        {id:302,nombre:"Fe y Razón — Fides et Ratio",dificultad:"media",parcial:"P1",estado:"pending",desc:"Principales caminos de respuesta a los grandes interrogantes de fe y razón en Oriente y Occidente. Relaciones entre fe y razón según Juan Pablo II."},
+      ]},
+      {unidad:"U II — ¿Qué es Filosofía? · Abril", items:[
+        {id:303,nombre:"Historia y definición de Filosofía (TP2, TP6)",dificultad:"media",parcial:"P1",estado:"pending",desc:"Breve historia de la filosofía. Definición etimológica (amor a la sabiduría) y real/esencial. Objeto. División en partes principales. Comienzo histórico: Thales y los presocráticos."},
+        {id:304,nombre:"Condiciones del filosofar (TP2-b, TP3)",dificultad:"baja",parcial:"P1",estado:"pending",desc:"Ocio, inteligencia, asombro/admiración, ignorancia y duda, problemas religiosos e interrogantes de las ciencias, angustia y situaciones límite."},
+        {id:305,nombre:"Filosofía y otros saberes (TP4, TP5)",dificultad:"media",parcial:"P1",estado:"pending",desc:"Jerarquía, relaciones e integración entre Filosofía y otros saberes: conocimiento pre-científico/experiencial, científico y religioso."},
+      ]},
+      {unidad:"U III — Antropología Filosófica · Mayo", items:[
+        {id:306,nombre:"El hombre como ser peculiar",dificultad:"media",parcial:"P1",estado:"pending",desc:"El hombre como misterio. Diferencias con el animal: inteligencia, libertad, apertura al ser. Corrientes: materialismo, espiritualismo, dualismo, personalismo."},
+        {id:307,nombre:"Cuerpo y alma: visión filosófica",dificultad:"alta",parcial:"P1",estado:"pending",desc:"Composición del ser humano. El alma: concepciones platónica y aristotélica. La unidad sustancial del hombre según la escolástica."},
+        {id:308,nombre:"Dimensiones del hombre: apertura y trascendencia",dificultad:"media",parcial:"P1",estado:"pending",desc:"El hombre como ser abierto al mundo, a los demás y a Dios. Dimensión religiosa del ser humano. Trascendencia e inmanencia."},
+      ]},
+      {unidad:"U IV — Vida Propiamente Humana · Mayo", items:[
+        {id:309,nombre:"Inteligencia, voluntad y libertad",dificultad:"alta",parcial:"P1",estado:"pending",desc:"La inteligencia: naturaleza, actos y objetos. La voluntad: naturaleza, actos y objetos. Libertad humana: tipos, límites, determinismos. Lo voluntario e involuntario."},
+        {id:310,nombre:"La persona humana",dificultad:"alta",parcial:"P1",estado:"pending",desc:"Etimología y noción de 'persona' a través de la historia. Concepciones clásicas y modernas. Ser con dignidad, libertad, individualidad, temporalidad y socialidad."},
+        {id:311,nombre:"El hombre como problema: grandes corrientes",dificultad:"alta",parcial:"P1",estado:"pending",desc:"El mito, la revelación, monismo, dualismo, personalismo. Filosofía griega: Platón y Aristóteles. Influencia en Santo Tomás. Pensamiento moderno: Descartes, Kant."},
+      ]},
+      {unidad:"U V — La Persona y sus Ámbitos · Junio ← PARCIAL", items:[
+        {id:312,nombre:"Bien individual, bien común y vida social",dificultad:"media",parcial:"P1",estado:"pending",desc:"Individualismo liberal y colectivismo moderno. El hombre como ser social. Dimensiones y niveles del amor personal. Persona, amor, sexualidad y familia."},
+        {id:313,nombre:"Persona, naturaleza y cultura",dificultad:"media",parcial:"P1",estado:"pending",desc:"Concepciones de naturaleza humana. La cultura: noción, dimensiones, relativismo cultural. El trabajo humano. Técnica y mundo humano. Vida económica."},
+      ]},
+    ],
+    examenes:[
+      {pregunta:"¿Cuáles son los tres pilares de la concepción de Frankl?",opciones:["Sentido, Libertad y Responsabilidad","Razón, Amor y Voluntad","Cuerpo, Alma y Espíritu","Libertad, Igualdad y Fraternidad"],correcta:0},
+      {pregunta:"La definición etimológica de Filosofía significa:",opciones:["Amor a la sabiduría","Ciencia del ser","Búsqueda de la verdad","Estudio del hombre"],correcta:0},
+      {pregunta:"El asombro como origen del filosofar es condición tratada en:",opciones:["La Unidad II, condiciones del filosofar","La Unidad I, junto con Frankl","La Unidad IV, sobre la inteligencia","La Unidad V, sobre cultura"],correcta:0},
+    ]
+  },
+  {
+    id:4, nombre:"Introducción a la Ingeniería", codigo:"Ciclo Común · 1°sem", icon:"⚙️", color:"#f76a6a",
+    progreso:0, status:"pending", proxParcial:"A confirmar", hsTotales:45, notebooklm:"",
+    promocion:{ tiene:true, desc:"Nota >7 en el parcial escrito Y en el trabajo práctico grupal, sin haber desaprobado ninguna instancia → coloquio integrador abreviado, válido solo para el 1er turno de examen. Con 4–6 → examen oral completo ante tribunal.", condicion:"Nota >7 en parcial individual Y en TP grupal, sin recuperar", beneficio:"Coloquio integrador (1er turno)" },
+    evaluacion:{ p1:"Parcial escrito individual · preguntas conceptuales sobre todo el programa · con recuperatorio", p2:"Trabajo práctico grupal (estudio de caso). Exposición oral. A lo largo de toda la cursada.", final:"Examen oral ante tribunal. O coloquio integrador si nota >7 en ambas instancias sin recuperar." },
+    temas:[
+      {unidad:"U1 — La Racionalidad", items:[
+        {id:401,nombre:"Racionalidad técnica vs. científica",dificultad:"media",parcial:"P1",estado:"pending",desc:"La ingeniería como resolución de problemas por vía técnica. Diferencia con la racionalidad científica. Heurística. Indicador de eficiencia e imperativo de su maximización."},
+        {id:402,nombre:"Modelo de barrilete y restricciones",dificultad:"media",parcial:"P1",estado:"pending",desc:"Tensiones del 'modelo de barrilete'. La definición de objetivos. Ponderación de resultados y concepciones ideológicas. El concepto de restricción en el diseño."},
+      ]},
+      {unidad:"U2 — La Metodología", items:[
+        {id:403,nombre:"Metodología del diseño: modelo de cinco etapas",dificultad:"media",parcial:"P1",estado:"pending",desc:"El diseño y su relación con empresa y sociedad. Principio de indeterminación forma-función. Modelo de cinco etapas. Flexibilidad interpretativa."},
+        {id:404,nombre:"Constructivismo y grupos sociales",dificultad:"baja",parcial:"P1",estado:"pending",desc:"Los problemas solo adquieren relevancia cuando un grupo social los reconoce. No existen problemas aislados de un entorno de intereses."},
+      ]},
+      {unidad:"U3 — La Cultura", items:[
+        {id:405,nombre:"Tecnología, cultura y normatividad",dificultad:"media",parcial:"P1",estado:"pending",desc:"Tecnología autónoma vs. controlada socialmente. Tecnología como instrumento neutral vs. cargada de valores e intereses. Implicancias normativas para la formación ingenieril."},
+      ]},
+      {unidad:"U4 — La Naturaleza", items:[
+        {id:406,nombre:"Ingeniería y desarrollo sustentable",dificultad:"media",parcial:"P1",estado:"pending",desc:"Concepto de 'desarrollo sustentable'. La ingeniería frente al mundo sostenible. Crítica al eco-eficiencia. Metodologías alternativas: diseño de la cuna a la cuna, propuestas decrecentistas."},
+      ]},
+    ],
+    examenes:[
+      {pregunta:"¿Qué distingue la racionalidad técnica de la científica?",opciones:["La técnica resuelve problemas; la ciencia comprende la realidad","La técnica es más rigurosa que la ciencia","No hay diferencia relevante","La ciencia prioriza la eficiencia"],correcta:0},
+      {pregunta:"¿Qué expresa el 'modelo de barrilete' en Intro a la Ingeniería?",opciones:["Tensión entre eficiencia, restricciones y valores sociales","El diseño es un proceso puramente técnico","Los objetivos de la ingeniería son universales","La naturaleza es un recurso ilimitado"],correcta:0},
+    ]
+  },
+  {
+    id:5, nombre:"Química I", codigo:"Ing. Industrial / Informática / Civil", icon:"🧪", color:"#a78bfa",
+    progreso:0, status:"pending", proxParcial:"A confirmar", hsTotales:null, notebooklm:"",
+    promocion:{ tiene:false, desc:"El programa completo aún no fue compartido. Material semanal en aula virtual (se carga sábado/domingo). La participación virtual suma en la evaluación.", condicion:"Por confirmar", beneficio:"Por confirmar" },
+    evaluacion:{p1:"A confirmar", p2:"A confirmar", final:"A confirmar"},
+    temas:[
+      {unidad:"⏳ Programa pendiente", items:[
+        {id:501,nombre:"Temario a cargar — pasame el PDF",dificultad:"baja",parcial:"—",estado:"pending",desc:"El programa completo de Química I aún no fue compartido. Cuando lo tengas, pasame el PDF y cargo todos los temas."},
+      ]},
+    ],
+    examenes:[
+      {pregunta:"[Placeholder] Pasá el programa de Química para ver preguntas reales",opciones:["Entendido ✓","—","—","—"],correcta:0},
+    ]
+  }
+];
+
+const FECHAS_DATA = [
+  {materia:"Introducción a la Filosofía", color:"#f7c26a", tipo:"1° Parcial", fecha:new Date(2026,5,3)},
+  {materia:"Introducción a la Filosofía", color:"#f7c26a", tipo:"Recuperatorio", fecha:new Date(2026,5,17)},
+];
+
+// ── PERSISTENCIA ──
+const STORE_KEY = 'studyos_v1';
+
+function saveProgress() {
+  try {
+    const d={};
+    MATERIAS.forEach(m=>{d[m.id]={};m.temas.forEach(u=>u.items.forEach(t=>{d[m.id][t.id]=t.estado;}));});
+    localStorage.setItem(STORE_KEY,JSON.stringify(d));
+  } catch(e){}
+}
+
+function loadProgress() {
+  try {
+    const raw=localStorage.getItem(STORE_KEY); if(!raw) return;
+    const d=JSON.parse(raw);
+    MATERIAS.forEach(m=>{if(!d[m.id])return;m.temas.forEach(u=>u.items.forEach(t=>{if(d[m.id][t.id])t.estado=d[m.id][t.id];}));});
+  } catch(e){}
+}
+
+// ── RACHA ──
+function getStreak() {
+  try {
+    const s=JSON.parse(localStorage.getItem('studyos_streak')||'{}');
+    const hoy=new Date().toDateString();
+    if(s.lastDate===hoy) return s.count||1;
+    const ayer=new Date(); ayer.setDate(ayer.getDate()-1);
+    const count=s.lastDate===ayer.toDateString()?(s.count||0)+1:1;
+    localStorage.setItem('studyos_streak',JSON.stringify({lastDate:hoy,count}));
+    return count;
+  } catch(e){return 1;}
+}
+function bumpStreak(){
+  try{const hoy=new Date().toDateString();const s=JSON.parse(localStorage.getItem('studyos_streak')||'{}');localStorage.setItem('studyos_streak',JSON.stringify({lastDate:hoy,count:s.count||1}));}catch(e){}
+}
+
+// ── TOAST ──
+function showToast(msg, color) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.style.borderColor=color||'var(--accent3)'; t.style.color=color||'var(--accent3)';
+  t.style.display='block'; clearTimeout(t._to);
+  t._to=setTimeout(()=>t.style.display='none',2800);
+}
+
+// ── UTILS ──
+function calcDias(fecha){const hoy=new Date();hoy.setHours(0,0,0,0);return Math.round((fecha-hoy)/86400000);}
+function diasCls(d){return d>30?'dr-ok':d>14?'dr-warn':'dr-danger';}
+
+function setDate() {
+  const now=new Date();
+  const streak=getStreak();
+  const sb=streak>1?`<span class="streak-badge">🔥 ${streak} días seguidos</span>`:'';
+  document.getElementById('fecha-hoy').innerHTML=now.toLocaleDateString('es-AR',{weekday:'long',year:'numeric',month:'long',day:'numeric'})+sb;
+}
+
+function updateStats() {
+  let v=0,t=0;
+  MATERIAS.forEach(m=>m.temas.forEach(u=>u.items.forEach(i=>{t++;if(i.estado==='done')v++;})));
+  document.getElementById('temas-vistos').textContent=v;
+  document.getElementById('temas-total').textContent=`de ${t} en total`;
+  let prox=null;
+  FECHAS_DATA.forEach(f=>{const d=calcDias(f.fecha);if(d>=0&&(!prox||d<prox.d))prox={...f,d};});
+  if(prox){document.getElementById('dias-prox').textContent=prox.d;document.getElementById('label-prox').textContent=`${prox.tipo} · Filosofía`;}
+}
+
+// ── PLAN DINÁMICO ──
+function buildSemana() {
+  const hoy=new Date();hoy.setHours(0,0,0,0);
+  const dow=hoy.getDay();
+  const lunes=new Date(hoy);lunes.setDate(hoy.getDate()-(dow===0?6:dow-1));
+  const dias=['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'];
+  const planBase=[
+    {tasks:["📐 Cálculo · U1 Funciones (TP1)","💻 Informática · Python: variables y tipos"],hs:"2.5 hs"},
+    {tasks:["📐 Cálculo · U2 Límites (TP2)","🧠 Filosofía · Frankl · El hombre en busca de sentido"],hs:"2 hs"},
+    {tasks:["💻 Informática · Funciones en Python (TP2)","⚙️ Intro Ing. · Racionalidad técnica"],hs:"2 hs"},
+    {tasks:["📐 Cálculo · U3 Continuidad (TP3)","🧠 Filosofía · Historia de la Filosofía"],hs:"2 hs"},
+    {tasks:["💻 Informática · Condicionales · ejercicios (TP3)","🧪 Química · material de la semana"],hs:"1.5 hs"},
+    {tasks:["📐 Cálculo · repaso U1-U3","⚙️ Intro Ing. · Metodología del diseño"],hs:"1.5 hs"},
+    {tasks:["Simulacro mixto rápido · 30 min"],hs:"0.5 hs"},
+  ];
+  return Array.from({length:7},(_,i)=>{
+    const d=new Date(lunes);d.setDate(lunes.getDate()+i);
+    return{dia:`${dias[d.getDay()]} ${d.getDate()}`,hoy:d.getTime()===hoy.getTime(),...planBase[i]};
+  });
+}
+
+// ── TODAY CARD ──
+function renderTodayCard() {
+  const sem=buildSemana(); const hoy=sem.find(s=>s.hoy); if(!hoy)return;
+  const dow=new Date().getDay();
+  const noms=['domingo de repaso','lunes de arranque','martes de cálculo','miércoles de código','jueves de filosofía','viernes de práctica','sábado de repaso'];
+  const tt=document.querySelector('.today-title');
+  const tc=document.querySelector('.today-tasks');
+  if(tt)tt.textContent=`${noms[dow]} — ${hoy.tasks.length} bloques`;
+  if(tc)tc.innerHTML=hoy.tasks.map(t=>`<span class="task-chip" onclick="this.classList.toggle('done')">${t}</span>`).join('');
+}
+
+// ── RENDER MATERIAS ──
+function renderMaterias(cid) {
+  const c=document.getElementById(cid);if(!c)return;c.innerHTML='';
+  MATERIAS.forEach((m,i)=>{
+    const tot=m.temas.reduce((a,u)=>a+u.items.length,0);
+    const done=m.temas.reduce((a,u)=>a+u.items.filter(t=>t.estado==='done').length,0);
+    const pct=tot?Math.round(done/tot*100):0;
+    const el=document.createElement('div');
+    el.className='materia-card';el.style.cssText=`--card-color:${m.color};animation-delay:${i*0.06}s`;
+    el.innerHTML=`
+      <div class="materia-header"><span class="materia-icon">${m.icon}</span><span class="materia-status status-pending">${done===tot&&tot>0?'✅ Completa':'Por arrancar'}</span></div>
+      <div class="materia-name">${m.nombre}</div>
+      <div class="materia-code">${m.codigo}</div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Temario visto</span><span>${pct}%</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+      </div>
+      ${m.promocion.tiene?'<span class="promo-badge promo-posible">🎯 Final corto posible</span>':'<span class="promo-badge promo-no">📋 Sin final corto</span>'}
+      <div class="materia-footer">
+        <div class="parcial-info">Parcial: <span>${m.proxParcial}</span></div>
+        <div class="temas-count">${done}/${tot} temas</div>
+      </div>`;
+    el.onclick=()=>showDetalle(m.id);
+    c.appendChild(el);
+  });
+}
+
+// ── PANEL LATERAL DE TEMA ──
+let panelTema=null,panelMateria=null;
+
+function openTemaPanel(tId,mId) {
+  const m=MATERIAS.find(x=>x.id===mId);
+  let tema=null;m?.temas.forEach(u=>{const f=u.items.find(x=>x.id===tId);if(f)tema=f;});
+  if(!tema||!m)return;
+  panelTema=tema;panelMateria=m;
+
+  document.getElementById('tp-name').textContent=tema.nombre;
+  const dc=tema.dificultad==='alta'?'🔴 Alta':tema.dificultad==='media'?'🟡 Media':'🟢 Baja';
+  document.getElementById('tp-meta').innerHTML=`<span>${dc}</span><span>·</span><span>${tema.parcial}</span><span>·</span><span style="color:${m.color}">${m.nombre}</span>`;
+  document.getElementById('tp-desc').textContent=tema.desc;
+
+  const sr=document.getElementById('tp-status-row');
+  sr.innerHTML=`
+    <button class="panel-status-btn ${tema.estado==='studying'?'s-studying':''}" onclick="setPanelStatus('studying')">◑ Estudiando</button>
+    <button class="panel-status-btn ${tema.estado==='done'?'s-done':''}" onclick="setPanelStatus('done')">✓ Visto — guardado</button>`;
+
+  const nl=m.notebooklm;
+  document.getElementById('tp-actions').innerHTML=`
+    <button class="panel-btn accent" onclick="copyPromptExplicacion()">
+      <span class="panel-btn-icon">📋</span>
+      <div><div class="panel-btn-text">Copiar prompt de explicación</div><div class="panel-btn-sub">Pegalo en ChatGPT, Gemini, o el chat que uses</div></div>
+    </button>
+    <button class="panel-btn yellow" onclick="copyPromptEjercicios()">
+      <span class="panel-btn-icon">✏️</span>
+      <div><div class="panel-btn-text">Copiar prompt de ejercicios</div><div class="panel-btn-sub">Genera ejercicios con solución paso a paso</div></div>
+    </button>
+    <button class="panel-btn" onclick="copyPromptParcial()">
+      <span class="panel-btn-icon">📝</span>
+      <div><div class="panel-btn-text">Copiar preguntas tipo parcial</div><div class="panel-btn-sub">Simula el estilo del examen real</div></div>
+    </button>
+    ${nl?`<button class="panel-btn green" onclick="window.open('${nl}','_blank')">
+      <span class="panel-btn-icon">🧠</span>
+      <div><div class="panel-btn-text">Abrir NotebookLM</div><div class="panel-btn-sub">Consultas sobre los PDFs de ${m.nombre}</div></div>
+    </button>`:`<button class="panel-btn" style="opacity:0.5;cursor:default">
+      <span class="panel-btn-icon">🧠</span>
+      <div><div class="panel-btn-text">NotebookLM — sin link aún</div><div class="panel-btn-sub">Creá el notebook y pegá el link en el campo notebooklm</div></div>
+    </button>`}`;
+
+  document.getElementById('tp-prompt-wrap').style.display='none';
+  document.getElementById('tema-panel-overlay').classList.add('open');
+}
+
+function closeTemaPanel(e) {
+  if(e&&e.target!==document.getElementById('tema-panel-overlay'))return;
+  document.getElementById('tema-panel-overlay').classList.remove('open');
+}
+
+function setPanelStatus(estado) {
+  if(!panelTema||!panelMateria)return;
+  panelTema.estado=estado; saveProgress(); bumpStreak();
+  const sr=document.getElementById('tp-status-row');
+  sr.querySelectorAll('.panel-status-btn').forEach(b=>b.classList.remove('s-studying','s-done'));
+  if(estado==='studying')sr.children[0].classList.add('s-studying');
+  if(estado==='done'){sr.children[1].classList.add('s-done');showToast('✅ Progreso guardado');}
+  updateStats();
+  const row=document.getElementById(`tr-${panelTema.id}`);
+  if(row){row.className=`tema-row ${estado}`;const ck=row.querySelector('.tema-check');if(ck)ck.textContent=estado==='done'?'✓':estado==='studying'?'◑':'';}
+  renderMaterias('materias-grid');renderMaterias('materias-grid-2');
+}
+
+function buildPromptExplicacion(){
+  if(!panelTema||!panelMateria)return'';
+  return `Soy estudiante de 1er año de Ingeniería Informática en Argentina. Materia: ${panelMateria.nombre}.
+
+Explicame el tema: "${panelTema.nombre}"
+
+Contexto según el programa: "${panelTema.desc}"
+Dificultad: ${panelTema.dificultad}. Entra en: ${panelTema.parcial}.
+
+Quiero:
+1. Explicación clara y progresiva desde cero
+2. Por qué es importante / para qué sirve
+3. Los conceptos clave bien definidos
+4. Al menos 2 ejemplos concretos y resueltos
+5. Errores más comunes de los estudiantes
+6. Resumen de 3-5 puntos para recordar antes del parcial
+
+Usá lenguaje simple, como un tutor universitario en Argentina.`;
+}
+function buildPromptEjercicios(){
+  if(!panelTema||!panelMateria)return'';
+  return `Soy estudiante de 1er año de Ingeniería Informática. Materia: ${panelMateria.nombre}.
+
+Generame 5 ejercicios prácticos sobre: "${panelTema.nombre}"
+Contexto: "${panelTema.desc}"
+Dificultad: ${panelTema.dificultad}. Entra en: ${panelTema.parcial}.
+
+Para cada ejercicio:
+- Enunciado claro
+- Solución paso a paso completa
+- Por qué se hace cada paso
+
+Variá la dificultad: 2 fáciles, 2 intermedios, 1 difícil.
+Estilo de parcial universitario argentino.`;
+}
+function buildPromptParcial(){
+  if(!panelTema||!panelMateria)return'';
+  return `Soy estudiante de ${panelMateria.nombre}, 1er año de Ingeniería Informática.
+
+Generame 5 preguntas tipo parcial sobre: "${panelTema.nombre}"
+Contexto: "${panelTema.desc}"
+
+Incluí:
+- 2 preguntas teóricas conceptuales
+- 2 ejercicios prácticos
+- 1 pregunta trampa (error común)
+
+Para cada una incluí la respuesta correcta y una explicación breve.
+Formato de parcial universitario argentino.`;
+}
+
+function copyToClipboard(text,msg){
+  const pw=document.getElementById('tp-prompt-wrap');
+  const pt=document.getElementById('tp-prompt-text');
+  const preview=text.slice(0,280)+(text.length>280?'\n[...] (copiado completo)':'');
+  navigator.clipboard.writeText(text).then(()=>{
+    pw.style.display='block';pt.textContent=preview;showToast(msg||'✅ Copiado');
+  }).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();
+    try{document.execCommand('copy');}catch(e){}
+    document.body.removeChild(ta);pw.style.display='block';pt.textContent=preview;showToast(msg||'✅ Copiado');
+  });
+}
+function copyPromptExplicacion(){copyToClipboard(buildPromptExplicacion(),'📋 Prompt de explicación copiado — pegalo en tu IA');}
+function copyPromptEjercicios(){copyToClipboard(buildPromptEjercicios(),'✏️ Prompt de ejercicios copiado');}
+function copyPromptParcial(){copyToClipboard(buildPromptParcial(),'📝 Prompt de parcial copiado');}
+
+// ── DETALLE ──
+function showDetalle(id) {
+  const m=MATERIAS.find(x=>x.id===id);if(!m)return;
+  showPage('detalle');
+  const tot=m.temas.reduce((a,u)=>a+u.items.length,0);
+  const done=m.temas.reduce((a,u)=>a+u.items.filter(t=>t.estado==='done').length,0);
+  const stud=m.temas.reduce((a,u)=>a+u.items.filter(t=>t.estado==='studying').length,0);
+
+  let cronHtml='';
+  if(m.cronograma){cronHtml=`<div class="section-title">Cronograma</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px">${m.cronograma.map(c=>`<div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:12px;"><span style="color:var(--accent2);font-family:'Space Mono',monospace;font-size:10px;">${c.mes}</span><br>${c.unidades}</div>`).join('')}</div>`;}
+
+  let html=`<div class="detail-hero" style="border-top:3px solid ${m.color}">
+    <div class="detail-top"><div class="detail-icon">${m.icon}</div>
+    <div style="flex:1"><div class="detail-name" style="color:${m.color}">${m.nombre}</div>
+    <div class="detail-meta">${m.codigo}${m.hsTotales?` · ${m.hsTotales}hs totales`:''}<br>Parcial: ${m.proxParcial}</div>
+    <div class="detail-stats">
+      <div class="detail-stat"><div class="detail-stat-val" style="color:${m.color}">${done}</div><div class="detail-stat-lbl">Vistos</div></div>
+      <div class="detail-stat"><div class="detail-stat-val" style="color:#f7c26a">${stud}</div><div class="detail-stat-lbl">Estudiando</div></div>
+      <div class="detail-stat"><div class="detail-stat-val" style="color:#888">${tot-done-stud}</div><div class="detail-stat-lbl">Pendientes</div></div>
+    </div></div></div>
+    <div class="promo-box"><div class="promo-box-title">🎯 Modalidad de examen final</div>
+    <div class="promo-box-body">${m.promocion.desc}</div>
+    ${m.promocion.tiene?`<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+      <span style="font-size:11px;background:rgba(106,247,194,0.06);border:1px solid rgba(106,247,194,0.15);border-radius:6px;padding:5px 10px;color:var(--accent3)">✓ ${m.promocion.condicion}</span>
+      <span style="font-size:11px;background:rgba(124,106,247,0.06);border:1px solid rgba(124,106,247,0.15);border-radius:6px;padding:5px 10px;color:var(--accent)">→ ${m.promocion.beneficio}</span>
+    </div>`:''}
+    </div></div>
+  <div class="section-title">Evaluaciones</div>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:24px;display:flex;flex-direction:column;gap:8px">
+    <div style="font-size:12px;color:var(--text2)">📝 <strong style="color:var(--text)">1° Parcial:</strong> ${m.evaluacion.p1}</div>
+    <div style="font-size:12px;color:var(--text2)">📝 <strong style="color:var(--text)">2° / TP:</strong> ${m.evaluacion.p2}</div>
+    <div style="font-size:12px;color:var(--text2)">🎓 <strong style="color:var(--text)">Final:</strong> ${m.evaluacion.final}</div>
+  </div>
+  ${cronHtml}
+  <div class="section-title">Temario <span style="font-size:11px;font-weight:400;color:var(--text2)">— tocá un tema para herramientas de estudio</span></div><div>`;
+
+  m.temas.forEach(u=>{
+    html+=`<div class="unidad-header">${u.unidad}</div>`;
+    u.items.forEach(t=>{
+      const dc=t.dificultad==='alta'?'dif-alta':t.dificultad==='media'?'dif-media':'dif-baja';
+      const ck=t.estado==='done'?'✓':t.estado==='studying'?'◑':'';
+      html+=`<div class="tema-row ${t.estado}" id="tr-${t.id}" onclick="openTemaPanel(${t.id},${m.id})">
+        <div class="tema-check">${ck}</div>
+        <div class="tema-name">${t.nombre}</div>
+        <span class="tema-dificultad ${dc}">${t.dificultad}</span>
+        <span class="tema-parcial">${t.parcial}</span>
+      </div>`;
+    });
+  });
+
+  html+=`</div><div class="section-title" style="margin-top:24px">Simulacro</div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:32px">
+    <button class="btn btn-primary" onclick="openExamen(${m.id})">✍️ Simulacro de ${m.nombre}</button>
+    ${m.notebooklm?`<button class="btn btn-green" onclick="window.open('${m.notebooklm}','_blank')">🧠 NotebookLM</button>`:`<button class="btn" style="opacity:0.5">🧠 NotebookLM (sin link)</button>`}
+  </div>`;
+
+  document.getElementById('detalle-content').innerHTML=html;
+  document.getElementById('back-btn').onclick=()=>showPage('dashboard');
+}
+
+// ── FECHAS ──
+function renderFechas(){
+  const c=document.getElementById('fechas-confirmadas');if(!c)return;
+  c.innerHTML=FECHAS_DATA.map(f=>{
+    const d=calcDias(f.fecha);
+    const ds=f.fecha.toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'long',year:'numeric'});
+    return `<div class="fecha-item"><div class="fecha-dot" style="background:${f.color}"></div><div class="fecha-materia">${f.materia}</div><div class="fecha-tipo" style="color:${f.color}">${f.tipo}</div><div class="fecha-dia">${ds}</div><span class="${diasCls(d)}">${d} días</span></div>`;
+  }).join('');
+}
+
+// ── SEMANA ──
+function renderSemana(){
+  const c=document.getElementById('week-plan');if(!c)return;
+  c.innerHTML=buildSemana().map(s=>`<div class="week-row ${s.hoy?'today-row':''}">
+    <div class="week-dia ${s.hoy?'hoy':''}">${s.dia}</div>
+    <div class="week-tasks-wrap">${s.tasks.map(t=>`<span class="week-chip">${t}</span>`).join('')}</div>
+    <div class="week-time">${s.hs}</div>
+  </div>`).join('');
+}
+
+// ── PROMOCIONES ──
+function renderPromociones(){
+  const c=document.getElementById('promo-content');if(!c)return;
+  c.innerHTML=MATERIAS.map(m=>`<div style="background:var(--surface);border:1px solid var(--border);border-top:3px solid ${m.color};border-radius:var(--radius);padding:20px;margin-bottom:16px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+      <span style="font-size:20px">${m.icon}</span>
+      <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:${m.color}">${m.nombre}</span>
+      ${m.promocion.tiene?'<span class="promo-badge promo-posible">🎯 Final corto posible</span>':'<span class="promo-badge promo-no">Sin final corto</span>'}
+    </div>
+    <div style="font-size:13px;color:var(--text2);line-height:1.7">${m.promocion.desc}</div>
+    ${m.promocion.tiene?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+      <span style="font-size:11px;background:rgba(106,247,194,0.06);border:1px solid rgba(106,247,194,0.15);border-radius:6px;padding:5px 10px;color:var(--accent3)">Condición: ${m.promocion.condicion}</span>
+      <span style="font-size:11px;background:rgba(124,106,247,0.06);border:1px solid rgba(124,106,247,0.15);border-radius:6px;padding:5px 10px;color:var(--accent)">Beneficio: ${m.promocion.beneficio}</span>
+    </div>`:''}
+  </div>`).join('');
+}
+
+// ── EXAMEN ──
+function openExamen(mid){
+  let pqs=[];
+  if(mid){const m=MATERIAS.find(x=>x.id===mid);pqs=m?[...m.examenes]:[];}
+  else{MATERIAS.forEach(m=>pqs.push(...m.examenes));pqs=pqs.sort(()=>Math.random()-0.5).slice(0,5);}
+  document.getElementById('modal-body').innerHTML=pqs.map((p,i)=>`<div class="pregunta">
+    <div class="pregunta-text"><b>Pregunta ${i+1}.</b> ${p.pregunta}</div>
+    <div class="opciones">${p.opciones.map((o,j)=>`<button class="opcion" onclick="chkOp(this,${j},${p.correcta})">${String.fromCharCode(65+j)}. ${o}</button>`).join('')}</div>
+  </div>`).join('')+`<div style="margin-top:16px;text-align:right"><button class="btn btn-primary" onclick="document.getElementById('modal-examen').classList.remove('open')">Cerrar</button></div>`;
+  document.getElementById('modal-examen').classList.add('open');
+}
+
+function chkOp(btn,idx,cor){
+  const ops=btn.closest('.opciones').querySelectorAll('.opcion');
+  ops.forEach(o=>o.disabled=true);
+  if(idx===cor)btn.classList.add('correcta');
+  else{btn.classList.add('incorrecta');ops[cor].classList.add('correcta');}
+}
+
+// ── NAVEGACIÓN ──
+const PAGES=['dashboard','materias','fechas','semana','promociones','detalle'];
+function showPage(p){
+  PAGES.forEach(x=>{const el=document.getElementById(`page-${x}`);if(el)el.style.display=x===p?'':'none';});
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.toggle('active',el.getAttribute('onclick')?.includes(`'${p}'`)));
+  if(p==='fechas')renderFechas();
+  if(p==='semana')renderSemana();
+  if(p==='materias')renderMaterias('materias-grid-2');
+  if(p==='promociones')renderPromociones();
+}
+
+// ── INIT ──
+loadProgress();
+setDate();
+renderTodayCard();
+renderMaterias('materias-grid');
+updateStats();
+</script>
+</body>
+</html>
