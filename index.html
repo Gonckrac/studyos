@@ -1574,14 +1574,12 @@ function checkSimEjercicio(i) {
   var match = ni.includes(nr.slice(0,12)) || nr.includes(ni.slice(0,12)) || (nr.length<6&&ni.includes(nr));
   if(match){
     res.className='ejercicio-resultado correcto';
-    res.innerHTML='<strong>✅ Correcto</strong><br><br><strong>Procedimiento:</strong><br>'+ej.procedimiento.replace(/
-/g,'<br>');
+    res.innerHTML='<strong>✅ Correcto</strong><br><br><strong>Procedimiento:</strong><br>'+ej.procedimiento.replace(/\n/g,'<br>');
     window._simCorrectas = (window._simCorrectas||0)+1;
     document.getElementById('sim-inp-'+i).style.borderColor='var(--accent3)';
   } else {
     res.className='ejercicio-resultado incorrecto';
-    res.innerHTML='<strong>❌ Incorrecto</strong><br><strong>Respuesta:</strong> '+ej.respuesta_corta+'<br><br><strong>Procedimiento:</strong><br>'+ej.procedimiento.replace(/
-/g,'<br>');
+    res.innerHTML='<strong>❌ Incorrecto</strong><br><strong>Respuesta:</strong> '+ej.respuesta_corta+'<br><br><strong>Procedimiento:</strong><br>'+ej.procedimiento.replace(/\n/g,'<br>');
     document.getElementById('sim-inp-'+i).style.borderColor='var(--danger)';
   }
   document.getElementById('sim-inp-'+i).disabled=true;
