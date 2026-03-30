@@ -208,6 +208,60 @@
   .panel-status-btn.s-done { border-color:var(--accent3); color:var(--accent3); background:rgba(106,247,194,0.1); }
   .copy-prompt-area { background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; font-size:11px; color:var(--text2); line-height:1.7; font-family:'Space Mono',monospace; white-space:pre-wrap; word-break:break-word; max-height:120px; overflow-y:auto; margin-bottom:8px; }
 
+  /* Tabs del panel */
+  .tp-tabs { display:flex; border-bottom:1px solid var(--border); background:var(--surface2); overflow-x:auto; flex-shrink:0; }
+  .tp-tab { padding:10px 14px; font-size:12px; font-weight:600; color:var(--text2); cursor:pointer; border-bottom:2px solid transparent; white-space:nowrap; transition:all 0.15s; }
+  .tp-tab:hover { color:var(--text); }
+  .tp-tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+
+  /* Prompt inicial de generación */
+  .tp-generate-prompt { text-align:center; padding:32px 20px; background:var(--surface2); border:1px dashed var(--border); border-radius:var(--radius); }
+  .tp-gen-btn { background:var(--accent); color:#fff; border:none; border-radius:var(--radius-sm); padding:10px 20px; font-size:13px; font-weight:600; cursor:pointer; font-family:'Inter',sans-serif; transition:opacity 0.15s; }
+  .tp-gen-btn:hover { opacity:0.85; }
+  .tp-gen-btn:disabled { opacity:0.4; cursor:not-allowed; }
+
+  /* Spinner inline */
+  @keyframes spin { to{transform:rotate(360deg)} }
+  .tp-spinner { display:inline-block; width:16px; height:16px; border:2px solid rgba(255,255,255,0.3); border-top-color:#fff; border-radius:50%; animation:spin 0.7s linear infinite; vertical-align:middle; margin-right:8px; }
+
+  /* Contenido generado */
+  .ai-content { font-size:13px; color:var(--text); line-height:1.85; }
+  .ai-content h2 { font-family:'Syne',sans-serif; font-size:17px; font-weight:800; color:var(--accent); margin:20px 0 10px; }
+  .ai-content h3 { font-family:'Syne',sans-serif; font-size:14px; font-weight:700; color:var(--accent2); margin:16px 0 8px; }
+  .ai-content p { margin-bottom:10px; }
+  .ai-content ul,  .ai-content ol { margin:8px 0 12px 20px; }
+  .ai-content li { margin-bottom:5px; }
+  .ai-content code { background:var(--surface2); border:1px solid var(--border); border-radius:4px; padding:1px 6px; font-family:'Space Mono',monospace; font-size:11px; color:var(--accent3); }
+  .ai-content pre { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:14px; overflow-x:auto; margin:12px 0; }
+  .ai-content pre code { background:none; border:none; padding:0; font-size:12px; }
+  .ai-content .callout { background:rgba(124,106,247,0.08); border-left:3px solid var(--accent); border-radius:0 8px 8px 0; padding:12px 16px; margin:14px 0; }
+  .ai-content .ejemplo { background:rgba(106,247,194,0.06); border:1px solid rgba(106,247,194,0.2); border-radius:8px; padding:12px 16px; margin:12px 0; }
+  .ai-content strong { color:var(--text); font-weight:600; }
+  .ai-content .grafico-wrap { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin:16px 0; }
+  .ai-content .grafico-title { font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--text2); margin-bottom:12px; }
+  .ai-content canvas { max-width:100%; border-radius:6px; }
+
+  /* Ejercicios para completar */
+  .ejercicio-card { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:14px; }
+  .ejercicio-num { font-family:'Space Mono',monospace; font-size:10px; color:var(--accent); margin-bottom:8px; font-weight:700; }
+  .ejercicio-enunciado { font-size:13px; color:var(--text); line-height:1.7; margin-bottom:12px; }
+  .ejercicio-input { width:100%; background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px; color:var(--text); font-family:'Inter',sans-serif; font-size:13px; resize:vertical; min-height:60px; outline:none; transition:border-color 0.15s; }
+  .ejercicio-input:focus { border-color:var(--accent); }
+  .ejercicio-check-btn { margin-top:8px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:7px 14px; font-size:12px; color:var(--text2); cursor:pointer; font-family:'Inter',sans-serif; transition:all 0.15s; }
+  .ejercicio-check-btn:hover { color:var(--text); border-color:var(--accent); }
+  .ejercicio-resultado { margin-top:10px; padding:12px 14px; border-radius:var(--radius-sm); font-size:12px; line-height:1.7; display:none; }
+  .ejercicio-resultado.correcto { background:rgba(106,247,194,0.08); border:1px solid rgba(106,247,194,0.25); color:var(--accent3); }
+  .ejercicio-resultado.incorrecto { background:rgba(247,106,106,0.06); border:1px solid rgba(247,106,106,0.2); color:var(--text); }
+
+  /* Examen con nota */
+  .examen-header { background:linear-gradient(135deg,rgba(124,106,247,0.12),rgba(106,247,194,0.06)); border:1px solid rgba(124,106,247,0.25); border-radius:var(--radius); padding:16px 20px; margin-bottom:20px; }
+  .examen-nota { font-family:'Syne',sans-serif; font-size:48px; font-weight:800; text-align:center; margin:16px 0 4px; }
+  .examen-analisis { font-size:12px; color:var(--text2); line-height:1.7; }
+
+  /* No entendí button */
+  .no-entendi-btn { display:inline-flex; align-items:center; gap:8px; background:rgba(247,194,106,0.1); border:1px solid rgba(247,194,106,0.3); border-radius:var(--radius-sm); padding:8px 14px; font-size:12px; color:var(--accent2); cursor:pointer; margin-top:16px; transition:all 0.15s; font-family:'Inter',sans-serif; }
+  .no-entendi-btn:hover { background:rgba(247,194,106,0.18); }
+
   /* Racha */
   .streak-badge { display:inline-flex; align-items:center; gap:5px; background:rgba(247,194,106,0.1); border:1px solid rgba(247,194,106,0.25); border-radius:20px; padding:4px 10px; font-size:11px; font-weight:600; color:var(--accent2); margin-left:8px; }
 
@@ -322,28 +376,94 @@
 </div>
 
 <!-- Panel lateral de tema -->
+<!-- AI Panel completo -->
 <div class="tema-panel-overlay" id="tema-panel-overlay" onclick="closeTemaPanel(event)">
   <div class="tema-panel" id="tema-panel">
+
+    <!-- Header -->
     <div class="tema-panel-head">
-      <div style="flex:1">
+      <div style="flex:1;min-width:0">
         <div class="tema-panel-name" id="tp-name">—</div>
         <div class="tema-panel-meta" id="tp-meta"></div>
       </div>
       <button class="tema-panel-close" onclick="closeTemaPanel()">✕</button>
     </div>
-    <div class="tema-panel-body">
-      <div class="tema-panel-desc" id="tp-desc">—</div>
 
-      <div class="panel-section-title">Estado</div>
-      <div class="panel-status-row" style="margin-bottom:20px" id="tp-status-row"></div>
+    <!-- Tabs -->
+    <div class="tp-tabs">
+      <div class="tp-tab active" id="tab-explicacion" onclick="switchTab('explicacion')">📖 Explicación</div>
+      <div class="tp-tab" id="tab-ejercicios" onclick="switchTab('ejercicios')">✏️ Ejercicios</div>
+      <div class="tp-tab" id="tab-examen" onclick="switchTab('examen')">📝 Examen unidad</div>
+      <div class="tp-tab" id="tab-feed" onclick="switchTab('feed')">📎 Mi material</div>
+    </div>
 
-      <div class="panel-section-title">Herramientas de estudio</div>
-      <div class="panel-actions" id="tp-actions"></div>
+    <!-- Body -->
+    <div class="tema-panel-body" id="tp-body">
 
-      <div id="tp-prompt-wrap" style="display:none">
-        <div class="panel-section-title" style="margin-top:4px">Prompt copiado — pegalo en tu IA favorita</div>
-        <div class="copy-prompt-area" id="tp-prompt-text"></div>
+      <!-- TAB: EXPLICACION -->
+      <div id="tp-explicacion">
+        <div class="panel-section-title" style="margin-bottom:12px">Estado</div>
+        <div class="panel-status-row" style="margin-bottom:20px" id="tp-status-row"></div>
+        <div id="tp-ai-explain-area">
+          <div class="tp-generate-prompt">
+            <div style="font-size:22px;margin-bottom:8px">🧠</div>
+            <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px">Explicación con IA</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6">Gemini va a generar una explicación completa del tema usando el programa de la materia y el material que hayas cargado. Incluye gráficos interactivos cuando aplica.</div>
+            <button class="tp-gen-btn" onclick="generateExplicacion()">✨ Generar explicación</button>
+          </div>
+        </div>
       </div>
+
+      <!-- TAB: EJERCICIOS -->
+      <div id="tp-ejercicios" style="display:none">
+        <div id="tp-ai-ejercicios-area">
+          <div class="tp-generate-prompt">
+            <div style="font-size:22px;margin-bottom:8px">✏️</div>
+            <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px">Ejercicios para practicar</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6">Gemini genera ejercicios basados en el programa y tu material cargado. Son para completar, no multiple choice. Si te equivocás, explica el procedimiento completo.</div>
+            <button class="tp-gen-btn" onclick="generateEjercicios()">✨ Generar ejercicios</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: EXAMEN UNIDAD -->
+      <div id="tp-examen" style="display:none">
+        <div id="tp-ai-examen-area">
+          <div class="tp-generate-prompt">
+            <div style="font-size:22px;margin-bottom:8px">📝</div>
+            <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px">Examen de la unidad completa</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6">Examen con ejercicios de todos los temas de esta unidad. Con nota, análisis y corrección completa. Estilo parcial universitario.</div>
+            <button class="tp-gen-btn" onclick="generateExamen()">📝 Tomar examen</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: FEED DE MATERIAL -->
+      <div id="tp-feed" style="display:none">
+        <div class="panel-section-title">Tu material para este tema</div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.6">
+          Pegá acá apuntes, texto de PPT del profe, guías de ejercicios, o lo que tengas. Gemini lo usa para generar explicaciones y ejercicios más fieles a tu cursada.
+        </div>
+        <textarea id="tp-feed-text" placeholder="Pegá apuntes, texto de diapositivas, guías de ejercicios..." style="width:100%;min-height:180px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;color:var(--text);font-family:'Inter',sans-serif;font-size:12px;line-height:1.7;resize:vertical;outline:none;transition:border-color 0.15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+          <button class="tp-gen-btn" style="flex:1" onclick="saveFeed()">💾 Guardar material</button>
+          <button class="panel-btn" style="flex:1" onclick="clearFeed()">🗑 Borrar</button>
+        </div>
+        <div id="tp-feed-status" style="font-size:11px;color:var(--accent3);margin-top:8px;display:none"></div>
+
+        <!-- Config API key -->
+        <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border)">
+          <div class="panel-section-title">Configuración Gemini</div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Tu API key de <a href="https://aistudio.google.com" target="_blank" style="color:var(--accent)">aistudio.google.com</a> — se guarda solo en este dispositivo</div>
+          <input id="gemini-key-input" type="password" placeholder="Pegá tu API key de Gemini acá"
+            style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-family:'Space Mono',monospace;font-size:11px;outline:none;transition:border-color 0.15s;margin-bottom:8px"
+            onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"
+          />
+          <button class="tp-gen-btn" style="width:100%" onclick="saveGeminiKey()">🔑 Guardar key</button>
+          <div id="key-status" style="font-size:11px;margin-top:6px;display:none"></div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -664,137 +784,282 @@ function renderMaterias(cid) {
   });
 }
 
-// ── PANEL LATERAL DE TEMA ──
-let panelTema=null,panelMateria=null;
+// ── PANEL LATERAL DE TEMA — GEMINI POWERED ──
+let panelTema=null, panelMateria=null, panelUnidad=null, examenPuntajes={};
 
-function openTemaPanel(tId,mId) {
-  const m=MATERIAS.find(x=>x.id===mId);
-  let tema=null;m?.temas.forEach(u=>{const f=u.items.find(x=>x.id===tId);if(f)tema=f;});
+function getGeminiKey(){ return localStorage.getItem('gemini_api_key')||''; }
+function saveGeminiKey(){
+  const k=document.getElementById('gemini-key-input').value.trim();
+  if(!k){showToast('Pegá tu API key primero','var(--danger)');return;}
+  localStorage.setItem('gemini_api_key',k);
+  const s=document.getElementById('key-status');
+  s.style.display='block';s.style.color='var(--accent3)';s.textContent='✅ Key guardada en este dispositivo';
+  showToast('🔑 API key guardada');
+}
+
+function getFeedKey(){ return panelTema?'feed_'+panelTema.id:''; }
+function saveFeed(){
+  const txt=document.getElementById('tp-feed-text').value.trim();
+  if(getFeedKey()) localStorage.setItem(getFeedKey(),txt);
+  const s=document.getElementById('tp-feed-status');
+  s.style.display='block'; s.style.color='var(--accent3)'; s.textContent='✅ Material guardado — la próxima generación lo usará';
+  showToast('💾 Material guardado');
+}
+function clearFeed(){
+  document.getElementById('tp-feed-text').value='';
+  if(getFeedKey()) localStorage.removeItem(getFeedKey());
+  const s=document.getElementById('tp-feed-status');
+  s.style.display='block'; s.style.color='var(--text2)'; s.textContent='Material borrado';
+}
+function getFeed(){ return getFeedKey()?localStorage.getItem(getFeedKey())||'':''; }
+
+function switchTab(tab){
+  ['explicacion','ejercicios','examen','feed'].forEach(t=>{
+    document.getElementById('tp-'+t).style.display=t===tab?'block':'none';
+    document.getElementById('tab-'+t).classList.toggle('active',t===tab);
+  });
+}
+
+async function callGemini(prompt){
+  const key=getGeminiKey();
+  if(!key) throw new Error('NO_KEY');
+  const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+key,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:8192,temperature:0.7}})
+  });
+  const d=await r.json();
+  if(d.error) throw new Error(d.error.message);
+  return d.candidates?.[0]?.content?.parts?.[0]?.text||'';
+}
+
+function renderMd(t){
+  return t
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/```python([\s\S]*?)```/g,function(_,c){return '<pre><code>'+c.trim()+'</code></pre>';})
+    .replace(/```([\s\S]*?)```/g,function(_,c){return '<pre><code>'+c.trim()+'</code></pre>';})
+    .replace(/`([^`\n]+)`/g,'<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*([^*\n]+)\*/g,'<em>$1</em>')
+    .replace(/^## (.+)$/gm,'<h2>$1</h2>')
+    .replace(/^### (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^> (.+)$/gm,'<div class="callout">$1</div>')
+    .replace(/^- (.+)$/gm,'<li>$1</li>')
+    .replace(/(<li>[\s\S]+?<\/li>)/g,'<ul>$1</ul>')
+    .replace(/<\/ul>\s*<ul>/g,'')
+    .replace(/\n\n+/g,'</p><p>')
+    .replace(/^(?!<[hucpdl]|<li|<pre)(.+)$/gm,'<p>$1</p>')
+    .replace(/<p><\/p>/g,'');
+}
+
+function loadChartJs(cb){
+  if(window.Chart){cb();return;}
+  const s=document.createElement('script');
+  s.src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js';
+  s.onload=cb; document.head.appendChild(s);
+}
+
+function noKeyError(area){
+  area.innerHTML='<div class="tp-generate-prompt"><div style="font-size:22px;margin-bottom:8px">🔑</div><div style="font-size:14px;font-weight:600;color:var(--danger);margin-bottom:8px">Falta la API key de Gemini</div><div style="font-size:12px;color:var(--text2);margin-bottom:16px">Andá a la tab "Mi material" → configurá tu key gratuita de aistudio.google.com</div><button class="tp-gen-btn" onclick="switchTab('feed')">Configurar key →</button></div>';
+}
+
+async function generateExplicacion(){
+  const key=getGeminiKey();
+  const area=document.getElementById('tp-ai-explain-area');
+  if(!key){noKeyError(area);return;}
+  area.innerHTML='<div style="text-align:center;padding:40px 20px"><div style="display:inline-block;width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:12px"></div><div style="color:var(--text2);font-size:13px">Gemini está generando tu explicación...</div></div>';
+  const feed=getFeed();
+  const feedCtx=feed?'\n\nMATERIAL DEL PROFE (prioridad máxima):\n'+feed:'';
+  const prompt='Sos un tutor universitario experto en '+panelMateria.nombre+' para estudiantes de 1er año de Ingeniería Informática en Argentina (UCA).\n\nTEMA: "'+panelTema.nombre+'"\nDESCRIPCIÓN: "'+panelTema.desc+'"\nDIFICULTAD: '+panelTema.dificultad+'\nENTRA EN: '+panelTema.parcial+feedCtx+'\n\nGenerá una explicación COMPLETA con este formato:\n\n## ¿Qué es y para qué sirve?\n[Explicación clara, por qué importa, dónde se aplica]\n\n## Conceptos clave\n[Definiciones precisas con ejemplos]\n\n## Explicación paso a paso\n[Desarrollo progresivo, de lo simple a lo complejo]\n\n## Ejemplos resueltos\n[Mínimo 2 ejemplos completamente resueltos, cada paso explicado]\n\n## ⚠️ Errores comunes\n[Los 2-3 errores típicos y cómo evitarlos]\n\n## Para recordar antes del parcial\n[Resumen de 4-5 puntos clave concretos]\n\nSi el tema involucra funciones matemáticas o conceptos visualizables, agregá al final:\n\n## GRAFICO_INTERACTIVO\n[Código JavaScript puro que use Chart.js con canvas id="ai-chart". Si aplica, incluí sliders HTML en div id="ai-chart-controls". Solo código JS, sin tags HTML extra. Si no aplica: NO_GRAFICO]\n\nUsá lenguaje claro y natural, como si explicaras en persona en Argentina.';
+  try{
+    const resp=await callGemini(prompt);
+    const gMatch=resp.match(/## GRAFICO_INTERACTIVO[\s\S]*?\n([\s\S]*)$/);
+    const textoMain=resp.replace(/## GRAFICO_INTERACTIVO[\s\S]*/,'');
+    const gCode=gMatch?gMatch[1].trim():'';
+    let html='<div class="ai-content">'+renderMd(textoMain)+'</div>';
+    html+='<button class="no-entendi-btn" onclick="regenerarSimple()">🤔 No entendí, explicame más simple</button>';
+    if(gCode&&gCode!=='NO_GRAFICO'&&gCode.length>20){
+      html+='<div class="grafico-wrap" style="margin-top:20px"><div class="grafico-title">📊 Gráfico interactivo</div><div id="ai-chart-controls"></div><canvas id="ai-chart" height="260"></canvas></div>';
+    }
+    area.innerHTML=html;
+    if(gCode&&gCode!=='NO_GRAFICO'&&gCode.length>20){
+      loadChartJs(function(){try{var fn=new Function(gCode);fn();}catch(e){var g=document.querySelector('.grafico-wrap');if(g)g.style.display='none';}});
+    }
+  }catch(e){
+    if(e.message==='NO_KEY'){noKeyError(area);}
+    else{area.innerHTML='<div class="tp-generate-prompt"><div style="font-size:22px;margin-bottom:8px">⚠️</div><div style="font-size:13px;color:var(--danger);margin-bottom:12px">'+e.message+'</div><button class="tp-gen-btn" onclick="generateExplicacion()">Reintentar</button></div>';}
+  }
+}
+
+async function regenerarSimple(){
+  const area=document.getElementById('tp-ai-explain-area');
+  area.innerHTML='<div style="text-align:center;padding:40px 20px"><div style="display:inline-block;width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent2);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:12px"></div><div style="color:var(--text2);font-size:13px">Generando versión más simple...</div></div>';
+  const feed=getFeed();
+  const prompt='Sos un tutor. Explicame "'+panelTema.nombre+'" de '+panelMateria.nombre+' de forma MUY SIMPLE, como si tuviera 15 años y nunca lo hubiera visto. Usá analogías de la vida cotidiana. Sin fórmulas complejas al principio. Máximo 400 palabras.'+(feed?' Material del profe: '+feed:'');
+  try{
+    const resp=await callGemini(prompt);
+    area.innerHTML='<div class="ai-content">'+renderMd(resp)+'</div><div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap"><button class="no-entendi-btn" onclick="generateExplicacion()">🔄 Ver explicación completa</button></div>';
+  }catch(e){area.innerHTML='<div style="color:var(--danger);font-size:13px;padding:16px">Error: '+e.message+'</div>';}
+}
+
+async function generateEjercicios(){
+  const key=getGeminiKey();
+  const area=document.getElementById('tp-ai-ejercicios-area');
+  if(!key){noKeyError(area);return;}
+  area.innerHTML='<div style="text-align:center;padding:40px 20px"><div style="display:inline-block;width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:12px"></div><div style="color:var(--text2);font-size:13px">Generando ejercicios...</div></div>';
+  const feed=getFeed();
+  const feedCtx=feed?'\n\nMATERIAL DEL PROFE (basate en este estilo):\n'+feed:'';
+  const prompt='Sos un profe de '+panelMateria.nombre+' en Argentina (UCA). Generá exactamente 4 ejercicios para completar (NO multiple choice, el alumno escribe la respuesta) sobre "'+panelTema.nombre+'".\nContexto: "'+panelTema.desc+'"\nDificultad: '+panelTema.dificultad+feedCtx+'\n\nRespondé SOLO con JSON válido sin texto antes ni después ni markdown:\n{"ejercicios":[{"num":1,"enunciado":"texto completo del ejercicio","dificultad":"fácil","respuesta_corta":"resultado final en pocas palabras","procedimiento":"procedimiento completo paso a paso numerado"}]}\n\nVariá: 1 fácil, 2 medios, 1 difícil. Estilo parcial universitario argentino.';
+  try{
+    const resp=await callGemini(prompt);
+    const clean=resp.replace(/```json|```/g,'').trim();
+    const data=JSON.parse(clean);
+    let html='';
+    data.ejercicios.forEach(function(ej,i){
+      const dc=ej.dificultad==='difícil'?'var(--danger)':ej.dificultad==='medio'?'var(--accent2)':'var(--accent3)';
+      const proc=ej.procedimiento.replace(/\/g,'\\').replace(/`/g,'\`').replace(/'/g,"\'");
+      const resp2=ej.respuesta_corta.replace(/\/g,'\\').replace(/`/g,'\`').replace(/'/g,"\'");
+      html+='<div class="ejercicio-card"><div class="ejercicio-num">EJERCICIO '+ej.num+' · <span style="color:'+dc+'">'+ej.dificultad.toUpperCase()+'</span></div><div class="ejercicio-enunciado">'+ej.enunciado+'</div><textarea class="ejercicio-input" id="ej-input-'+i+'" placeholder="Escribí tu respuesta acá..."></textarea><button class="ejercicio-check-btn" onclick="checkEjercicio('+i+',`'+resp2+'`,`'+proc+'`)">✓ Verificar respuesta</button><div class="ejercicio-resultado" id="ej-res-'+i+'"></div></div>';
+    });
+    html+='<button class="tp-gen-btn" style="width:100%;margin-top:8px" onclick="generateEjercicios()">🔄 Nuevos ejercicios</button>';
+    area.innerHTML=html;
+  }catch(e){
+    area.innerHTML='<div class="tp-generate-prompt"><div style="font-size:22px;margin-bottom:8px">⚠️</div><div style="font-size:13px;color:var(--danger);margin-bottom:12px">'+e.message+'</div><button class="tp-gen-btn" onclick="generateEjercicios()">Reintentar</button></div>';
+  }
+}
+
+function checkEjercicio(i,respCorta,procedimiento){
+  const input=document.getElementById('ej-input-'+i).value.trim();
+  const res=document.getElementById('ej-res-'+i);
+  if(!input){showToast('Escribí tu respuesta primero','var(--accent2)');return;}
+  res.style.display='block';
+  const norm=function(s){return s.toLowerCase().replace(/[^a-z0-9.,\-]/g,' ').replace(/\s+/g,' ').trim();};
+  const nr=norm(respCorta); const ni=norm(input);
+  const match=ni.includes(nr.slice(0,12))||nr.includes(ni.slice(0,12))||(nr.length<6&&ni.includes(nr));
+  if(match){
+    res.className='ejercicio-resultado correcto';
+    res.innerHTML='<strong>✅ ¡Correcto!</strong><br><br><strong>Procedimiento completo:</strong><br>'+procedimiento.replace(/\n/g,'<br>');
+  } else {
+    res.className='ejercicio-resultado incorrecto';
+    res.innerHTML='<strong>❌ No es correcto.</strong><br><br><strong>Respuesta:</strong> '+respCorta+'<br><br><strong>Procedimiento paso a paso:</strong><br>'+procedimiento.replace(/\n/g,'<br>');
+  }
+}
+
+async function generateExamen(){
+  const key=getGeminiKey();
+  const area=document.getElementById('tp-ai-examen-area');
+  if(!key){noKeyError(area);return;}
+  if(!panelUnidad){showToast('Error: no hay unidad','var(--danger)');return;}
+  area.innerHTML='<div style="text-align:center;padding:40px 20px"><div style="display:inline-block;width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:12px"></div><div style="color:var(--text2);font-size:13px">Armando tu examen de unidad...</div></div>';
+  const temasU=panelUnidad.items.map(function(t){return t.nombre;}).join(', ');
+  const feed=getFeed();
+  const prompt='Sos profesor de '+panelMateria.nombre+' (UCA Argentina). Armá un examen parcial de la unidad "'+panelUnidad.unidad+'" con temas: '+temasU+'.\n'+(feed?'Material del profe: '+feed+'.\n':'')+'Generá exactamente 5 ejercicios para escribir (NO multiple choice).\nRespondé SOLO con JSON válido:\n{"titulo":"Examen: nombre_unidad","ejercicios":[{"num":1,"enunciado":"enunciado completo","puntaje":20,"respuesta_corta":"resultado final","procedimiento":"pasos completos numerados"}]}\nPuntaje total=100. Cubrí distintos temas. Estilo parcial universitario argentino.';
+  try{
+    const resp=await callGemini(prompt);
+    const clean=resp.replace(/```json|```/g,'').trim();
+    const data=JSON.parse(clean);
+    let html='<div class="examen-header"><div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent2);margin-bottom:4px">📝 '+data.titulo+'</div><div style="font-size:12px;color:var(--text2)">'+panelMateria.nombre+' · '+temasU+'</div></div>';
+    data.ejercicios.forEach(function(ej,i){
+      const proc=ej.procedimiento.replace(/\/g,'\\').replace(/`/g,'\`').replace(/'/g,"\'");
+      const resp2=ej.respuesta_corta.replace(/\/g,'\\').replace(/`/g,'\`').replace(/'/g,"\'");
+      html+='<div class="ejercicio-card"><div class="ejercicio-num">EJERCICIO '+ej.num+' · <span style="color:var(--accent)">'+ej.puntaje+' pts</span></div><div class="ejercicio-enunciado">'+ej.enunciado+'</div><textarea class="ejercicio-input" id="ex-input-'+i+'" placeholder="Tu respuesta..."></textarea><button class="ejercicio-check-btn" onclick="checkExamen('+i+',`'+resp2+'`,`'+proc+'`,'+ej.puntaje+')">✓ Entregar respuesta</button><div class="ejercicio-resultado" id="ex-res-'+i+'"></div></div>';
+    });
+    const pts=data.ejercicios.map(function(e){return e.puntaje;}).join(',');
+    html+='<button class="tp-gen-btn" style="width:100%;margin-top:12px" onclick="calcNotaFinal('+pts+')">📊 Ver nota final</button>';
+    area.innerHTML=html;
+  }catch(e){
+    area.innerHTML='<div class="tp-generate-prompt"><div style="font-size:22px;margin-bottom:8px">⚠️</div><div style="font-size:13px;color:var(--danger);margin-bottom:12px">'+e.message+'</div><button class="tp-gen-btn" onclick="generateExamen()">Reintentar</button></div>';
+  }
+}
+
+function checkExamen(i,respCorta,procedimiento,puntaje){
+  const input=document.getElementById('ex-input-'+i).value.trim();
+  const res=document.getElementById('ex-res-'+i);
+  if(!input){showToast('Escribí tu respuesta primero','var(--accent2)');return;}
+  res.style.display='block';
+  const norm=function(s){return s.toLowerCase().replace(/[^a-z0-9.,\-]/g,' ').replace(/\s+/g,' ').trim();};
+  const nr=norm(respCorta); const ni=norm(input);
+  const match=ni.includes(nr.slice(0,12))||nr.includes(ni.slice(0,12))||(nr.length<6&&ni.includes(nr));
+  examenPuntajes[i]=match?puntaje:0;
+  if(match){
+    res.className='ejercicio-resultado correcto';
+    res.innerHTML='<strong>✅ Correcto (+'+puntaje+' pts)</strong><br><br><strong>Procedimiento:</strong><br>'+procedimiento.replace(/\n/g,'<br>');
+  } else {
+    res.className='ejercicio-resultado incorrecto';
+    res.innerHTML='<strong>❌ Incorrecto (0 pts)</strong><br><br><strong>Respuesta:</strong> '+respCorta+'<br><br><strong>Procedimiento:</strong><br>'+procedimiento.replace(/\n/g,'<br>');
+  }
+}
+
+function calcNotaFinal(){
+  const puntajes=Array.from(arguments);
+  const total=puntajes.reduce(function(a,b){return a+b;},0);
+  const obtenido=Object.values(examenPuntajes).reduce(function(a,b){return a+b;},0);
+  const pct=Math.round(obtenido/total*100);
+  const nota=Math.min(10,Math.round(pct/10));
+  const color=nota>=7?'var(--accent3)':nota>=4?'var(--accent2)':'var(--danger)';
+  const emoji=nota>=8?'🎉':nota>=6?'💪':nota>=4?'📚':'😅';
+  const analisis=nota>=8?'Excelente. Dominás los conceptos de esta unidad.':nota>=6?'Buena base. Repasá los ejercicios erróneos antes del parcial.':nota>=4?'Aprobado, pero reforzá los temas donde erraste.':'Necesitás repasar toda la unidad. No te rindas, es para eso que practicamos.';
+  const area=document.getElementById('tp-ai-examen-area');
+  const div=document.createElement('div');
+  div.className='examen-header'; div.style.marginBottom='20px';
+  div.innerHTML='<div class="examen-nota" style="color:'+color+'">'+emoji+' '+nota+'/10</div><div style="text-align:center;font-size:13px;color:'+color+';margin-bottom:8px">'+obtenido+'/'+total+' puntos ('+pct+'%)</div><div class="examen-analisis">'+analisis+'</div><div style="margin-top:12px;text-align:center"><button class="tp-gen-btn" onclick="examenPuntajes={};generateExamen()">🔄 Nuevo examen</button></div>';
+  area.insertBefore(div,area.firstChild);
+  examenPuntajes={};
+}
+
+function openTemaPanel(tId,mId){
+  const m=MATERIAS.find(function(x){return x.id===mId;});
+  let tema=null, unidad=null;
+  m&&m.temas.forEach(function(u){var f=u.items.find(function(x){return x.id===tId;});if(f){tema=f;unidad=u;}});
   if(!tema||!m)return;
-  panelTema=tema;panelMateria=m;
-
+  panelTema=tema; panelMateria=m; panelUnidad=unidad; examenPuntajes={};
+  
   document.getElementById('tp-name').textContent=tema.nombre;
   const dc=tema.dificultad==='alta'?'🔴 Alta':tema.dificultad==='media'?'🟡 Media':'🟢 Baja';
   const meses2=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
-  const dlStr = tema.deadline ? `· 📅 listo para el ${tema.deadline.getDate()} ${meses2[tema.deadline.getMonth()]}` : '';
-  document.getElementById('tp-meta').innerHTML=`<span>${dc}</span><span>·</span><span>${tema.parcial}</span><span>·</span><span style="color:${m.color}">${m.nombre}</span><span style="color:var(--accent2)">${dlStr}</span>`;
-  document.getElementById('tp-desc').textContent=tema.desc;
-
+  const dlStr=tema.deadline?' · 📅 listo para el '+tema.deadline.getDate()+' '+meses2[tema.deadline.getMonth()]:'';
+  document.getElementById('tp-meta').innerHTML='<span>'+dc+'</span><span style="margin:0 4px">·</span><span>'+tema.parcial+'</span><span style="margin:0 4px">·</span><span style="color:'+m.color+'">'+m.nombre+'</span><span style="color:var(--accent2);font-size:11px">'+dlStr+'</span>';
+  
   const sr=document.getElementById('tp-status-row');
-  sr.innerHTML=`
-    <button class="panel-status-btn ${tema.estado==='studying'?'s-studying':''}" onclick="setPanelStatus('studying')">◑ Estudiando</button>
-    <button class="panel-status-btn ${tema.estado==='done'?'s-done':''}" onclick="setPanelStatus('done')">✓ Visto — guardado</button>`;
-
-  const nl=m.notebooklm;
-  document.getElementById('tp-actions').innerHTML=`
-    <button class="panel-btn accent" onclick="copyPromptExplicacion()">
-      <span class="panel-btn-icon">📋</span>
-      <div><div class="panel-btn-text">Copiar prompt de explicación</div><div class="panel-btn-sub">Pegalo en ChatGPT, Gemini, o el chat que uses</div></div>
-    </button>
-    <button class="panel-btn yellow" onclick="copyPromptEjercicios()">
-      <span class="panel-btn-icon">✏️</span>
-      <div><div class="panel-btn-text">Copiar prompt de ejercicios</div><div class="panel-btn-sub">Genera ejercicios con solución paso a paso</div></div>
-    </button>
-    <button class="panel-btn" onclick="copyPromptParcial()">
-      <span class="panel-btn-icon">📝</span>
-      <div><div class="panel-btn-text">Copiar preguntas tipo parcial</div><div class="panel-btn-sub">Simula el estilo del examen real</div></div>
-    </button>
-    ${nl?`<button class="panel-btn green" onclick="window.open('${nl}','_blank')">
-      <span class="panel-btn-icon">🧠</span>
-      <div><div class="panel-btn-text">Abrir NotebookLM</div><div class="panel-btn-sub">Consultas sobre los PDFs de ${m.nombre}</div></div>
-    </button>`:`<button class="panel-btn" style="opacity:0.5;cursor:default">
-      <span class="panel-btn-icon">🧠</span>
-      <div><div class="panel-btn-text">NotebookLM — sin link aún</div><div class="panel-btn-sub">Creá el notebook y pegá el link en el campo notebooklm</div></div>
-    </button>`}`;
-
-  document.getElementById('tp-prompt-wrap').style.display='none';
+  sr.innerHTML='<button class="panel-status-btn '+(tema.estado==="studying"?"s-studying":"")+'" onclick="setPanelStatus('studying')">◑ Estudiando</button><button class="panel-status-btn '+(tema.estado==="done"?"s-done":"")+'" onclick="setPanelStatus('done')">✓ Visto</button>';
+  
+  switchTab('explicacion');
+  
+  document.getElementById('tp-ai-explain-area').innerHTML='<div class="tp-generate-prompt"><div style="font-size:22px;margin-bottom:8px">🧠</div><div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px">Explicación con Gemini</div><div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6">Gemini genera una explicación completa usando el programa y tu material. Incluye gráficos interactivos cuando aplica.</div><button class="tp-gen-btn" onclick="generateExplicacion()">✨ Generar explicación</button></div>';
+  document.getElementById('tp-ai-ejercicios-area').innerHTML='<div class="tp-generate-prompt"><div style="font-size:22px;margin-bottom:8px">✏️</div><div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px">Ejercicios para practicar</div><div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6">Ejercicios para completar — si te equivocás explica el procedimiento completo.</div><button class="tp-gen-btn" onclick="generateEjercicios()">✨ Generar ejercicios</button></div>';
+  document.getElementById('tp-ai-examen-area').innerHTML='<div class="tp-generate-prompt"><div style="font-size:22px;margin-bottom:8px">📝</div><div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px">Examen: '+( unidad?unidad.unidad:'esta unidad')+'</div><div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6">Examen completo de la unidad con nota y análisis. Estilo parcial universitario.</div><button class="tp-gen-btn" onclick="generateExamen()">📝 Tomar examen</button></div>';
+  
+  const feedGuardado=getFeed();
+  document.getElementById('tp-feed-text').value=feedGuardado;
+  const fs=document.getElementById('tp-feed-status');
+  if(feedGuardado){fs.style.display='block';fs.style.color='var(--accent3)';fs.textContent='✅ Tenés material cargado ('+feedGuardado.length+' caracteres)';}
+  else{fs.style.display='none';}
+  
+  const existingKey=getGeminiKey();
+  const ks=document.getElementById('key-status');
+  if(existingKey){ks.style.display='block';ks.style.color='var(--accent3)';ks.textContent='✅ Key configurada';}
+  else{ks.style.display='none';}
+  
   document.getElementById('tema-panel-overlay').classList.add('open');
 }
 
-function closeTemaPanel(e) {
+function closeTemaPanel(e){
   if(e&&e.target!==document.getElementById('tema-panel-overlay'))return;
   document.getElementById('tema-panel-overlay').classList.remove('open');
 }
 
-function setPanelStatus(estado) {
+function setPanelStatus(estado){
   if(!panelTema||!panelMateria)return;
   panelTema.estado=estado; saveProgress(); bumpStreak();
   const sr=document.getElementById('tp-status-row');
-  sr.querySelectorAll('.panel-status-btn').forEach(b=>b.classList.remove('s-studying','s-done'));
+  sr.querySelectorAll('.panel-status-btn').forEach(function(b){b.classList.remove('s-studying','s-done');});
   if(estado==='studying')sr.children[0].classList.add('s-studying');
   if(estado==='done'){sr.children[1].classList.add('s-done');showToast('✅ Progreso guardado');}
   updateStats();
-  const row=document.getElementById(`tr-${panelTema.id}`);
-  if(row){row.className=`tema-row ${estado}`;const ck=row.querySelector('.tema-check');if(ck)ck.textContent=estado==='done'?'✓':estado==='studying'?'◑':'';}
+  const row=document.getElementById('tr-'+panelTema.id);
+  if(row){row.className='tema-row '+estado;const ck=row.querySelector('.tema-check');if(ck)ck.textContent=estado==='done'?'✓':estado==='studying'?'◑':'';}
   renderMaterias('materias-grid');renderMaterias('materias-grid-2');
 }
-
-function buildPromptExplicacion(){
-  if(!panelTema||!panelMateria)return'';
-  return `Soy estudiante de 1er año de Ingeniería Informática en Argentina. Materia: ${panelMateria.nombre}.
-
-Explicame el tema: "${panelTema.nombre}"
-
-Contexto según el programa: "${panelTema.desc}"
-Dificultad: ${panelTema.dificultad}. Entra en: ${panelTema.parcial}.
-
-Quiero:
-1. Explicación clara y progresiva desde cero
-2. Por qué es importante / para qué sirve
-3. Los conceptos clave bien definidos
-4. Al menos 2 ejemplos concretos y resueltos
-5. Errores más comunes de los estudiantes
-6. Resumen de 3-5 puntos para recordar antes del parcial
-
-Usá lenguaje simple, como un tutor universitario en Argentina.`;
-}
-function buildPromptEjercicios(){
-  if(!panelTema||!panelMateria)return'';
-  return `Soy estudiante de 1er año de Ingeniería Informática. Materia: ${panelMateria.nombre}.
-
-Generame 5 ejercicios prácticos sobre: "${panelTema.nombre}"
-Contexto: "${panelTema.desc}"
-Dificultad: ${panelTema.dificultad}. Entra en: ${panelTema.parcial}.
-
-Para cada ejercicio:
-- Enunciado claro
-- Solución paso a paso completa
-- Por qué se hace cada paso
-
-Variá la dificultad: 2 fáciles, 2 intermedios, 1 difícil.
-Estilo de parcial universitario argentino.`;
-}
-function buildPromptParcial(){
-  if(!panelTema||!panelMateria)return'';
-  return `Soy estudiante de ${panelMateria.nombre}, 1er año de Ingeniería Informática.
-
-Generame 5 preguntas tipo parcial sobre: "${panelTema.nombre}"
-Contexto: "${panelTema.desc}"
-
-Incluí:
-- 2 preguntas teóricas conceptuales
-- 2 ejercicios prácticos
-- 1 pregunta trampa (error común)
-
-Para cada una incluí la respuesta correcta y una explicación breve.
-Formato de parcial universitario argentino.`;
-}
-
-function copyToClipboard(text,msg){
-  const pw=document.getElementById('tp-prompt-wrap');
-  const pt=document.getElementById('tp-prompt-text');
-  const preview=text.slice(0,280)+(text.length>280?'\n[...] (copiado completo)':'');
-  navigator.clipboard.writeText(text).then(()=>{
-    pw.style.display='block';pt.textContent=preview;showToast(msg||'✅ Copiado');
-  }).catch(()=>{
-    const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();
-    try{document.execCommand('copy');}catch(e){}
-    document.body.removeChild(ta);pw.style.display='block';pt.textContent=preview;showToast(msg||'✅ Copiado');
-  });
-}
-function copyPromptExplicacion(){copyToClipboard(buildPromptExplicacion(),'📋 Prompt de explicación copiado — pegalo en tu IA');}
-function copyPromptEjercicios(){copyToClipboard(buildPromptEjercicios(),'✏️ Prompt de ejercicios copiado');}
-function copyPromptParcial(){copyToClipboard(buildPromptParcial(),'📝 Prompt de parcial copiado');}
 
 // ── DETALLE ──
 function showDetalle(id) {
