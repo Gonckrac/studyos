@@ -365,7 +365,7 @@
     <div class="nav-label">Herramientas</div>
     <div class="nav-item" onclick="openExamen()"><span class="nav-icon">✍️</span> Simulacro</div>
     <div class="nav-item" onclick="showPage('promociones')"><span class="nav-icon">🎯</span> Finales cortos</div>
-    <div class="nav-item" onclick="alert('Subí el PDF de la materia a NotebookLM → creá un notebook → linkeable desde acá')"><span class="nav-icon">🧠</span> NotebookLM</div>
+
   </div>
 </nav>
 </nav>
@@ -634,12 +634,41 @@
 <div class="toast" id="toast" style="display:none"></div>
 
 <div class="modal-overlay" id="modal-examen">
-  <div class="modal">
+  <div class="modal" style="max-width:640px;width:95%">
     <div class="modal-header">
       <div class="modal-title">✍️ Simulacro</div>
       <button class="modal-close" onclick="document.getElementById('modal-examen').classList.remove('open')">✕</button>
     </div>
-    <div id="modal-body"></div>
+    <!-- Step 1: configurar -->
+    <div id="sim-config">
+      <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:20px">
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Materia</div>
+          <select id="sim-materia" onchange="simUpdateUnidades()" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none"></select>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Unidades (podés elegir varias)</div>
+          <div id="sim-unidades" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Temas (opcional — dejá vacío para todos los de la unidad)</div>
+          <div id="sim-temas" style="display:flex;flex-wrap:wrap;gap:6px;max-height:120px;overflow-y:auto"></div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <div style="flex:1">
+            <div style="font-size:11px;color:var(--text2);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Cantidad de ejercicios</div>
+            <select id="sim-cantidad" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none">
+              <option value="3">3 ejercicios</option>
+              <option value="5" selected>5 ejercicios</option>
+              <option value="8">8 ejercicios</option>
+            </select>
+          </div>
+        </div>
+        <button onclick="startSimulacro()" style="background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">✍️ Generar simulacro con IA</button>
+      </div>
+    </div>
+    <!-- Step 2: simulacro en curso -->
+    <div id="sim-body" style="display:none"></div>
   </div>
 </div>
 
@@ -1306,13 +1335,18 @@ function setPanelStatus(estado){ setTemaStatus(estado); }
 function setTemaStatus(estado){
   if(!panelTema||!panelMateria)return;
   panelTema.estado=estado; saveProgress(); bumpStreak();
-  // Update status buttons on the full page
   document.querySelectorAll('.status-bar-btn').forEach(function(b){
     b.classList.remove('active-studying','active-done');
   });
   var btns=document.querySelectorAll('.status-bar-btn');
   if(estado==='studying'&&btns[0])btns[0].classList.add('active-studying');
-  if(estado==='done'){if(btns[1])btns[1].classList.add('active-done');showToast('✅ Progreso guardado');}
+  if(estado==='done'){
+    if(btns[1])btns[1].classList.add('active-done');
+    // Recalculate deadlines — redistribute remaining temas now that this one is done
+    calcDeadlines();
+    recalcQCY();
+    showToast('✅ Tema completado — plan actualizado');
+  }
   updateStats();
   const row=document.getElementById('tr-'+panelTema.id);
   if(row){row.className='tema-row '+estado;const ck=row.querySelector('.tema-check');if(ck)ck.textContent=estado==='done'?'✓':estado==='studying'?'◑':'';}
@@ -1372,7 +1406,7 @@ function showDetalle(id) {
   html+=`</div><div class="section-title" style="margin-top:24px">Simulacro</div>
   <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:32px">
     <button class="btn btn-primary" onclick="openExamen(${m.id})">✍️ Simulacro de ${m.nombre}</button>
-    ${m.notebooklm?`<button class="btn btn-green" onclick="window.open('${m.notebooklm}','_blank')">🧠 NotebookLM</button>`:`<button class="btn" style="opacity:0.5">🧠 NotebookLM (sin link)</button>`}
+    
   </div>`;
 
   document.getElementById('detalle-content').innerHTML=html;
@@ -1409,24 +1443,191 @@ function renderPromociones(){
   </div>`).join('');
 }
 
-// ── EXAMEN ──
-function openExamen(mid){
-  let pqs=[];
-  if(mid){const m=MATERIAS.find(x=>x.id===mid);pqs=m?[...m.examenes]:[];}
-  else{MATERIAS.forEach(m=>pqs.push(...m.examenes));pqs=pqs.sort(()=>Math.random()-0.5).slice(0,5);}
-  document.getElementById('modal-body').innerHTML=pqs.map((p,i)=>`<div class="pregunta">
-    <div class="pregunta-text"><b>Pregunta ${i+1}.</b> ${p.pregunta}</div>
-    <div class="opciones">${p.opciones.map((o,j)=>`<button class="opcion" onclick="chkOp(this,${j},${p.correcta})">${String.fromCharCode(65+j)}. ${o}</button>`).join('')}</div>
-  </div>`).join('')+`<div style="margin-top:16px;text-align:right"><button class="btn btn-primary" onclick="document.getElementById('modal-examen').classList.remove('open')">Cerrar</button></div>`;
-  document.getElementById('modal-examen').classList.add('open');
+// ── SIMULACRO CON IA ──
+function openExamen(mid) {
+  // Open simulacro modal and preselect materia if given
+  var modal = document.getElementById('modal-examen');
+  document.getElementById('sim-config').style.display='block';
+  document.getElementById('sim-body').style.display='none';
+
+  // Populate materia select
+  var sel = document.getElementById('sim-materia');
+  sel.innerHTML = MATERIAS.map(function(m){
+    return '<option value="'+m.id+'" '+(mid&&m.id===mid?'selected':'')+'>'+m.icon+' '+m.nombre+'</option>';
+  }).join('');
+  simUpdateUnidades();
+  modal.classList.add('open');
 }
 
-function chkOp(btn,idx,cor){
-  const ops=btn.closest('.opciones').querySelectorAll('.opcion');
-  ops.forEach(o=>o.disabled=true);
-  if(idx===cor)btn.classList.add('correcta');
-  else{btn.classList.add('incorrecta');ops[cor].classList.add('correcta');}
+function simUpdateUnidades() {
+  var mId = parseInt(document.getElementById('sim-materia').value);
+  var m = MATERIAS.find(function(x){return x.id===mId;});
+  if(!m) return;
+
+  // Unidades checkboxes
+  var uDiv = document.getElementById('sim-unidades');
+  uDiv.innerHTML = m.temas.map(function(u,i){
+    var uid = 'simu_'+i;
+    return '<label style="cursor:pointer;display:inline-flex;align-items:center;gap:4px">'
+      +'<input type="checkbox" id="'+uid+'" value="'+i+'" onchange="simUpdateTemas()" style="accent-color:var(--accent)"/> '
+      +'<span style="font-size:11px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:3px 8px">'+u.unidad.split('—')[0].trim()+'</span>'
+      +'</label>';
+  }).join('');
+
+  simUpdateTemas();
 }
+
+function simUpdateTemas() {
+  var mId = parseInt(document.getElementById('sim-materia').value);
+  var m = MATERIAS.find(function(x){return x.id===mId;});
+  if(!m) return;
+
+  var checkedUnits = [];
+  document.querySelectorAll('#sim-unidades input:checked').forEach(function(cb){
+    checkedUnits.push(parseInt(cb.value));
+  });
+
+  var tDiv = document.getElementById('sim-temas');
+  if(checkedUnits.length === 0){ tDiv.innerHTML='<span style="font-size:12px;color:var(--text2)">Seleccioná al menos una unidad primero</span>'; return; }
+
+  var allTemas = [];
+  checkedUnits.forEach(function(ui){
+    if(m.temas[ui]) m.temas[ui].items.forEach(function(t){ allTemas.push({t:t,u:m.temas[ui]}); });
+  });
+
+  tDiv.innerHTML = allTemas.map(function(item,i){
+    var tid = 'simt_'+i;
+    return '<label style="cursor:pointer;display:inline-flex;align-items:center;gap:4px">'
+      +'<input type="checkbox" id="'+tid+'" value="'+i+'" style="accent-color:var(--accent)"/> '
+      +'<span style="font-size:11px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:3px 8px">'+item.t.nombre+'</span>'
+      +'</label>';
+  }).join('');
+  window._simAllTemas = allTemas;
+}
+
+async function startSimulacro() {
+  var key = getGeminiKey();
+  if(!key){
+    showToast('Configurá tu API key de Groq primero — abrí cualquier tema → Mi material','var(--danger)');
+    return;
+  }
+  var mId = parseInt(document.getElementById('sim-materia').value);
+  var m = MATERIAS.find(function(x){return x.id===mId;});
+  var cantidad = document.getElementById('sim-cantidad').value;
+
+  // Get selected temas
+  var selectedTemas = [];
+  document.querySelectorAll('#sim-temas input:checked').forEach(function(cb){
+    var item = window._simAllTemas && window._simAllTemas[parseInt(cb.value)];
+    if(item) selectedTemas.push(item);
+  });
+  // If none selected, use all from checked unidades
+  if(selectedTemas.length === 0 && window._simAllTemas) selectedTemas = window._simAllTemas;
+  if(selectedTemas.length === 0){ showToast('Seleccioná al menos una unidad','var(--danger)'); return; }
+
+  var temasDesc = selectedTemas.map(function(item){
+    return '"'+item.t.nombre+'": '+item.t.desc;
+  }).join('
+');
+
+  // Show loading
+  document.getElementById('sim-config').style.display='none';
+  document.getElementById('sim-body').style.display='block';
+  document.getElementById('sim-body').innerHTML = '<div style="text-align:center;padding:40px"><div style="display:inline-block;width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:12px"></div><div style="color:var(--text2);font-size:13px">Generando simulacro...</div></div>';
+
+  var prompt = 'Sos un profesor de '+m.nombre+' en Argentina. Generá un simulacro de '+cantidad+' ejercicios para completar (NO multiple choice, el alumno escribe la respuesta) sobre estos temas:
+
+'+temasDesc+'
+
+Respondé SOLO con JSON válido:
+{"ejercicios":[{"num":1,"enunciado":"enunciado completo y claro","dificultad":"fácil","respuesta_corta":"resultado final o respuesta clave","procedimiento":"solución paso a paso numerada y explicada"}]}
+
+Variá la dificultad. Estilo parcial universitario argentino.';
+
+  try {
+    var resp = await callGemini(prompt);
+    var clean = resp.replace(/```json|```/g,'').trim();
+    var data = JSON.parse(clean);
+    window._simData = data.ejercicios;
+    window._simCorrectas = 0;
+    window._simTotal = data.ejercicios.length;
+
+    var html = '<div style="font-size:11px;color:var(--text2);margin-bottom:16px">'+m.icon+' '+m.nombre+' · '+selectedTemas.length+' tema(s) · '+data.ejercicios.length+' ejercicios</div>';
+    data.ejercicios.forEach(function(ej,i){
+      var dc = ej.dificultad==='difícil'?'var(--danger)':ej.dificultad==='medio'?'var(--accent2)':'var(--accent3)';
+      html += '<div class="ejercicio-card"><div class="ejercicio-num">Ejercicio '+ej.num+' · <span style="color:'+dc+'">'+ej.dificultad+'</span></div>'
+        +'<div class="ejercicio-enunciado">'+ej.enunciado+'</div>'
+        +'<textarea class="ejercicio-input" id="sim-inp-'+i+'" placeholder="Tu respuesta..."></textarea>'
+        +'<button class="ejercicio-check-btn" onclick="checkSimEjercicio('+i+')">✓ Verificar</button>'
+        +'<div class="ejercicio-resultado" id="sim-res-'+i+'"></div>'
+        +'</div>';
+    });
+    html += '<button class="tp-gen-btn" style="width:100%;margin-top:12px" onclick="verNotaSimulacro()">📊 Ver resultado final</button>';
+    html += '<button onclick="resetSimulacro()" style="width:100%;margin-top:8px;background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:var(--radius-sm);padding:9px;cursor:pointer;font-family:Inter,sans-serif;font-size:13px">← Nuevo simulacro</button>';
+    document.getElementById('sim-body').innerHTML = html;
+
+  } catch(e) {
+    document.getElementById('sim-body').innerHTML = '<div style="color:var(--danger);padding:20px;text-align:center">'+e.message+'<br><br><button onclick="resetSimulacro()" class="tp-gen-btn">Reintentar</button></div>';
+  }
+}
+
+function checkSimEjercicio(i) {
+  var ej = window._simData && window._simData[i]; if(!ej) return;
+  var input = document.getElementById('sim-inp-'+i).value.trim();
+  var res = document.getElementById('sim-res-'+i);
+  if(!input){ showToast('Escribí tu respuesta primero','var(--accent2)'); return; }
+  res.style.display='block';
+  var norm = function(s){ return s.toLowerCase().replace(/[^a-z0-9.,]/g,' ').replace(/\s+/g,' ').trim(); };
+  var nr=norm(ej.respuesta_corta); var ni=norm(input);
+  var match = ni.includes(nr.slice(0,12)) || nr.includes(ni.slice(0,12)) || (nr.length<6&&ni.includes(nr));
+  if(match){
+    res.className='ejercicio-resultado correcto';
+    res.innerHTML='<strong>✅ Correcto</strong><br><br><strong>Procedimiento:</strong><br>'+ej.procedimiento.replace(/
+/g,'<br>');
+    window._simCorrectas = (window._simCorrectas||0)+1;
+    document.getElementById('sim-inp-'+i).style.borderColor='var(--accent3)';
+  } else {
+    res.className='ejercicio-resultado incorrecto';
+    res.innerHTML='<strong>❌ Incorrecto</strong><br><strong>Respuesta:</strong> '+ej.respuesta_corta+'<br><br><strong>Procedimiento:</strong><br>'+ej.procedimiento.replace(/
+/g,'<br>');
+    document.getElementById('sim-inp-'+i).style.borderColor='var(--danger)';
+  }
+  document.getElementById('sim-inp-'+i).disabled=true;
+  document.querySelector('[onclick="checkSimEjercicio('+i+')"]').disabled=true;
+}
+
+function verNotaSimulacro() {
+  var total = window._simTotal||1;
+  var correctas = window._simCorrectas||0;
+  var pct = Math.round(correctas/total*100);
+  var nota = Math.min(10, Math.round(pct/10));
+  var color = nota>=8?'var(--accent3)':nota>=6?'var(--accent2)':'var(--danger)';
+  var emoji = nota>=8?'🎉':nota>=6?'💪':nota>=4?'📚':'😅';
+  var analisis = nota>=8?'Excelente. Dominás estos temas.':nota>=6?'Buen nivel. Repasá los que fallaste.':nota>=4?'Aprobado, pero hay que reforzar.':'Necesitás repasar antes del parcial.';
+
+  // 85%+ threshold to mark temas as understood
+  var canMark = pct >= 85;
+  var markHtml = canMark
+    ? '<div style="margin-top:12px;padding:12px;background:rgba(106,247,194,0.08);border:1px solid rgba(106,247,194,0.2);border-radius:8px;font-size:12px;color:var(--accent3)">🎯 Superaste el 85% — podés marcar los temas como vistos desde la página de cada tema.</div>'
+    : '<div style="margin-top:12px;font-size:12px;color:var(--text2)">Necesitás 85% o más para que los temas se marquen como dominados.</div>';
+
+  var resultDiv = document.createElement('div');
+  resultDiv.style.cssText='background:linear-gradient(135deg,rgba(124,106,247,0.1),rgba(106,247,194,0.05));border:1px solid rgba(124,106,247,0.2);border-radius:var(--radius);padding:20px;margin-bottom:20px;text-align:center';
+  resultDiv.innerHTML = '<div style="font-size:48px;font-weight:800;font-family:Syne,sans-serif;color:'+color+'">'+emoji+' '+nota+'/10</div>'
+    +'<div style="color:'+color+';margin-bottom:6px">'+correctas+'/'+total+' correctas ('+pct+'%)</div>'
+    +'<div style="font-size:13px;color:var(--text2)">'+analisis+'</div>'
+    +markHtml;
+  document.getElementById('sim-body').insertBefore(resultDiv, document.getElementById('sim-body').firstChild);
+}
+
+function resetSimulacro() {
+  window._simData=null; window._simCorrectas=0; window._simTotal=0;
+  document.getElementById('sim-config').style.display='block';
+  document.getElementById('sim-body').style.display='none';
+  document.getElementById('sim-body').innerHTML='';
+}
+
+function chkOp(){} // kept for compat
 
 // ── NAVEGACIÓN ──
 const PAGES=['dashboard','materias','fechas','semana','promociones','detalle','tema','qcy'];
@@ -1641,10 +1842,17 @@ function renderCal() {
     var el=document.createElement('div');
     el.className='cal-day'+(isToday?' today':'');
     var inner='<div class="cal-day-num">'+d+'</div>';
-    dayEvs.slice(0,3).forEach(function(ev){
+    dayEvs.slice(0,2).forEach(function(ev){
       var cfg=TIPO_CONFIG[ev.tipo]||TIPO_CONFIG.otro;
       var color=ev.color||cfg.color;
-      inner+='<div class="cal-dot-label" style="background:'+color+'">'+cfg.emoji+' '+(ev.materia?ev.materia.split(' ')[0]:ev.tipo)+'</div>';
+      // Show tipo label, not materia name truncated
+      var label = cfg.emoji+' '+cfg.label;
+      if(ev.materia){
+        // Short materia: first meaningful word
+        var mWords = ev.materia.replace('Introducción a','Intro').replace('Introducción','Intro').split(' ');
+        label = cfg.emoji+' '+mWords.slice(0,2).join(' ');
+      }
+      inner+='<div class="cal-dot-label" style="background:'+color+';color:#fff;font-size:9px;padding:2px 4px;border-radius:3px;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+label+'</div>';
     });
     el.innerHTML=inner;
     grid.appendChild(el);
