@@ -922,11 +922,10 @@ async function generateEjercicios(){
     const clean=resp.replace(/```json|```/g,'').trim();
     const data=JSON.parse(clean);
     let html='';
+    window._ejercicioData=data.ejercicios;
     data.ejercicios.forEach(function(ej,i){
       const dc=ej.dificultad==='difícil'?'var(--danger)':ej.dificultad==='medio'?'var(--accent2)':'var(--accent3)';
-      const proc=ej.procedimiento.replace(/\/g,'\\').replace(/`/g,'\`').replace(/'/g,"\'");
-      const resp2=ej.respuesta_corta.replace(/\/g,'\\').replace(/`/g,'\`').replace(/'/g,"\'");
-      html+='<div class="ejercicio-card"><div class="ejercicio-num">EJERCICIO '+ej.num+' · <span style="color:'+dc+'">'+ej.dificultad.toUpperCase()+'</span></div><div class="ejercicio-enunciado">'+ej.enunciado+'</div><textarea class="ejercicio-input" id="ej-input-'+i+'" placeholder="Escribí tu respuesta acá..."></textarea><button class="ejercicio-check-btn" onclick="checkEjercicio('+i+',`'+resp2+'`,`'+proc+'`)">✓ Verificar respuesta</button><div class="ejercicio-resultado" id="ej-res-'+i+'"></div></div>';
+      html+='<div class="ejercicio-card"><div class="ejercicio-num">EJERCICIO '+ej.num+' · <span style="color:'+dc+'">'+ej.dificultad.toUpperCase()+'</span></div><div class="ejercicio-enunciado">'+ej.enunciado+'</div><textarea class="ejercicio-input" id="ej-input-'+i+'" placeholder="Escribí tu respuesta acá..."></textarea><button class="ejercicio-check-btn" onclick="checkEjercicio('+i+')">✓ Verificar respuesta</button><div class="ejercicio-resultado" id="ej-res-'+i+'"></div></div>';
     });
     html+='<button class="tp-gen-btn" style="width:100%;margin-top:8px" onclick="generateEjercicios()">🔄 Nuevos ejercicios</button>';
     area.innerHTML=html;
@@ -935,20 +934,22 @@ async function generateEjercicios(){
   }
 }
 
-function checkEjercicio(i,respCorta,procedimiento){
+function checkEjercicio(i){
+  const ej=window._ejercicioData&&window._ejercicioData[i];
+  if(!ej)return;
   const input=document.getElementById('ej-input-'+i).value.trim();
   const res=document.getElementById('ej-res-'+i);
   if(!input){showToast('Escribí tu respuesta primero','var(--accent2)');return;}
   res.style.display='block';
-  const norm=function(s){return s.toLowerCase().replace(/[^a-z0-9.,\-]/g,' ').replace(/\s+/g,' ').trim();};
-  const nr=norm(respCorta); const ni=norm(input);
+  const norm=function(s){return s.toLowerCase().replace(/[^a-z0-9.,]/g,' ').replace(/\s+/g,' ').trim();};
+  const nr=norm(ej.respuesta_corta); const ni=norm(input);
   const match=ni.includes(nr.slice(0,12))||nr.includes(ni.slice(0,12))||(nr.length<6&&ni.includes(nr));
   if(match){
     res.className='ejercicio-resultado correcto';
-    res.innerHTML='<strong>✅ ¡Correcto!</strong><br><br><strong>Procedimiento completo:</strong><br>'+procedimiento.replace(/\n/g,'<br>');
+    res.innerHTML='<strong>✅ ¡Correcto!</strong><br><br><strong>Procedimiento completo:</strong><br>'+ej.procedimiento.replace(/\n/g,'<br>');
   } else {
     res.className='ejercicio-resultado incorrecto';
-    res.innerHTML='<strong>❌ No es correcto.</strong><br><br><strong>Respuesta:</strong> '+respCorta+'<br><br><strong>Procedimiento paso a paso:</strong><br>'+procedimiento.replace(/\n/g,'<br>');
+    res.innerHTML='<strong>❌ No es correcto.</strong><br><br><strong>Respuesta:</strong> '+ej.respuesta_corta+'<br><br><strong>Procedimiento paso a paso:</strong><br>'+ej.procedimiento.replace(/\n/g,'<br>');
   }
 }
 
@@ -966,10 +967,9 @@ async function generateExamen(){
     const clean=resp.replace(/```json|```/g,'').trim();
     const data=JSON.parse(clean);
     let html='<div class="examen-header"><div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent2);margin-bottom:4px">📝 '+data.titulo+'</div><div style="font-size:12px;color:var(--text2)">'+panelMateria.nombre+' · '+temasU+'</div></div>';
+    window._examenData=data.ejercicios;
     data.ejercicios.forEach(function(ej,i){
-      const proc=ej.procedimiento.replace(/\/g,'\\').replace(/`/g,'\`').replace(/'/g,"\'");
-      const resp2=ej.respuesta_corta.replace(/\/g,'\\').replace(/`/g,'\`').replace(/'/g,"\'");
-      html+='<div class="ejercicio-card"><div class="ejercicio-num">EJERCICIO '+ej.num+' · <span style="color:var(--accent)">'+ej.puntaje+' pts</span></div><div class="ejercicio-enunciado">'+ej.enunciado+'</div><textarea class="ejercicio-input" id="ex-input-'+i+'" placeholder="Tu respuesta..."></textarea><button class="ejercicio-check-btn" onclick="checkExamen('+i+',`'+resp2+'`,`'+proc+'`,'+ej.puntaje+')">✓ Entregar respuesta</button><div class="ejercicio-resultado" id="ex-res-'+i+'"></div></div>';
+      html+='<div class="ejercicio-card"><div class="ejercicio-num">EJERCICIO '+ej.num+' · <span style="color:var(--accent)">'+ej.puntaje+' pts</span></div><div class="ejercicio-enunciado">'+ej.enunciado+'</div><textarea class="ejercicio-input" id="ex-input-'+i+'" placeholder="Tu respuesta..."></textarea><button class="ejercicio-check-btn" onclick="checkExamen('+i+')">✓ Entregar respuesta</button><div class="ejercicio-resultado" id="ex-res-'+i+'"></div></div>';
     });
     const pts=data.ejercicios.map(function(e){return e.puntaje;}).join(',');
     html+='<button class="tp-gen-btn" style="width:100%;margin-top:12px" onclick="calcNotaFinal('+pts+')">📊 Ver nota final</button>';
@@ -979,21 +979,23 @@ async function generateExamen(){
   }
 }
 
-function checkExamen(i,respCorta,procedimiento,puntaje){
+function checkExamen(i){
+  const ej=window._examenData&&window._examenData[i];
+  if(!ej)return;
   const input=document.getElementById('ex-input-'+i).value.trim();
   const res=document.getElementById('ex-res-'+i);
   if(!input){showToast('Escribí tu respuesta primero','var(--accent2)');return;}
   res.style.display='block';
-  const norm=function(s){return s.toLowerCase().replace(/[^a-z0-9.,\-]/g,' ').replace(/\s+/g,' ').trim();};
-  const nr=norm(respCorta); const ni=norm(input);
+  const norm=function(s){return s.toLowerCase().replace(/[^a-z0-9.,]/g,' ').replace(/\s+/g,' ').trim();};
+  const nr=norm(ej.respuesta_corta); const ni=norm(input);
   const match=ni.includes(nr.slice(0,12))||nr.includes(ni.slice(0,12))||(nr.length<6&&ni.includes(nr));
-  examenPuntajes[i]=match?puntaje:0;
+  examenPuntajes[i]=match?ej.puntaje:0;
   if(match){
     res.className='ejercicio-resultado correcto';
-    res.innerHTML='<strong>✅ Correcto (+'+puntaje+' pts)</strong><br><br><strong>Procedimiento:</strong><br>'+procedimiento.replace(/\n/g,'<br>');
+    res.innerHTML='<strong>✅ Correcto (+'+ej.puntaje+' pts)</strong><br><br><strong>Procedimiento:</strong><br>'+ej.procedimiento.replace(/\n/g,'<br>');
   } else {
     res.className='ejercicio-resultado incorrecto';
-    res.innerHTML='<strong>❌ Incorrecto (0 pts)</strong><br><br><strong>Respuesta:</strong> '+respCorta+'<br><br><strong>Procedimiento:</strong><br>'+procedimiento.replace(/\n/g,'<br>');
+    res.innerHTML='<strong>❌ Incorrecto (0 pts)</strong><br><br><strong>Respuesta:</strong> '+ej.respuesta_corta+'<br><br><strong>Procedimiento:</strong><br>'+ej.procedimiento.replace(/\n/g,'<br>');
   }
 }
 
@@ -1028,7 +1030,10 @@ function openTemaPanel(tId,mId){
   document.getElementById('tp-meta').innerHTML='<span>'+dc+'</span><span style="margin:0 4px">·</span><span>'+tema.parcial+'</span><span style="margin:0 4px">·</span><span style="color:'+m.color+'">'+m.nombre+'</span><span style="color:var(--accent2);font-size:11px">'+dlStr+'</span>';
   
   const sr=document.getElementById('tp-status-row');
-  sr.innerHTML='<button class="panel-status-btn '+(tema.estado==="studying"?"s-studying":"")+'" onclick="setPanelStatus('studying')">◑ Estudiando</button><button class="panel-status-btn '+(tema.estado==="done"?"s-done":"")+'" onclick="setPanelStatus('done')">✓ Visto</button>';
+  var stCls1=tema.estado==="studying"?"s-studying":"";
+  var stCls2=tema.estado==="done"?"s-done":"";
+  sr.innerHTML='<button class="panel-status-btn '+stCls1+'" onclick="setPanelStatus(\'studying\')">◑ Estudiando</button>'
+    +'<button class="panel-status-btn '+stCls2+'" onclick="setPanelStatus(\'done\')">✓ Visto</button>';
   
   switchTab('explicacion');
   
