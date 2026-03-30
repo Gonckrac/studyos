@@ -304,7 +304,45 @@
   /* Racha */
   .streak-badge { display:inline-flex; align-items:center; gap:5px; background:rgba(247,194,106,0.1); border:1px solid rgba(247,194,106,0.25); border-radius:20px; padding:4px 10px; font-size:11px; font-weight:600; color:var(--accent2); margin-left:8px; }
 
-  @media (max-width: 768px) { #sidebar { display: none; } #main { padding: 16px; } .stats-row { grid-template-columns: repeat(2, 1fr); } .materias-grid { grid-template-columns: 1fr; } .today-card { flex-direction: column; } .tema-panel { width:100vw; } }
+  /* Calendario */
+  .cal-day { min-height:52px; border-radius:6px; padding:4px; cursor:pointer; position:relative; background:var(--surface2); transition:all 0.1s; display:flex; flex-direction:column; gap:2px; }
+  .cal-day:hover { border:1px solid var(--border); }
+  .cal-day.today { background:rgba(124,106,247,0.15); border:1px solid rgba(124,106,247,0.4); }
+  .cal-day.empty { background:transparent; cursor:default; }
+  .cal-day-num { font-size:11px; font-weight:700; color:var(--text2); }
+  .cal-day.today .cal-day-num { color:var(--accent); }
+  .cal-dot { height:5px; border-radius:3px; width:100%; }
+  .cal-dot-label { font-size:9px; font-weight:600; color:#fff; padding:1px 3px; border-radius:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .evento-chip { display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 14px; margin-bottom:8px; cursor:pointer; transition:all 0.15s; }
+  .evento-chip:hover { border-color:var(--accent); }
+  .evento-chip-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .evento-chip-info { flex:1; }
+  .evento-chip-title { font-size:13px; font-weight:600; color:var(--text); }
+  .evento-chip-meta { font-size:11px; color:var(--text2); margin-top:2px; }
+  .evento-chip-dias { font-family:'Space Mono',monospace; font-size:11px; flex-shrink:0; }
+  .ev-delete { background:none; border:none; color:var(--text2); cursor:pointer; padding:4px 8px; font-size:14px; opacity:0.5; }
+  .ev-delete:hover { opacity:1; color:var(--danger); }
+
+  /* QCY */
+  .qcy-mini-day { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 8px; text-align:center; }
+  .qcy-mini-day.today { background:rgba(124,106,247,0.12); border-color:rgba(124,106,247,0.4); }
+  .qcy-mini-day.has-event { border-color:var(--accent2); }
+  .qcy-mini-nombre { font-size:10px; font-weight:700; color:var(--text2); text-transform:uppercase; letter-spacing:1px; }
+  .qcy-mini-num { font-size:20px; font-weight:800; font-family:'Syne',sans-serif; color:var(--text); }
+  .qcy-mini-day.today .qcy-mini-num { color:var(--accent); }
+  .qcy-dia-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px 20px; margin-bottom:12px; display:flex; gap:16px; }
+  .qcy-dia-card.today { border-color:rgba(124,106,247,0.4); background:rgba(124,106,247,0.04); }
+  .qcy-dia-label { width:56px; flex-shrink:0; }
+  .qcy-dia-nombre { font-family:'Space Mono',monospace; font-size:10px; font-weight:700; color:var(--text2); text-transform:uppercase; }
+  .qcy-dia-num { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; color:var(--text); line-height:1; }
+  .qcy-dia-card.today .qcy-dia-nombre { color:var(--accent); }
+  .qcy-dia-card.today .qcy-dia-num { color:var(--accent); }
+  .qcy-chips { flex:1; display:flex; flex-wrap:wrap; gap:6px; align-items:flex-start; }
+  .qcy-chip { display:inline-flex; align-items:center; gap:5px; padding:5px 11px; border-radius:20px; font-size:12px; font-weight:500; border:1px solid; white-space:nowrap; }
+  .qcy-chip-event { font-size:11px; padding:4px 10px; border-radius:4px; font-weight:700; }
+  .qcy-empty { color:var(--text2); font-size:13px; padding:4px 0; font-style:italic; }
+
+    @media (max-width: 768px) { #sidebar { display: none; } #main { padding: 16px; } .stats-row { grid-template-columns: repeat(2, 1fr); } .materias-grid { grid-template-columns: 1fr; } .today-card { flex-direction: column; } .tema-panel { width:100vw; } }
 </style>
 </head>
 <body>
@@ -321,6 +359,7 @@
     <div class="nav-item" onclick="showPage('materias')"><span class="nav-icon">📚</span> Materias</div>
     <div class="nav-item" onclick="showPage('fechas')"><span class="nav-icon">📅</span> Fechas clave</div>
     <div class="nav-item" onclick="showPage('semana')"><span class="nav-icon">🗓</span> Esta semana</div>
+    <div class="nav-item" onclick="showPage('qcy')"><span class="nav-icon">📆</span> QCY — Plan semanal</div>
   </div>
   <div class="nav-section" style="margin-top:8px">
     <div class="nav-label">Herramientas</div>
@@ -386,19 +425,97 @@
   </div>
 
   <div id="page-fechas" style="display:none">
-    <div class="page-header"><div><div class="page-title">Fechas <span>Clave</span></div><div class="page-date">Parciales · Recuperatorios · Finales</div></div></div>
-    <div class="section-title">Confirmadas</div>
-    <div id="fechas-confirmadas"></div>
-    <div class="section-title">Por confirmar</div>
-    <div style="background:var(--surface);border:1px dashed var(--border);border-radius:var(--radius);padding:20px;color:var(--text2);font-size:13px;line-height:1.8;">
-      📌 Las fechas de parciales de <strong style="color:var(--text)">Cálculo Elemental</strong>, <strong style="color:var(--text)">Informática General</strong> e <strong style="color:var(--text)">Intro a la Ingeniería</strong> aún no están disponibles.<br>
-      Cuando las tengas, pasámelas y las cargo con la cuenta regresiva.
+    <div class="page-header" style="justify-content:space-between;align-items:center">
+      <div><div class="page-title">Fechas <span>Clave</span></div><div class="page-date">Calendarios · Parciales · Finales</div></div>
+      <button onclick="openAddEvent()" style="background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">+ Agregar fecha</button>
+    </div>
+    <!-- Calendario -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <button onclick="calPrev()" style="background:none;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text2);padding:6px 12px;cursor:pointer;font-size:16px">‹</button>
+        <div id="cal-month-title" style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--text)"></div>
+        <button onclick="calNext()" style="background:none;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text2);padding:6px 12px;cursor:pointer;font-size:16px">›</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:8px">
+        <div style="text-align:center;font-size:10px;font-weight:700;color:var(--text2);padding:4px">LUN</div>
+        <div style="text-align:center;font-size:10px;font-weight:700;color:var(--text2);padding:4px">MAR</div>
+        <div style="text-align:center;font-size:10px;font-weight:700;color:var(--text2);padding:4px">MIÉ</div>
+        <div style="text-align:center;font-size:10px;font-weight:700;color:var(--text2);padding:4px">JUE</div>
+        <div style="text-align:center;font-size:10px;font-weight:700;color:var(--text2);padding:4px">VIE</div>
+        <div style="text-align:center;font-size:10px;font-weight:700;color:var(--text2);padding:4px">SÁB</div>
+        <div style="text-align:center;font-size:10px;font-weight:700;color:var(--text2);padding:4px">DOM</div>
+      </div>
+      <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px"></div>
+      <!-- Leyenda -->
+      <div id="cal-legend" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)"></div>
+    </div>
+    <!-- Eventos en orden cronológico -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div class="section-title" style="margin-bottom:0">Próximos eventos</div>
+    </div>
+    <div id="eventos-lista"></div>
+  </div>
+
+  <!-- MODAL agregar evento -->
+  <div id="modal-add-event" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px;width:90%;max-width:480px;animation:fadeSlideIn 0.2s ease">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800">+ Nueva fecha</div>
+        <button onclick="closeAddEvent()" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer">✕</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Tipo</div>
+          <select id="ev-tipo" onchange="onTipoChange()" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none">
+            <option value="tarea">📋 Tarea / TP</option>
+            <option value="parcial">📝 Parcial</option>
+            <option value="final">🎓 Final</option>
+            <option value="recuperatorio">🔄 Recuperatorio</option>
+            <option value="otro">📌 Otro</option>
+          </select>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Materia</div>
+          <select id="ev-materia" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none">
+          </select>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Descripción (opcional)</div>
+          <input id="ev-desc" type="text" placeholder="ej: Unidades 1-3, TP grupal..." style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none"/>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Fecha</div>
+          <input id="ev-fecha" type="date" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none"/>
+        </div>
+        <!-- Unidades (solo para parcial/final) -->
+        <div id="ev-unidades-wrap" style="display:none">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:1px">¿Qué unidades entran? (tocá para seleccionar)</div>
+          <div id="ev-unidades-chips" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+        </div>
+        <button onclick="saveEvent()" style="background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;margin-top:4px">Guardar fecha</button>
+      </div>
     </div>
   </div>
 
   <div id="page-semana" style="display:none">
-    <div class="page-header"><div><div class="page-title">Esta <span>Semana</span></div><div class="page-date">Plan de estudio sugerido · sem del 30/3</div></div></div>
+    <div class="page-header"><div><div class="page-title">Esta <span>Semana</span></div><div class="page-date">Plan de estudio sugerido</div></div></div>
     <div class="week-plan" id="week-plan"></div>
+  </div>
+
+  <!-- QCY PAGE -->
+  <div id="page-qcy" style="display:none">
+    <div class="page-header" style="justify-content:space-between;align-items:center">
+      <div><div class="page-title">📆 <span>QCY</span> — Plan semanal</div><div class="page-date">Qué Cursás Y estudiás cada día</div></div>
+      <div style="display:flex;gap:8px">
+        <button onclick="qcyPrev()" style="background:none;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text2);padding:6px 14px;cursor:pointer;font-size:16px">‹</button>
+        <div id="qcy-week-label" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 16px;font-size:13px;color:var(--text);display:flex;align-items:center"></div>
+        <button onclick="qcyNext()" style="background:none;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text2);padding:6px 14px;cursor:pointer;font-size:16px">›</button>
+      </div>
+    </div>
+    <!-- Mini calendario de la semana -->
+    <div id="qcy-mini-cal" style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:24px"></div>
+    <!-- Plan día a día -->
+    <div id="qcy-dias"></div>
   </div>
 
   <div id="page-promociones" style="display:none">
@@ -1263,14 +1380,7 @@ function showDetalle(id) {
 }
 
 // ── FECHAS ──
-function renderFechas(){
-  const c=document.getElementById('fechas-confirmadas');if(!c)return;
-  c.innerHTML=FECHAS_DATA.map(f=>{
-    const d=calcDias(f.fecha);
-    const ds=f.fecha.toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'long',year:'numeric'});
-    return `<div class="fecha-item"><div class="fecha-dot" style="background:${f.color}"></div><div class="fecha-materia">${f.materia}</div><div class="fecha-tipo" style="color:${f.color}">${f.tipo}</div><div class="fecha-dia">${ds}</div><span class="${diasCls(d)}">${d} días</span></div>`;
-  }).join('');
-}
+function renderFechas(){ renderCal(); }
 
 // ── SEMANA ──
 function renderSemana(){
@@ -1319,12 +1429,13 @@ function chkOp(btn,idx,cor){
 }
 
 // ── NAVEGACIÓN ──
-const PAGES=['dashboard','materias','fechas','semana','promociones','detalle','tema'];
+const PAGES=['dashboard','materias','fechas','semana','promociones','detalle','tema','qcy'];
 function showPage(p){
   PAGES.forEach(x=>{const el=document.getElementById(`page-${x}`);if(el)el.style.display=x===p?'':'none';});
   document.querySelectorAll('.nav-item').forEach(el=>el.classList.toggle('active',el.getAttribute('onclick')?.includes(`'${p}'`)));
-  if(p==='fechas')renderFechas();
+  if(p==='fechas'){calYear=new Date().getFullYear();calMonth=new Date().getMonth();renderCal();}
   if(p==='semana')renderSemana();
+  if(p==='qcy')renderQCY();
   if(p==='materias')renderMaterias('materias-grid-2');
   if(p==='promociones')renderPromociones();
 }
@@ -1377,6 +1488,356 @@ function fmtDeadline(d) {
   const label = diff < 0 ? 'vencido' : diff === 0 ? 'hoy' : `${diff}d`;
   const cls = diff < 0 ? 'color:var(--danger)' : diff <= 7 ? 'color:var(--accent2)' : 'color:var(--text2)';
   return `<span style="font-family:'Space Mono',monospace;font-size:10px;${cls};margin-left:6px;flex-shrink:0">📅 ${d.getDate()} ${meses[d.getMonth()]} (${label})</span>`;
+}
+
+
+// ══════════════════════════════════════
+// ── EVENTOS / CALENDARIO ──
+// ══════════════════════════════════════
+const TIPO_CONFIG = {
+  parcial:      { label:'Parcial',      emoji:'📝', color:'#f76a6a' },
+  final:        { label:'Final',        emoji:'🎓', color:'#7c6af7' },
+  recuperatorio:{ label:'Recuperatorio',emoji:'🔄', color:'#f7c26a' },
+  tarea:        { label:'Tarea/TP',     emoji:'📋', color:'#6af7c2' },
+  otro:         { label:'Otro',         emoji:'📌', color:'#8888a8' },
+};
+
+function getEventos() {
+  try {
+    const base = FECHAS_DATA.map(function(f,i){
+      return { id:'base_'+i, tipo:f.tipoKey||'parcial', materia:f.materia, desc:f.tipo,
+               fecha:f.fecha.toISOString().slice(0,10), color:f.color, unidades:[] };
+    });
+    const custom = JSON.parse(localStorage.getItem('studyos_eventos')||'[]');
+    return base.concat(custom).sort(function(a,b){return a.fecha>b.fecha?1:-1;});
+  } catch(e){ return []; }
+}
+
+function saveEventos(evs) {
+  const custom = evs.filter(function(e){return !e.id.startsWith('base_');});
+  localStorage.setItem('studyos_eventos', JSON.stringify(custom));
+}
+
+// ── CALENDARIO STATE ──
+var calYear = new Date().getFullYear();
+var calMonth = new Date().getMonth();
+
+function calPrev(){ calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCal(); }
+function calNext(){ calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCal(); }
+
+function renderCal() {
+  const meses=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  document.getElementById('cal-month-title').textContent = meses[calMonth] + ' ' + calYear;
+
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const firstDay = new Date(calYear, calMonth, 1);
+  // Lunes=0 offset
+  var startOffset = firstDay.getDay() - 1;
+  if(startOffset < 0) startOffset = 6;
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+
+  const eventos = getEventos();
+  // Build event map by date string
+  var evMap = {};
+  eventos.forEach(function(ev){
+    if(!evMap[ev.fecha]) evMap[ev.fecha] = [];
+    evMap[ev.fecha].push(ev);
+  });
+
+  var grid = document.getElementById('cal-grid');
+  grid.innerHTML = '';
+
+  // Empty cells
+  for(var i=0;i<startOffset;i++){
+    var el=document.createElement('div');
+    el.className='cal-day empty'; grid.appendChild(el);
+  }
+
+  for(var d=1;d<=daysInMonth;d++){
+    var dateStr = calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    var dObj = new Date(calYear,calMonth,d);
+    var isToday = dObj.getTime()===hoy.getTime();
+    var dayEvs = evMap[dateStr]||[];
+
+    var el=document.createElement('div');
+    el.className='cal-day'+(isToday?' today':'');
+    var inner='<div class="cal-day-num">'+d+'</div>';
+    dayEvs.slice(0,3).forEach(function(ev){
+      var cfg=TIPO_CONFIG[ev.tipo]||TIPO_CONFIG.otro;
+      var color=ev.color||cfg.color;
+      inner+='<div class="cal-dot-label" style="background:'+color+'">'+cfg.emoji+' '+(ev.materia?ev.materia.split(' ')[0]:ev.tipo)+'</div>';
+    });
+    el.innerHTML=inner;
+    grid.appendChild(el);
+  }
+
+  // Legend
+  var legend = document.getElementById('cal-legend');
+  var seen = {};
+  eventos.forEach(function(ev){
+    var cfg=TIPO_CONFIG[ev.tipo]||TIPO_CONFIG.otro;
+    var color=ev.color||cfg.color;
+    var key=ev.tipo+'_'+color;
+    if(!seen[key]){
+      seen[key]=true;
+      legend.innerHTML+='<span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)"><span style="width:10px;height:10px;border-radius:50%;background:'+color+';display:inline-block"></span>'+cfg.emoji+' '+cfg.label+'</span>';
+    }
+  });
+  // Reset legend before re-render
+  legend.innerHTML='';
+  Object.keys(seen).forEach(function(){});
+  // redo
+  seen={};
+  eventos.forEach(function(ev){
+    var cfg=TIPO_CONFIG[ev.tipo]||TIPO_CONFIG.otro;
+    var color=ev.color||cfg.color;
+    var key=cfg.label;
+    if(!seen[key]){
+      seen[key]=color;
+    }
+  });
+  legend.innerHTML='';
+  Object.keys(seen).forEach(function(k){
+    legend.innerHTML+='<span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)"><span style="width:10px;height:10px;border-radius:50%;background:'+seen[k]+';display:inline-block"></span>'+k+'</span>';
+  });
+
+  renderEventosList();
+}
+
+function renderEventosList() {
+  var c = document.getElementById('eventos-lista'); if(!c) return;
+  var hoy = new Date(); hoy.setHours(0,0,0,0);
+  var eventos = getEventos().filter(function(ev){ return new Date(ev.fecha+'T00:00:00') >= hoy; });
+  if(!eventos.length){ c.innerHTML='<div style="color:var(--text2);font-size:13px;padding:16px 0">No hay eventos próximos.</div>'; return; }
+  c.innerHTML = eventos.map(function(ev){
+    var cfg = TIPO_CONFIG[ev.tipo]||TIPO_CONFIG.otro;
+    var color = ev.color||cfg.color;
+    var d = new Date(ev.fecha+'T00:00:00');
+    var dias = Math.round((d-hoy)/86400000);
+    var diasCls = dias>30?'color:var(--accent3)':dias>7?'color:var(--accent2)':'color:var(--danger)';
+    var dsStr = d.toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'long'});
+    var unStr = ev.unidades&&ev.unidades.length?' · '+ev.unidades.join(', '):'';
+    var canDel = !ev.id.startsWith('base_');
+    return '<div class="evento-chip">'
+      +'<div class="evento-chip-dot" style="background:'+color+'"></div>'
+      +'<div class="evento-chip-info">'
+        +'<div class="evento-chip-title">'+cfg.emoji+' '+cfg.label+' — '+(ev.materia||'')+(ev.desc?' · '+ev.desc:'')+'</div>'
+        +'<div class="evento-chip-meta">'+dsStr+unStr+'</div>'
+      +'</div>'
+      +'<div class="evento-chip-dias" style="'+diasCls+'">'+(dias===0?'HOY':dias===1?'MAÑANA':dias+' días')+'</div>'
+      +(canDel?'<button class="ev-delete" onclick="deleteEvento(''+ev.id+'')">✕</button>':'')
+    +'</div>';
+  }).join('');
+}
+
+function deleteEvento(id) {
+  var evs = getEventos().filter(function(e){return e.id!==id;});
+  saveEventos(evs);
+  renderCal();
+  recalcQCY();
+  showToast('🗑 Evento eliminado');
+}
+
+// ── MODAL AGREGAR EVENTO ──
+function openAddEvent() {
+  // Populate materia select
+  var sel = document.getElementById('ev-materia');
+  sel.innerHTML = MATERIAS.map(function(m){
+    return '<option value="'+m.nombre+'">'+m.icon+' '+m.nombre+'</option>';
+  }).join('');
+  document.getElementById('modal-add-event').style.display='flex';
+  // Set today as default date
+  document.getElementById('ev-fecha').value = new Date().toISOString().slice(0,10);
+  onTipoChange();
+}
+function closeAddEvent() { document.getElementById('modal-add-event').style.display='none'; }
+
+function onTipoChange() {
+  var tipo = document.getElementById('ev-tipo').value;
+  var wrap = document.getElementById('ev-unidades-wrap');
+  if(tipo==='parcial'||tipo==='final'||tipo==='recuperatorio'){
+    wrap.style.display='block';
+    // Build unidades chips from selected materia
+    buildUnidadesChips();
+    document.getElementById('ev-materia').onchange = buildUnidadesChips;
+  } else {
+    wrap.style.display='none';
+    document.getElementById('ev-materia').onchange = null;
+  }
+}
+
+function buildUnidadesChips() {
+  var matNombre = document.getElementById('ev-materia').value;
+  var m = MATERIAS.find(function(x){return x.nombre===matNombre;});
+  var wrap = document.getElementById('ev-unidades-chips');
+  if(!m){ wrap.innerHTML=''; return; }
+  wrap.innerHTML = m.temas.map(function(u){
+    var id='uchip_'+u.unidad.slice(0,20).replace(/[^a-zA-Z0-9]/g,'');
+    return '<label style="cursor:pointer"><input type="checkbox" id="'+id+'" value="'+u.unidad+'" style="margin-right:5px"/>'
+      +'<span style="font-size:12px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:4px 8px;display:inline-block">'+u.unidad.split('—')[0].trim()+'</span></label>';
+  }).join('');
+}
+
+function saveEvent() {
+  var tipo = document.getElementById('ev-tipo').value;
+  var materia = document.getElementById('ev-materia').value;
+  var desc = document.getElementById('ev-desc').value.trim();
+  var fecha = document.getElementById('ev-fecha').value;
+  if(!fecha){ showToast('Seleccioná una fecha','var(--danger)'); return; }
+  
+  var unidades = [];
+  document.querySelectorAll('#ev-unidades-chips input:checked').forEach(function(cb){ unidades.push(cb.value); });
+  
+  var cfg = TIPO_CONFIG[tipo]||TIPO_CONFIG.otro;
+  var m = MATERIAS.find(function(x){return x.nombre===materia;});
+  var color = m?m.color:cfg.color;
+  
+  var ev = {
+    id: 'ev_'+Date.now(),
+    tipo: tipo, materia: materia, desc: desc,
+    fecha: fecha, color: color, unidades: unidades
+  };
+  
+  var evs = getEventos();
+  evs.push(ev);
+  saveEventos(evs);
+  closeAddEvent();
+  renderCal();
+  recalcQCY();
+  showToast('✅ Fecha guardada');
+  
+  // If parcial/final with unidades, recalc deadlines
+  if(unidades.length>0) calcDeadlines();
+}
+
+// ══════════════════════════════════════
+// ── QCY — PLAN SEMANAL ──
+// ══════════════════════════════════════
+var qcyWeekOffset = 0; // 0 = semana actual
+
+function qcyPrev(){ qcyWeekOffset--; renderQCY(); }
+function qcyNext(){ qcyWeekOffset++; renderQCY(); }
+
+function getQCYWeekStart() {
+  var hoy = new Date(); hoy.setHours(0,0,0,0);
+  var dow = hoy.getDay();
+  var lunes = new Date(hoy);
+  lunes.setDate(hoy.getDate() - (dow===0?6:dow-1) + qcyWeekOffset*7);
+  return lunes;
+}
+
+function recalcQCY() { if(document.getElementById('page-qcy').style.display!=='none') renderQCY(); }
+
+function renderQCY() {
+  var lunes = getQCYWeekStart();
+  var hoy = new Date(); hoy.setHours(0,0,0,0);
+  var meses=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  var diasNom=['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'];
+
+  // Week label
+  var dom = new Date(lunes); dom.setDate(lunes.getDate()+6);
+  document.getElementById('qcy-week-label').textContent =
+    lunes.getDate()+' '+meses[lunes.getMonth()]+' — '+dom.getDate()+' '+meses[dom.getMonth()]+' '+dom.getFullYear();
+
+  var eventos = getEventos();
+
+  // Mini calendario
+  var miniCal = document.getElementById('qcy-mini-cal');
+  miniCal.innerHTML = '';
+  for(var i=0;i<7;i++){
+    var d = new Date(lunes); d.setDate(lunes.getDate()+i);
+    var dateStr = d.toISOString().slice(0,10);
+    var isHoy = d.getTime()===hoy.getTime();
+    var dayEvs = eventos.filter(function(ev){return ev.fecha===dateStr;});
+    var el = document.createElement('div');
+    el.className = 'qcy-mini-day'+(isHoy?' today':'')+(dayEvs.length?' has-event':'');
+    el.innerHTML = '<div class="qcy-mini-nombre">'+diasNom[i]+'</div><div class="qcy-mini-num">'+d.getDate()+'</div>';
+    if(dayEvs.length){
+      dayEvs.slice(0,2).forEach(function(ev){
+        var cfg=TIPO_CONFIG[ev.tipo]||TIPO_CONFIG.otro;
+        el.innerHTML+='<div style="font-size:9px;margin-top:2px;padding:1px 4px;border-radius:3px;background:'+(ev.color||cfg.color)+';color:#fff;font-weight:700">'+cfg.emoji+'</div>';
+      });
+    }
+    miniCal.appendChild(el);
+  }
+
+  // Día a día con plan de estudio
+  var diasContainer = document.getElementById('qcy-dias');
+  diasContainer.innerHTML = '';
+
+  // Build study plan per day
+  // Strategy: distribute temas across the week weighted by what's due soon
+  var allTemas = [];
+  MATERIAS.forEach(function(m){
+    m.temas.forEach(function(u){
+      u.items.forEach(function(t){
+        if(t.estado!=='done'){
+          allTemas.push({tema:t, materia:m, unidad:u});
+        }
+      });
+    });
+  });
+
+  // Sort by deadline
+  allTemas.sort(function(a,b){
+    var da = a.tema.deadline||new Date(2026,11,31);
+    var db = b.tema.deadline||new Date(2026,11,31);
+    return da-db;
+  });
+
+  // Assign 2-3 temas per day, cycling through
+  var temaIdx = 0;
+
+  for(var i=0;i<7;i++){
+    var d = new Date(lunes); d.setDate(lunes.getDate()+i);
+    var dateStr = d.toISOString().slice(0,10);
+    var isHoy = d.getTime()===hoy.getTime();
+    var isPast = d < hoy;
+    var dayEvs = eventos.filter(function(ev){return ev.fecha===dateStr;});
+
+    var card = document.createElement('div');
+    card.className = 'qcy-dia-card'+(isHoy?' today':'');
+
+    // Label
+    var labelHtml = '<div class="qcy-dia-label"><div class="qcy-dia-nombre">'+diasNom[i]+'</div><div class="qcy-dia-num">'+d.getDate()+'</div></div>';
+
+    // Chips
+    var chips = '<div class="qcy-chips">';
+
+    // Events for this day
+    dayEvs.forEach(function(ev){
+      var cfg=TIPO_CONFIG[ev.tipo]||TIPO_CONFIG.otro;
+      var color=ev.color||cfg.color;
+      chips+='<span class="qcy-chip qcy-chip-event" style="background:'+color+';color:#fff;border-color:'+color+'">'+cfg.emoji+' '+cfg.label+' '+( ev.materia?ev.materia.split(' ')[0]:'')+'</span>';
+    });
+
+    // Study chips - weekend lighter load
+    var isWeekend = (i===5||i===6);
+    var studySlots = isWeekend?1:2;
+
+    if(!isPast){
+      var added=0;
+      var startIdx = (qcyWeekOffset*7+i)*studySlots % Math.max(allTemas.length,1);
+      for(var j=0;j<allTemas.length&&added<studySlots;j++){
+        var idx=(startIdx+j)%allTemas.length;
+        var item=allTemas[idx];
+        var m=item.materia;
+        chips+='<span class="qcy-chip" style="color:'+m.color+';border-color:'+m.color+'40;background:'+m.color+'12">'+m.icon+' '+m.nombre.split(' ')[0]+' · '+item.unidad.unidad.split('—')[0].trim()+'</span>';
+        added++;
+      }
+    }
+
+    if(!dayEvs.length && isPast){
+      chips+='<span class="qcy-empty">—</span>';
+    }
+    if(!dayEvs.length && !isPast && allTemas.length===0){
+      chips+='<span class="qcy-empty">🎉 Todo visto</span>';
+    }
+
+    chips+='</div>';
+    card.innerHTML = labelHtml+chips;
+    diasContainer.appendChild(card);
+  }
 }
 
 // ── INIT ──
