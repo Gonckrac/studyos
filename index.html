@@ -1527,22 +1527,14 @@ async function startSimulacro() {
 
   var temasDesc = selectedTemas.map(function(item){
     return '"'+item.t.nombre+'": '+item.t.desc;
-  }).join('
-');
+  }).join('\n');
 
   // Show loading
   document.getElementById('sim-config').style.display='none';
   document.getElementById('sim-body').style.display='block';
   document.getElementById('sim-body').innerHTML = '<div style="text-align:center;padding:40px"><div style="display:inline-block;width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:12px"></div><div style="color:var(--text2);font-size:13px">Generando simulacro...</div></div>';
 
-  var prompt = 'Sos un profesor de '+m.nombre+' en Argentina. Generá un simulacro de '+cantidad+' ejercicios para completar (NO multiple choice, el alumno escribe la respuesta) sobre estos temas:
-
-'+temasDesc+'
-
-Respondé SOLO con JSON válido:
-{"ejercicios":[{"num":1,"enunciado":"enunciado completo y claro","dificultad":"fácil","respuesta_corta":"resultado final o respuesta clave","procedimiento":"solución paso a paso numerada y explicada"}]}
-
-Variá la dificultad. Estilo parcial universitario argentino.';
+  var prompt = 'Sos un profesor de '+m.nombre+' en Argentina. Generá un simulacro de '+cantidad+' ejercicios para completar (NO multiple choice) sobre estos temas:\n\n'+temasDesc+'\n\nRespondé SOLO con JSON válido:\n{"ejercicios":[{"num":1,"enunciado":"enunciado completo","dificultad":"fácil","respuesta_corta":"resultado final","procedimiento":"solución paso a paso"}]}\n\nVariá la dificultad. Estilo parcial universitario argentino.';
 
   try {
     var resp = await callGemini(prompt);
