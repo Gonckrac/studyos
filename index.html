@@ -1525,10 +1525,7 @@ async function deleteMaterial(materialId, materiaId){
 async function getMatContext(materiaId){
   const mats = await loadMaterialesMateria(materiaId);
   if(!mats.length) return '';
-  return mats.map(m=>'=== '+m.nombre+' ===
-'+m.contenido).join('
-
-');
+  return mats.map(m=>'=== '+m.nombre+' ===\n'+m.contenido).join('\n\n');
 }
 
 // Render del panel de materiales en la página de detalle de materia
@@ -1546,7 +1543,7 @@ async function renderMaterialesPanel(materiaId){
         +'<span style="font-size:16px">📄</span>'
         +'<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+m.nombre+'</div>'
         +'<div style="font-size:10px;color:var(--text2);margin-top:2px">'+m.contenido.length+' caracteres</div></div>'
-        +'<button onclick="deleteMaterial(''+m.id+'','+materiaId+').then(()=>renderMaterialesPanel('+materiaId+'))" style="background:rgba(247,106,106,0.1);border:1px solid rgba(247,106,106,0.2);color:var(--danger);border-radius:4px;padding:5px 10px;font-size:11px;cursor:pointer;font-family:Inter,sans-serif">🗑</button>'
+        +'<button onclick="deleteMaterial('+JSON.stringify(m.id)+','+materiaId+').then(()=>renderMaterialesPanel('+materiaId+'))" style="background:rgba(247,106,106,0.1);border:1px solid rgba(247,106,106,0.2);color:var(--danger);border-radius:4px;padding:5px 10px;font-size:11px;cursor:pointer;font-family:Inter,sans-serif">🗑</button>'
         +'</div>';
     });
   }
@@ -1555,7 +1552,7 @@ async function renderMaterialesPanel(materiaId){
     +'<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text2);margin-bottom:8px">Agregar material</div>'
     +'<input id="mat-nombre-'+materiaId+'" type="text" placeholder="Nombre del archivo / apunte (ej: Guía TP1)" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;color:var(--text);font-family:Inter,sans-serif;font-size:13px;outline:none;margin-bottom:8px"/>'
     // Drop zone
-    +'<div id="mat-drop-'+materiaId+'" style="border:2px dashed var(--border);border-radius:var(--radius-sm);padding:16px;text-align:center;cursor:pointer;transition:border-color 0.2s;background:var(--bg);margin-bottom:8px" onclick="document.getElementById('mat-file-'+materiaId+'').click()" ondragover="event.preventDefault();this.style.borderColor='var(--accent)'" ondragleave="this.style.borderColor='var(--border)'" ondrop="handleMatFileDrop(event,'+materiaId+')">'
+    +'<div id="mat-drop-'+materiaId+'" style="border:2px dashed var(--border);border-radius:var(--radius-sm);padding:16px;text-align:center;cursor:pointer;transition:border-color 0.2s;background:var(--bg);margin-bottom:8px" onclick="document.getElementById(&quot;mat-file-'+materiaId+'&quot;).click()" ondragover="event.preventDefault();this.style.borderColor=&quot;var(--accent)&quot;" ondragleave="this.style.borderColor=&quot;var(--border)&quot;" ondrop="handleMatFileDrop(event,'+materiaId+')">'
     +'<div style="font-size:20px;margin-bottom:4px">📁</div>'
     +'<div style="font-size:12px;color:var(--text2)">Subí un archivo o arrastralo acá</div>'
     +'<div style="font-size:10px;color:var(--text2);margin-top:3px;opacity:0.7">PDF · TXT · MD — para PPT/Word exportá como PDF primero</div>'
