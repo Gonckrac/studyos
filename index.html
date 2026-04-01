@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>StudyOS — UCA Ingeniería Informática</title>
+<title>StudyOS — UCA Ingeniería Civil</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet"/>
 <style>
   :root {
@@ -988,37 +988,188 @@ function updateStats() {
   if(prox){document.getElementById('dias-prox').textContent=prox.d;document.getElementById('label-prox').textContent=`${prox.tipo} · Filosofía`;}
 }
 
-// ── OBTENER TEMAS PENDIENTES (CHANGE 5: siempre desde el primero no visto) ──
-function getFirstUnseenPerMateria(){
-  // Returns for each materia the first tema not done
-  var result=[];
+// ══════════════════════════════════════════════════════════════════
+// ── SMART SCHEDULER — Motor de planificación inteligente ──
+// ══════════════════════════════════════════════════════════════════
+//
+// LÓGICA:
+// 1. Recolecta TODOS los temas pendientes de TODAS las materias en orden
+// 2. Intercala materias (round-robin) para no cargar una sola materia por día
+// 3. Persiste en localStorage qué se completó cada día (scheduleLog)
+// 4. Si un día pasó y un tema no se marcó como done → lo reinserta adelante
+// 5. Si un tema se completa antes, el slot queda libre → avanza al siguiente
+// 6. Siempre genera el plan desde HOY hacia adelante, nunca queda stale
+
+var SCHED_KEY = 'studyos_schedule_v2';
+
+// Cuántos temas por día por día de la semana: LUN-VIE=2, SAB-DOM=1
+function getSlotsForDay(dow){ return (dow===0||dow===6)?1:2; }
+
+// Todos los temas pendientes (no done), en orden de materia y unidad
+function getAllPendingTemas(){
+  var all=[];
   MATERIAS.forEach(function(m){
-    var found=false;
-    for(var ui=0;ui<m.temas.length&&!found;ui++){
-      var u=m.temas[ui];
-      for(var ti=0;ti<u.items.length&&!found;ti++){
-        var t=u.items[ti];
+    m.temas.forEach(function(u){
+      u.items.forEach(function(t){
         if(t.estado!=='done'){
-          result.push({tema:t,materia:m,unidad:u});
-          found=true;
+          all.push({tId:t.id,mId:m.id,tNombre:t.nombre,mNombre:m.nombre,mIcon:m.icon,mColor:m.color,uNombre:u.unidad,estado:t.estado});
         }
-      }
-    }
+      });
+    });
   });
+  return all;
+}
+
+// Intercala temas de distintas materias para que cada día tenga variedad
+// Algoritmo: round-robin por materia
+function interleaveByMateria(temas){
+  // Group by materia
+  var byMat={};
+  var order=[];
+  temas.forEach(function(t){
+    if(!byMat[t.mId]){ byMat[t.mId]=[]; order.push(t.mId); }
+    byMat[t.mId].push(t);
+  });
+  var result=[];
+  var maxLen=0;
+  order.forEach(function(id){ maxLen=Math.max(maxLen,byMat[id].length); });
+  for(var i=0;i<maxLen;i++){
+    order.forEach(function(id){ if(byMat[id][i]) result.push(byMat[id][i]); });
+  }
   return result;
 }
 
-// Get all temas de hoy: first unseen + any tareas de hoy repartidas
+// Carga el scheduleLog: { "2026-03-31": { tId: "done"|"pending" } }
+function loadScheduleLog(){
+  try{ return JSON.parse(localStorage.getItem(SCHED_KEY)||'{}'); }catch(e){ return {}; }
+}
+function saveScheduleLog(log){ localStorage.setItem(SCHED_KEY,JSON.stringify(log)); }
+
+// Regenera el plan completo desde startDate hacia adelante, para N días
+// Devuelve array de { date (ISO string), temas: [{tId,mId,...}] }
+function buildSchedulePlan(startDate, numDays){
+  var log=loadScheduleLog();
+  var pending=interleaveByMateria(getAllPendingTemas());
+
+  // IDs de temas ya completados globalmente (estado=done en MATERIAS)
+  var doneIds={};
+  MATERIAS.forEach(function(m){
+    m.temas.forEach(function(u){
+      u.items.forEach(function(t){ if(t.estado==='done') doneIds[t.id]=true; });
+    });
+  });
+
+  // Remove done from pending
+  pending=pending.filter(function(t){ return !doneIds[t.tId]; });
+
+  // Collect temas NOT completed from past days that are still pending → reinsert at front
+  var hoy=new Date(); hoy.setHours(0,0,0,0);
+  var overdue=[];
+  Object.keys(log).sort().forEach(function(dateStr){
+    var d=new Date(dateStr+'T00:00:00'); d.setHours(0,0,0,0);
+    if(d<hoy){
+      var dayLog=log[dateStr];
+      Object.keys(dayLog).forEach(function(tIdStr){
+        var tId=parseInt(tIdStr);
+        if(dayLog[tIdStr]!=='done' && !doneIds[tId]){
+          // This tema was scheduled but not done → make sure it's in pending (move to front later)
+          overdue.push(tId);
+        }
+      });
+    }
+  });
+
+  // Move overdue temas to the front of pending (preserve order among them)
+  if(overdue.length>0){
+    var overdueSet={};
+    overdue.forEach(function(id){ overdueSet[id]=true; });
+    var overdueItems=pending.filter(function(t){ return overdueSet[t.tId]; });
+    var rest=pending.filter(function(t){ return !overdueSet[t.tId]; });
+    pending=overdueItems.concat(rest);
+  }
+
+  // Assign temas to days
+  var plan=[];
+  var idx=0;
+  for(var i=0;i<numDays;i++){
+    var d=new Date(startDate); d.setDate(startDate.getDate()+i);
+    var dow=d.getDay();
+    var slots=getSlotsForDay(dow);
+    var dateStr=d.toISOString().slice(0,10);
+    var dayLog=log[dateStr]||{};
+    var dayTemas=[];
+
+    // Check if day already has a log (committed temas)
+    var committed=Object.keys(dayLog);
+    if(committed.length>0){
+      // Use logged temas but update their status
+      committed.forEach(function(tIdStr){
+        var tId=parseInt(tIdStr);
+        var found=pending.find(function(t){ return t.tId===tId; });
+        if(found){
+          dayTemas.push({...found, logStatus:dayLog[tIdStr]});
+          pending=pending.filter(function(t){ return t.tId!==tId; });
+        }
+      });
+      // If slots remain and this day hasn't passed yet, fill with next pending
+      if(d>=hoy && dayTemas.length<slots){
+        for(var s=dayTemas.length;s<slots&&idx<pending.length;s++){
+          dayTemas.push({...pending[idx],logStatus:'pending'}); idx++;
+        }
+      }
+    } else {
+      // No log yet — assign from pending
+      for(var s=0;s<slots&&idx<pending.length;s++,idx++){
+        dayTemas.push({...pending[idx],logStatus:'pending'});
+      }
+      // Auto-save to log if day is today or future (so we can track skips)
+      if(d>=hoy && dayTemas.length>0){
+        var newLog={};
+        dayTemas.forEach(function(t){ newLog[t.tId]='pending'; });
+        log[dateStr]=newLog;
+      }
+    }
+
+    plan.push({date:dateStr,d:d,dow:dow,temas:dayTemas});
+  }
+  saveScheduleLog(log);
+  return plan;
+}
+
+// Marca un tema del log como hecho hoy
+function markScheduledTema(tId, dateStr){
+  var log=loadScheduleLog();
+  if(!log[dateStr]) log[dateStr]={};
+  log[dateStr][tId]='done';
+  saveScheduleLog(log);
+}
+
+// Cuando un tema se marca como done globalmente, actualizamos el log y recalculamos
+function onTemaDoneInScheduler(tId){
+  var hoyStr=new Date().toISOString().slice(0,10);
+  markScheduledTema(tId,hoyStr);
+  renderTodayCard();
+  renderSemana();
+  recalcQCY();
+}
+
+// Obtener plan de HOY (para la today card y la página de tareas)
+function getTodayPlan(){
+  var hoy=new Date(); hoy.setHours(0,0,0,0);
+  var plan=buildSchedulePlan(hoy,1);
+  return plan[0]?plan[0].temas:[];
+}
+
+// Get all temas de hoy incluyendo tareas manuales
 function getTareasDeHoyList(){
   var hoy=new Date();hoy.setHours(0,0,0,0);
   var hoyStr=hoy.toISOString().slice(0,10);
   var items=[];
 
-  // 1. Tareas con ejercicios programadas para hoy (CHANGE 3)
+  // 1. Tareas con ejercicios programadas para hoy
   var tareasData=getTareasData();
   tareasData.forEach(function(tarea){
     if(tarea.tipo==='tarea_ejercicios'){
-      // Find day assignments
       var assigns=(tarea.dayAssignments||[]).filter(function(a){return a.fecha===hoyStr;});
       assigns.forEach(function(a){
         items.push({tipo:'tarea',label:tarea.materia+' · '+a.label,tareaId:tarea.id,color:tarea.color||'var(--accent2)'});
@@ -1026,64 +1177,52 @@ function getTareasDeHoyList(){
     }
   });
 
-  // 2. Primer tema no visto de cada materia
-  var unseen=getFirstUnseenPerMateria();
-  unseen.forEach(function(item){
-    items.push({tipo:'tema',label:item.materia.icon+' '+item.materia.nombre.split(' ')[0]+' · '+item.tema.nombre,
-      temaId:item.tema.id,materiaId:item.materia.id,color:item.materia.color});
+  // 2. Temas del scheduler de hoy
+  var todayTemas=getTodayPlan();
+  var log=loadScheduleLog();
+  var dayLog=log[hoyStr]||{};
+  todayTemas.forEach(function(t){
+    var isDone=t.estado==='done'||dayLog[t.tId]==='done';
+    items.push({tipo:'tema',label:t.mIcon+' '+t.mNombre.split(' ')[0]+' · '+t.tNombre,
+      temaId:t.tId,materiaId:t.mId,color:t.mColor,done:isDone});
   });
 
   return items;
 }
 
-// ── PLAN DINÁMICO (CHANGE 5: usa temas reales no vistos) ──
-function buildSemana() {
+// ── PLAN "ESTA SEMANA" (usa scheduler) ──
+function buildSemana(){
   var hoy=new Date();hoy.setHours(0,0,0,0);
   var dow=hoy.getDay();
-  var lunes=new Date(hoy);lunes.setDate(hoy.getDate()-(dow===0?6:dow-1));
+  var lunes=new Date(hoy); lunes.setDate(hoy.getDate()-(dow===0?6:dow-1));
   var diasNom=['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'];
-
-  // Get all unseen temas in order
-  var allUnseen=[];
-  MATERIAS.forEach(function(m){
-    m.temas.forEach(function(u){
-      u.items.forEach(function(t){
-        if(t.estado!=='done') allUnseen.push({t:t,m:m,u:u});
-      });
+  var plan=buildSchedulePlan(lunes,7);
+  return plan.map(function(day){
+    var tasks=day.temas.map(function(t){
+      var done=t.estado==='done'||t.logStatus==='done';
+      return (done?'✅ ':'')+(t.mIcon)+' '+(t.mNombre.split(' ')[0])+' · '+t.tNombre;
     });
-  });
-
-  // Distribute across 7 days: 2 per weekday, 1 per weekend
-  var slots=[2,2,2,2,2,1,1];
-  var idx=0;
-  return Array.from({length:7},function(_,i){
-    var d=new Date(lunes);d.setDate(lunes.getDate()+i);
-    var dayTemas=[];
-    var count=slots[i];
-    for(var s=0;s<count&&idx<allUnseen.length;s++,idx++){
-      var item=allUnseen[idx];
-      dayTemas.push(item.m.icon+' '+item.m.nombre.split(' ')[0]+' · '+item.t.nombre);
-    }
-    if(dayTemas.length===0) dayTemas=['🎉 Todo visto por hoy'];
-    return{dia:diasNom[d.getDay()]+' '+d.getDate(),hoy:d.getTime()===hoy.getTime(),tasks:dayTemas,hs:(count*1.5)+'hs'};
+    if(tasks.length===0) tasks=['🎉 Todo visto'];
+    return{dia:diasNom[day.d.getDay()]+' '+day.d.getDate(),hoy:day.d.getTime()===hoy.getTime(),tasks:tasks,hs:getSlotsForDay(day.dow)*1.5+'hs'};
   });
 }
 
-// ── TODAY CARD (CHANGE 4: chips clickables que mandan a tareas) ──
-function renderTodayCard() {
+// ── TODAY CARD ──
+function renderTodayCard(){
   var dow=new Date().getDay();
   var noms=['domingo de repaso','lunes de arranque','martes de trabajo','miércoles de código','jueves de estudio','viernes de práctica','sábado de repaso'];
   var tt=document.querySelector('.today-title');
   var tc=document.getElementById('today-tasks-preview');
   var items=getTareasDeHoyList();
-  if(tt)tt.textContent=noms[dow]+' — '+Math.max(items.length,1)+' bloques';
+  var bloques=items.filter(function(x){return !x.done;}).length;
+  if(tt) tt.textContent=noms[dow]+' — '+Math.max(bloques,0)+' bloques pendientes';
   if(tc){
     if(items.length===0){
       tc.innerHTML='<span class="task-chip">🎉 Sin pendientes hoy</span>';
     } else {
       tc.innerHTML=items.slice(0,4).map(function(item){
-        return '<span class="task-chip">'+item.label+'</span>';
-      }).join('')+(items.length>4?'<span class="task-chip">+'+( items.length-4)+' más...</span>':'');
+        return '<span class="task-chip'+(item.done?' done':'')+'">'+item.label+'</span>';
+      }).join('')+(items.length>4?'<span class="task-chip">+'+(items.length-4)+' más...</span>':'');
     }
   }
 }
@@ -1121,42 +1260,106 @@ function renderTareasHoy(){
   if(lbl)lbl.textContent=hoy.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
 
   var cont=document.getElementById('tareas-hoy-content');if(!cont)return;
-  var items=getTareasDeHoyList();
+  var log=loadScheduleLog();
+  var dayLog=log[hoyStr]||{};
 
-  if(items.length===0){
+  // Get today's plan from scheduler
+  var todayTemas=getTodayPlan();
+  var tareasData=getTareasData();
+  var tareaItems=[];
+  tareasData.forEach(function(tarea){
+    if(tarea.tipo==='tarea_ejercicios'){
+      var assigns=(tarea.dayAssignments||[]).filter(function(a){return a.fecha===hoyStr;});
+      assigns.forEach(function(a){ tareaItems.push({tarea:tarea,assign:a}); });
+    }
+  });
+
+  if(todayTemas.length===0 && tareaItems.length===0){
     cont.innerHTML='<div style="text-align:center;padding:48px 20px;color:var(--text2);font-size:15px">🎉 ¡No tenés nada pendiente para hoy!</div>';
     return;
   }
 
   var html='';
 
-  // Tareas de ejercicios
-  var tareaItems=items.filter(function(x){return x.tipo==='tarea';});
+  // Tareas manuales
   if(tareaItems.length>0){
-    html+='<div class="section-title">Tareas con fechas</div>';
+    html+='<div class="section-title">📋 Tareas con fecha</div>';
     tareaItems.forEach(function(item){
-      html+='<div style="background:var(--surface);border:1px solid var(--border);border-left:4px solid '+(item.color||'var(--accent2)')+';border-radius:var(--radius);padding:16px 20px;margin-bottom:10px;display:flex;align-items:center;gap:14px">';
+      var tarea=item.tarea; var a=item.assign;
+      var isDone=dayLog['t_'+tarea.id+a.fecha]==='done';
+      html+='<div style="background:var(--surface);border:1px solid var(--border);border-left:4px solid '+(tarea.color||'var(--accent2)')+';border-radius:var(--radius);padding:16px 20px;margin-bottom:10px;display:flex;align-items:center;gap:14px;'+(isDone?'opacity:0.5':'')+'"">';
       html+='<span style="font-size:20px">📋</span>';
-      html+='<div style="flex:1"><div style="font-weight:600;font-size:14px;color:var(--text)">'+item.label+'</div><div style="font-size:11px;color:var(--text2);margin-top:3px">Tarea programada para hoy</div></div>';
-      html+='<button onclick="checkTareaDone(this)" data-id="'+item.tareaId+'" style="background:rgba(106,247,194,0.1);border:1px solid rgba(106,247,194,0.3);color:var(--accent3);border-radius:var(--radius-sm);padding:7px 14px;font-size:12px;cursor:pointer;font-family:Inter,sans-serif">✓ Hecha</button>';
+      html+='<div style="flex:1"><div style="font-weight:600;font-size:14px;color:var(--text)'+(isDone?';text-decoration:line-through':'')+'">'+tarea.materia+' · '+a.label+'</div><div style="font-size:11px;color:var(--text2);margin-top:3px">'+a.cantidad+' ejercicios para hoy</div></div>';
+      if(!isDone){
+        html+='<button onclick="markTareaManualDone(this,\'t_'+tarea.id+a.fecha+'\')" style="background:rgba(106,247,194,0.1);border:1px solid rgba(106,247,194,0.3);color:var(--accent3);border-radius:var(--radius-sm);padding:7px 14px;font-size:12px;cursor:pointer;font-family:Inter,sans-serif">✓ Hecha</button>';
+      } else {
+        html+='<span style="color:var(--accent3);font-size:13px">✅ Lista</span>';
+      }
       html+='</div>';
     });
   }
 
-  // Temas del día (primer no visto)
-  var temaItems=items.filter(function(x){return x.tipo==='tema';});
-  if(temaItems.length>0){
-    html+='<div class="section-title" style="margin-top:20px">Temas para estudiar hoy</div>';
-    temaItems.forEach(function(item){
-      html+='<div style="background:var(--surface);border:1px solid var(--border);border-left:4px solid '+(item.color||'var(--accent)')+';border-radius:var(--radius);padding:16px 20px;margin-bottom:10px;display:flex;align-items:center;gap:14px;cursor:pointer" onclick="openTemaPanel('+item.temaId+','+item.materiaId+')">';
-      html+='<span style="font-size:20px">📖</span>';
-      html+='<div style="flex:1"><div style="font-weight:600;font-size:14px;color:var(--text)">'+item.label+'</div><div style="font-size:11px;color:var(--text2);margin-top:3px">Primer tema no visto — tocá para estudiar</div></div>';
-      html+='<span style="font-size:18px;color:var(--text2)">→</span>';
+  // Temas del scheduler
+  if(todayTemas.length>0){
+    html+='<div class="section-title" style="margin-top:'+( tareaItems.length>0?'20px':'0')+'">📖 Temas para estudiar hoy</div>';
+    // Status banner
+    var doneCount=todayTemas.filter(function(t){ return t.estado==='done'||dayLog[t.tId]==='done'; }).length;
+    var total=todayTemas.length;
+    var pct=Math.round(doneCount/total*100);
+    html+='<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px">'
+      +'<div style="flex:1"><div style="font-size:12px;color:var(--text2);margin-bottom:6px">Progreso de hoy</div>'
+      +'<div style="height:6px;background:var(--bg);border-radius:3px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:var(--accent3);border-radius:3px;transition:width 0.4s"></div></div></div>'
+      +'<div style="font-family:\'Space Mono\',monospace;font-size:13px;color:'+(pct===100?'var(--accent3)':'var(--text)')+'">'+doneCount+'/'+total+'</div>'
+      +'</div>';
+
+    todayTemas.forEach(function(t){
+      var isDone=t.estado==='done'||dayLog[t.tId]==='done';
+      html+='<div style="background:var(--surface);border:1px solid '+(isDone?'rgba(106,247,194,0.3)':'var(--border)')+';border-left:4px solid '+t.mColor+';border-radius:var(--radius);padding:16px 20px;margin-bottom:10px;'+(isDone?'opacity:0.6':'')+'display:flex;align-items:flex-start;gap:14px">';
+      html+='<div style="width:22px;height:22px;border-radius:50%;border:2px solid '+(isDone?'var(--accent3)':t.mColor)+';display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;color:'+(isDone?'var(--accent3)':t.mColor)+';margin-top:1px">'+(isDone?'✓':'○')+'</div>';
+      html+='<div style="flex:1;min-width:0">';
+      html+='<div style="font-weight:600;font-size:14px;color:var(--text)'+(isDone?';text-decoration:line-through':'')+';line-height:1.3">'+t.tNombre+'</div>';
+      html+='<div style="font-size:11px;color:var(--text2);margin-top:3px">'+t.mIcon+' '+t.mNombre+' · '+t.uNombre.split('—')[0].trim()+'</div>';
+      html+='</div>';
+      html+='<div style="display:flex;gap:8px;flex-shrink:0">';
+      if(!isDone){
+        html+='<button onclick="openTemaPanel('+t.tId+','+t.mId+')" style="background:rgba(124,106,247,0.1);border:1px solid rgba(124,106,247,0.3);color:var(--accent);border-radius:var(--radius-sm);padding:7px 12px;font-size:12px;cursor:pointer;font-family:Inter,sans-serif">📖 Estudiar</button>';
+        html+='<button onclick="markTemaHoyDone(this,'+t.tId+')" style="background:rgba(106,247,194,0.08);border:1px solid rgba(106,247,194,0.25);color:var(--accent3);border-radius:var(--radius-sm);padding:7px 12px;font-size:12px;cursor:pointer;font-family:Inter,sans-serif">✓ Listo</button>';
+      } else {
+        html+='<span style="color:var(--accent3);font-size:13px;padding:7px 0">✅ Hecho</span>';
+      }
+      html+='</div>';
       html+='</div>';
     });
+
+    if(doneCount===total && total>0){
+      html+='<div style="text-align:center;padding:20px;background:rgba(106,247,194,0.06);border:1px solid rgba(106,247,194,0.2);border-radius:var(--radius);margin-top:8px">'
+        +'<div style="font-size:24px;margin-bottom:6px">🎉</div>'
+        +'<div style="font-family:\'Syne\',sans-serif;font-size:16px;font-weight:700;color:var(--accent3)">¡Día completado!</div>'
+        +'<div style="font-size:12px;color:var(--text2);margin-top:4px">Todos los temas de hoy están listos. El plan de mañana ya está armado.</div>'
+        +'</div>';
+    }
   }
 
   cont.innerHTML=html;
+}
+
+function markTareaManualDone(btn,key){
+  var hoyStr=new Date().toISOString().slice(0,10);
+  var log=loadScheduleLog();
+  if(!log[hoyStr]) log[hoyStr]={};
+  log[hoyStr][key]='done';
+  saveScheduleLog(log);
+  renderTareasHoy();
+  renderTodayCard();
+  showToast('✅ Tarea marcada como hecha','var(--accent3)');
+}
+
+function markTemaHoyDone(btn,tId){
+  var hoyStr=new Date().toISOString().slice(0,10);
+  markScheduledTema(tId,hoyStr);
+  renderTareasHoy();
+  renderTodayCard();
+  showToast('✅ Tema marcado — cronograma actualizado','var(--accent3)');
 }
 
 function checkTareaDone(btn){
@@ -1611,7 +1814,8 @@ function setTemaStatus(estado){
     // Recalculate deadlines — redistribute remaining temas now that this one is done
     calcDeadlines();
     recalcQCY();
-    showToast('✅ Tema completado — plan actualizado');
+    onTemaDoneInScheduler(panelTema.id);
+    showToast('✅ Tema completado — cronograma actualizado');
   }
   updateStats();
   const row=document.getElementById('tr-'+panelTema.id);
@@ -2311,102 +2515,69 @@ function renderQCY() {
     miniCal.appendChild(el);
   }
 
-  // Día a día con plan de estudio
+  // Día a día con plan de estudio — SMART SCHEDULER
   var diasContainer = document.getElementById('qcy-dias');
   diasContainer.innerHTML = '';
 
-  // Build study plan per day
-  // CHANGE 5: Always show first unseen (pending) temas, never skip ahead
-  var allTemas = [];
-  MATERIAS.forEach(function(m){
-    m.temas.forEach(function(u){
-      u.items.forEach(function(t){
-        if(t.estado!=='done'){
-          allTemas.push({tema:t, materia:m, unidad:u});
-        }
-      });
-    });
-  });
-  // Sort: studying first, then pending, in order as defined (no deadline-skip)
-  allTemas.sort(function(a,b){
-    var sa=a.tema.estado==='studying'?0:1;
-    var sb=b.tema.estado==='studying'?0:1;
-    return sa-sb;
-  });
+  // Build doneIds map for qcy display
+  var doneIds_qcy = {};
+  MATERIAS.forEach(function(m){ m.temas.forEach(function(u){ u.items.forEach(function(t){ if(t.estado==='done') doneIds_qcy[t.id]=true; }); }); });
 
-  // Assign 2-3 temas per day, cycling through
-  var temaIdx = 0;
+  // Build plan for this week using scheduler
+  var plan = buildSchedulePlan(lunes, 7);
+  var log = loadScheduleLog();
 
   for(var i=0;i<7;i++){
-    var d = new Date(lunes); d.setDate(lunes.getDate()+i);
-    var dateStr = d.toISOString().slice(0,10);
+    var dayPlan = plan[i];
+    var d = dayPlan.d;
+    var dateStr = dayPlan.date;
     var isHoy = d.getTime()===hoy.getTime();
     var isPast = d < hoy;
     var dayEvs = eventos.filter(function(ev){return ev.fecha===dateStr;});
+    var dayLog = log[dateStr]||{};
 
     var card = document.createElement('div');
     card.className = 'qcy-dia-card'+(isHoy?' today':'');
 
-    // Label
     var labelHtml = '<div class="qcy-dia-label"><div class="qcy-dia-nombre">'+diasNom[i]+'</div><div class="qcy-dia-num">'+d.getDate()+'</div></div>';
-
-    // Chips
     var chips = '<div class="qcy-chips">';
 
-    // Events for this day
+    // Event chips (parciales, etc)
     dayEvs.forEach(function(ev){
       var cfg=TIPO_CONFIG[ev.tipo]||TIPO_CONFIG.otro;
       var color=ev.color||cfg.color;
-      chips+='<span class="qcy-chip qcy-chip-event" style="background:'+color+';color:#fff;border-color:'+color+'">'+cfg.emoji+' '+cfg.label+' '+( ev.materia?ev.materia.split(' ')[0]:'')+'</span>';
+      chips+='<span class="qcy-chip qcy-chip-event" style="background:'+color+';color:#fff;border-color:'+color+'">'+cfg.emoji+' '+cfg.label+' '+(ev.materia?ev.materia.split(' ')[0]:'')+'</span>';
     });
 
-    // Study chips: show temas whose deadline falls this week or is overdue
-    // Weekend = lighter (1 slot), weekday = 2 slots
-    var isWeekend = (i===5||i===6);
-    var studySlots = isWeekend ? 1 : 2;
-
-    if(!isPast) {
-      // Find temas that should be done by or around this day
-      // Show temas whose deadline is within the next 7 days from this day
-      var dayMs = d.getTime();
-      var urgentTemas = allTemas.filter(function(item){
-        if(!item.tema.deadline) return false;
-        var dl = item.tema.deadline.getTime();
-        // Show if deadline is within 8 days ahead of this day, or overdue
-        return dl >= dayMs - 86400000 && dl <= dayMs + 8*86400000;
-      });
-
-      // If not enough urgent temas, fill with next upcoming by deadline
-      var toShow = urgentTemas.slice(0, studySlots);
-      if(toShow.length < studySlots) {
-        var extras = allTemas.filter(function(item){
-          return toShow.indexOf(item) < 0;
-        }).slice(0, studySlots - toShow.length);
-        toShow = toShow.concat(extras);
-      }
-
-      toShow.forEach(function(item){
-        var m = item.materia;
-        var dl = item.tema.deadline;
-        var daysLeft = dl ? Math.round((dl.getTime()-dayMs)/86400000) : null;
-        var urgentStyle = (daysLeft !== null && daysLeft <= 3) ? 'font-weight:700;' : '';
-        var urgentIcon = (daysLeft !== null && daysLeft <= 0) ? '⚠️ ' : '';
-        chips += '<span class="qcy-chip" style="'+urgentStyle+'color:'+m.color+';border-color:'+m.color+'40;background:'+m.color+'12">'
-          + urgentIcon + m.icon + ' ' + item.unidad.unidad.split('—')[0].trim()
-          + (dl ? ' <span style="font-size:10px;opacity:0.7">· hasta ' + dl.getDate()+'/'+(dl.getMonth()+1)+'</span>' : '')
-          + '</span>';
-      });
-    }
-
-    if(!dayEvs.length && isPast){
+    if(isPast && dayPlan.temas.length===0 && !dayEvs.length){
       chips+='<span class="qcy-empty">—</span>';
-    }
-    if(!dayEvs.length && !isPast && allTemas.length===0){
+    } else if(!isPast && dayPlan.temas.length===0 && !dayEvs.length){
       chips+='<span class="qcy-empty">🎉 Todo visto</span>';
     }
 
+    // Study chips
+    dayPlan.temas.forEach(function(t){
+      var isDone = t.estado==='done' || dayLog[t.tId]==='done';
+      var isOverdue = isPast && !isDone;
+      var overStyle = isOverdue ? 'border-style:dashed;opacity:0.75;' : '';
+      var overIcon = isOverdue ? '⚠️ ' : '';
+      var checkMark = isDone ? '✅ ' : '';
+      chips += '<span class="qcy-chip" style="'+overStyle+'color:'+t.mColor+';border-color:'+t.mColor+'40;background:'+t.mColor+(isDone?'22':'12')+'">'
+        + overIcon + checkMark + t.mIcon + ' ' + t.mNombre.split(' ')[0]
+        + ' <span style="font-size:11px;opacity:0.8">· '+t.tNombre.slice(0,28)+(t.tNombre.length>28?'…':'')+'</span>'
+        + (isOverdue?'<span style="font-size:10px;background:rgba(247,106,106,0.2);color:var(--danger);border-radius:4px;padding:1px 5px;margin-left:4px">no hecho</span>':'')
+        + '</span>';
+    });
+
     chips+='</div>';
     card.innerHTML = labelHtml+chips;
+
+    // Overdue notice for past days with missed temas
+    var missedCount = dayPlan.temas.filter(function(t){ return !doneIds_qcy[t.tId] && dayLog[t.tId]!=='done' && isPast; }).length;
+    if(missedCount>0){
+      card.innerHTML += '<div style="font-size:11px;color:var(--danger);padding:4px 0 0 72px;opacity:0.8">↩ '+missedCount+' tema'+(missedCount>1?'s':'')+' no completado'+(missedCount>1?'s':'')+' — reagendado'+(missedCount>1?'s':'')+' automáticamente</div>';
+    }
+
     diasContainer.appendChild(card);
   }
 }
