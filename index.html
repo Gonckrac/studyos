@@ -1475,8 +1475,7 @@ async function extractPdfText(file){
         for(let i=1;i<=pdf.numPages;i++){
           const page=await pdf.getPage(i);
           const tc=await page.getTextContent();
-          text+=tc.items.map(function(x){return x.str;}).join(' ')+'
-';
+          text+=tc.items.map(function(x){return x.str;}).join(' ')+'\n';
         }
         resolve(text.trim());
       }catch(e){reject(e);}
