@@ -365,7 +365,8 @@
     <div class="nav-label">Herramientas</div>
     <div class="nav-item" onclick="openExamen()"><span class="nav-icon">✍️</span> Simulacro</div>
     <div class="nav-item" onclick="showPage('promociones')"><span class="nav-icon">🎯</span> Finales cortos</div>
-
+    <div class="nav-item" onclick="openAddMateria()"><span class="nav-icon">➕</span> Agregar materia</div>
+    <div class="nav-item" onclick="showPage('tareas')"><span class="nav-icon">✅</span> Tareas de hoy</div>
   </div>
 </nav>
 </nav>
@@ -379,16 +380,12 @@
         <div class="page-date" id="fecha-hoy"></div>
       </div>
     </div>
-    <div class="today-card">
+    <div class="today-card" style="cursor:pointer" onclick="showPage('tareas')">
       <div class="today-icon">⚡</div>
       <div class="today-content">
-        <div class="today-label">Para hoy · marcá cuando termines</div>
+        <div class="today-label">Para hoy · tocá para ver en detalle</div>
         <div class="today-title">Lunes de arranque — 3 bloques</div>
-        <div class="today-tasks">
-          <span class="task-chip" onclick="this.classList.toggle('done')">📐 Cálculo · Funciones (TP1)</span>
-          <span class="task-chip" onclick="this.classList.toggle('done')">💻 Informática · Python: variables y tipos</span>
-          <span class="task-chip" onclick="this.classList.toggle('done')">🧠 Filosofía · Frankl · Unidad I</span>
-        </div>
+        <div class="today-tasks" id="today-tasks-preview"></div>
       </div>
     </div>
     <div class="stats-row">
@@ -534,6 +531,14 @@
     <div id="tema-page-content"></div>
   </div>
 
+  <!-- PÁGINA TAREAS DE HOY -->
+  <div id="page-tareas" style="display:none">
+    <div class="page-header">
+      <div><div class="page-title">Tareas de <span>hoy</span></div><div class="page-date" id="tareas-fecha-label"></div></div>
+    </div>
+    <div id="tareas-hoy-content"></div>
+  </div>
+
 </main>
 </div>
 
@@ -632,6 +637,73 @@
 
 <!-- Toast -->
 <div class="toast" id="toast" style="display:none"></div>
+
+<!-- MODAL AGREGAR MATERIA -->
+<div id="modal-add-materia" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px;width:90%;max-width:540px;max-height:88vh;overflow-y:auto;animation:fadeSlideIn 0.2s ease">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800">➕ Nueva materia</div>
+      <button onclick="closeAddMateria()" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Nombre de la materia</div>
+        <input id="am-nombre" type="text" placeholder="ej: Álgebra Lineal" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none"/>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Código / descripción breve</div>
+        <input id="am-codigo" type="text" placeholder="ej: Ing. Informática · 2°sem 2026" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none"/>
+      </div>
+      <div style="display:flex;gap:10px">
+        <div style="flex:1">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Ícono</div>
+          <input id="am-icon" type="text" placeholder="📘" maxlength="2" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:20px;text-align:center;outline:none"/>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Color</div>
+          <input id="am-color" type="color" value="#7c6af7" style="width:100%;height:42px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;padding:3px"/>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Material general de la materia (opcional)</div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:6px;line-height:1.5">Pegá el programa, índice, descripción. La IA lo usa como contexto base para todos los temas.</div>
+        <textarea id="am-material" placeholder="Pegá el programa de la materia, temario, descripción general..." style="width:100%;min-height:100px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:12px;line-height:1.6;resize:vertical;outline:none"></textarea>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Unidades y temas</div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:8px;line-height:1.5">Escribí cada línea como: <code style="background:var(--surface2);padding:2px 5px;border-radius:3px;color:var(--accent3)">U1 — Nombre: Tema 1, Tema 2, Tema 3</code></div>
+        <textarea id="am-temas" placeholder="U1 — Funciones: Variables y dominio, Operaciones, Funciones elementales&#10;U2 — Límites: Definición, Operaciones con límites&#10;U3 — Derivadas: Definición, Reglas de derivación" style="width:100%;min-height:120px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:12px;line-height:1.7;resize:vertical;outline:none"></textarea>
+      </div>
+      <div style="display:flex;gap:8px">
+        <div style="flex:1">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Próximo parcial</div>
+          <input id="am-parcial" type="text" placeholder="ej: 15 May 2026" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none"/>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:1px">¿Tiene final corto?</div>
+          <select id="am-promo" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none">
+            <option value="no">No</option>
+            <option value="si">Sí</option>
+          </select>
+        </div>
+      </div>
+      <button onclick="saveNewMateria()" style="background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;margin-top:4px">✅ Agregar materia</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL AVISO EJERCICIOS REQUERIDOS -->
+<div id="modal-ejercicios-req" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:300;align-items:center;justify-content:center">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px;width:90%;max-width:440px;animation:fadeSlideIn 0.2s ease;text-align:center">
+    <div style="font-size:36px;margin-bottom:12px">✏️</div>
+    <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:8px">Antes de marcar como visto...</div>
+    <div style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:20px">Perfecto, ya estudiaste el tema. Pero para que cuente como visto tenés que completar los ejercicios y tenerlos bien.<br><br>Completá los ejercicios de práctica y si salís bien (85% o más), el tema se marca automáticamente como visto.</div>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button onclick="document.getElementById('modal-ejercicios-req').style.display='none';switchTemaTab('ejercicios')" style="background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);padding:11px 22px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">✏️ Ir a ejercicios</button>
+      <button onclick="document.getElementById('modal-ejercicios-req').style.display='none'" style="background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:var(--radius-sm);padding:11px 22px;font-size:13px;cursor:pointer;font-family:'Inter',sans-serif">Cerrar</button>
+    </div>
+  </div>
+</div>
 
 <div class="modal-overlay" id="modal-examen">
   <div class="modal" style="max-width:640px;width:95%">
@@ -916,36 +988,180 @@ function updateStats() {
   if(prox){document.getElementById('dias-prox').textContent=prox.d;document.getElementById('label-prox').textContent=`${prox.tipo} · Filosofía`;}
 }
 
-// ── PLAN DINÁMICO ──
+// ── OBTENER TEMAS PENDIENTES (CHANGE 5: siempre desde el primero no visto) ──
+function getFirstUnseenPerMateria(){
+  // Returns for each materia the first tema not done
+  var result=[];
+  MATERIAS.forEach(function(m){
+    var found=false;
+    for(var ui=0;ui<m.temas.length&&!found;ui++){
+      var u=m.temas[ui];
+      for(var ti=0;ti<u.items.length&&!found;ti++){
+        var t=u.items[ti];
+        if(t.estado!=='done'){
+          result.push({tema:t,materia:m,unidad:u});
+          found=true;
+        }
+      }
+    }
+  });
+  return result;
+}
+
+// Get all temas de hoy: first unseen + any tareas de hoy repartidas
+function getTareasDeHoyList(){
+  var hoy=new Date();hoy.setHours(0,0,0,0);
+  var hoyStr=hoy.toISOString().slice(0,10);
+  var items=[];
+
+  // 1. Tareas con ejercicios programadas para hoy (CHANGE 3)
+  var tareasData=getTareasData();
+  tareasData.forEach(function(tarea){
+    if(tarea.tipo==='tarea_ejercicios'){
+      // Find day assignments
+      var assigns=(tarea.dayAssignments||[]).filter(function(a){return a.fecha===hoyStr;});
+      assigns.forEach(function(a){
+        items.push({tipo:'tarea',label:tarea.materia+' · '+a.label,tareaId:tarea.id,color:tarea.color||'var(--accent2)'});
+      });
+    }
+  });
+
+  // 2. Primer tema no visto de cada materia
+  var unseen=getFirstUnseenPerMateria();
+  unseen.forEach(function(item){
+    items.push({tipo:'tema',label:item.materia.icon+' '+item.materia.nombre.split(' ')[0]+' · '+item.tema.nombre,
+      temaId:item.tema.id,materiaId:item.materia.id,color:item.materia.color});
+  });
+
+  return items;
+}
+
+// ── PLAN DINÁMICO (CHANGE 5: usa temas reales no vistos) ──
 function buildSemana() {
-  const hoy=new Date();hoy.setHours(0,0,0,0);
-  const dow=hoy.getDay();
-  const lunes=new Date(hoy);lunes.setDate(hoy.getDate()-(dow===0?6:dow-1));
-  const dias=['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'];
-  const planBase=[
-    {tasks:["📐 Cálculo · U1 Funciones (TP1)","💻 Informática · Python: variables y tipos"],hs:"2.5 hs"},
-    {tasks:["📐 Cálculo · U2 Límites (TP2)","🧠 Filosofía · Frankl · El hombre en busca de sentido"],hs:"2 hs"},
-    {tasks:["💻 Informática · Funciones en Python (TP2)","⚙️ Intro Ing. · Racionalidad técnica"],hs:"2 hs"},
-    {tasks:["📐 Cálculo · U3 Continuidad (TP3)","🧠 Filosofía · Historia de la Filosofía"],hs:"2 hs"},
-    {tasks:["💻 Informática · Condicionales · ejercicios (TP3)","🧪 Química · material de la semana"],hs:"1.5 hs"},
-    {tasks:["📐 Cálculo · repaso U1-U3","⚙️ Intro Ing. · Metodología del diseño"],hs:"1.5 hs"},
-    {tasks:["Simulacro mixto rápido · 30 min"],hs:"0.5 hs"},
-  ];
-  return Array.from({length:7},(_,i)=>{
-    const d=new Date(lunes);d.setDate(lunes.getDate()+i);
-    return{dia:`${dias[d.getDay()]} ${d.getDate()}`,hoy:d.getTime()===hoy.getTime(),...planBase[i]};
+  var hoy=new Date();hoy.setHours(0,0,0,0);
+  var dow=hoy.getDay();
+  var lunes=new Date(hoy);lunes.setDate(hoy.getDate()-(dow===0?6:dow-1));
+  var diasNom=['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'];
+
+  // Get all unseen temas in order
+  var allUnseen=[];
+  MATERIAS.forEach(function(m){
+    m.temas.forEach(function(u){
+      u.items.forEach(function(t){
+        if(t.estado!=='done') allUnseen.push({t:t,m:m,u:u});
+      });
+    });
+  });
+
+  // Distribute across 7 days: 2 per weekday, 1 per weekend
+  var slots=[2,2,2,2,2,1,1];
+  var idx=0;
+  return Array.from({length:7},function(_,i){
+    var d=new Date(lunes);d.setDate(lunes.getDate()+i);
+    var dayTemas=[];
+    var count=slots[i];
+    for(var s=0;s<count&&idx<allUnseen.length;s++,idx++){
+      var item=allUnseen[idx];
+      dayTemas.push(item.m.icon+' '+item.m.nombre.split(' ')[0]+' · '+item.t.nombre);
+    }
+    if(dayTemas.length===0) dayTemas=['🎉 Todo visto por hoy'];
+    return{dia:diasNom[d.getDay()]+' '+d.getDate(),hoy:d.getTime()===hoy.getTime(),tasks:dayTemas,hs:(count*1.5)+'hs'};
   });
 }
 
-// ── TODAY CARD ──
+// ── TODAY CARD (CHANGE 4: chips clickables que mandan a tareas) ──
 function renderTodayCard() {
-  const sem=buildSemana(); const hoy=sem.find(s=>s.hoy); if(!hoy)return;
-  const dow=new Date().getDay();
-  const noms=['domingo de repaso','lunes de arranque','martes de cálculo','miércoles de código','jueves de filosofía','viernes de práctica','sábado de repaso'];
-  const tt=document.querySelector('.today-title');
-  const tc=document.querySelector('.today-tasks');
-  if(tt)tt.textContent=`${noms[dow]} — ${hoy.tasks.length} bloques`;
-  if(tc)tc.innerHTML=hoy.tasks.map(t=>`<span class="task-chip" onclick="this.classList.toggle('done')">${t}</span>`).join('');
+  var dow=new Date().getDay();
+  var noms=['domingo de repaso','lunes de arranque','martes de trabajo','miércoles de código','jueves de estudio','viernes de práctica','sábado de repaso'];
+  var tt=document.querySelector('.today-title');
+  var tc=document.getElementById('today-tasks-preview');
+  var items=getTareasDeHoyList();
+  if(tt)tt.textContent=noms[dow]+' — '+Math.max(items.length,1)+' bloques';
+  if(tc){
+    if(items.length===0){
+      tc.innerHTML='<span class="task-chip">🎉 Sin pendientes hoy</span>';
+    } else {
+      tc.innerHTML=items.slice(0,4).map(function(item){
+        return '<span class="task-chip">'+item.label+'</span>';
+      }).join('')+(items.length>4?'<span class="task-chip">+'+( items.length-4)+' más...</span>':'');
+    }
+  }
+}
+
+// ── TAREAS DE HOY (CHANGE 3 + CHANGE 4) ──
+function getTareasData(){
+  try{return JSON.parse(localStorage.getItem('studyos_tareas')||'[]');}catch(e){return [];}
+}
+function saveTareasData(d){localStorage.setItem('studyos_tareas',JSON.stringify(d));}
+
+// When a tarea tipo "ejercicios" is saved (from "Agregar fecha"), split it across days
+function distribuirTareaEjercicios(tarea){
+  // tarea: {id, materia, desc, fechaInicio, fechaFin, totalEjercicios, tipo:'tarea_ejercicios', color}
+  var inicio=new Date(tarea.fechaInicio+'T00:00:00');
+  var fin=new Date(tarea.fechaFin+'T00:00:00');
+  var diasTotal=Math.max(1,Math.round((fin-inicio)/86400000)+1);
+  var porDia=Math.ceil(tarea.totalEjercicios/diasTotal);
+  var restante=tarea.totalEjercicios;
+  var assignments=[];
+  for(var i=0;i<diasTotal&&restante>0;i++){
+    var d=new Date(inicio);d.setDate(inicio.getDate()+i);
+    var cantidad=Math.min(porDia,restante);
+    var desde=tarea.totalEjercicios-restante+1;
+    assignments.push({fecha:d.toISOString().slice(0,10),label:tarea.desc+' Ej. '+desde+'-'+(desde+cantidad-1),cantidad:cantidad});
+    restante-=cantidad;
+  }
+  tarea.dayAssignments=assignments;
+  return tarea;
+}
+
+function renderTareasHoy(){
+  var hoy=new Date();hoy.setHours(0,0,0,0);
+  var hoyStr=hoy.toISOString().slice(0,10);
+  var lbl=document.getElementById('tareas-fecha-label');
+  if(lbl)lbl.textContent=hoy.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
+
+  var cont=document.getElementById('tareas-hoy-content');if(!cont)return;
+  var items=getTareasDeHoyList();
+
+  if(items.length===0){
+    cont.innerHTML='<div style="text-align:center;padding:48px 20px;color:var(--text2);font-size:15px">🎉 ¡No tenés nada pendiente para hoy!</div>';
+    return;
+  }
+
+  var html='';
+
+  // Tareas de ejercicios
+  var tareaItems=items.filter(function(x){return x.tipo==='tarea';});
+  if(tareaItems.length>0){
+    html+='<div class="section-title">Tareas con fechas</div>';
+    tareaItems.forEach(function(item){
+      html+='<div style="background:var(--surface);border:1px solid var(--border);border-left:4px solid '+(item.color||'var(--accent2)')+';border-radius:var(--radius);padding:16px 20px;margin-bottom:10px;display:flex;align-items:center;gap:14px">';
+      html+='<span style="font-size:20px">📋</span>';
+      html+='<div style="flex:1"><div style="font-weight:600;font-size:14px;color:var(--text)">'+item.label+'</div><div style="font-size:11px;color:var(--text2);margin-top:3px">Tarea programada para hoy</div></div>';
+      html+='<button onclick="checkTareaDone(this)" data-id="'+item.tareaId+'" style="background:rgba(106,247,194,0.1);border:1px solid rgba(106,247,194,0.3);color:var(--accent3);border-radius:var(--radius-sm);padding:7px 14px;font-size:12px;cursor:pointer;font-family:Inter,sans-serif">✓ Hecha</button>';
+      html+='</div>';
+    });
+  }
+
+  // Temas del día (primer no visto)
+  var temaItems=items.filter(function(x){return x.tipo==='tema';});
+  if(temaItems.length>0){
+    html+='<div class="section-title" style="margin-top:20px">Temas para estudiar hoy</div>';
+    temaItems.forEach(function(item){
+      html+='<div style="background:var(--surface);border:1px solid var(--border);border-left:4px solid '+(item.color||'var(--accent)')+';border-radius:var(--radius);padding:16px 20px;margin-bottom:10px;display:flex;align-items:center;gap:14px;cursor:pointer" onclick="openTemaPanel('+item.temaId+','+item.materiaId+')">';
+      html+='<span style="font-size:20px">📖</span>';
+      html+='<div style="flex:1"><div style="font-weight:600;font-size:14px;color:var(--text)">'+item.label+'</div><div style="font-size:11px;color:var(--text2);margin-top:3px">Primer tema no visto — tocá para estudiar</div></div>';
+      html+='<span style="font-size:18px;color:var(--text2)">→</span>';
+      html+='</div>';
+    });
+  }
+
+  cont.innerHTML=html;
+}
+
+function checkTareaDone(btn){
+  btn.textContent='✅ ¡Listo!'; btn.disabled=true; btn.style.opacity='0.5';
+  showToast('✅ Tarea marcada como hecha','var(--accent3)');
 }
 
 // ── RENDER MATERIAS ──
@@ -1002,6 +1218,12 @@ function clearFeed(){
   showToast('🗑 Material borrado');
 }
 function getFeed(){ return getFeedKey()?localStorage.getItem(getFeedKey())||'':''; }
+function saveMatFeed(){
+  const ta=document.getElementById('tp-matfeed-text');
+  const txt=ta?ta.value.trim():'';
+  if(panelMateria) localStorage.setItem('mat_material_'+panelMateria.id, txt);
+  showToast('💾 Material de la materia guardado — la IA lo usará en todos los temas');
+}
 
 function switchTab(tab){
   ['explicacion','ejercicios','examen','feed'].forEach(t=>{
@@ -1066,7 +1288,8 @@ async function generateExplicacion(){
   if(!key){noKeyError(area);return;}
   area.innerHTML='<div style="text-align:center;padding:40px 20px"><div style="display:inline-block;width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:12px"></div><div style="color:var(--text2);font-size:13px">Generando tu explicación...</div></div>';
   const feed=getFeed();
-  const feedCtx=feed?'\n\nMATERIAL DEL PROFE (prioridad máxima):\n'+feed:'';
+  const matFeed=panelMateria?localStorage.getItem('mat_material_'+panelMateria.id)||'':'';
+  const feedCtx=(matFeed?'\n\nMATERIAL GENERAL DE LA MATERIA:\n'+matFeed:'')+(feed?'\n\nMATERIAL DEL PROFE PARA ESTE TEMA (prioridad máxima):\n'+feed:'');
   const prompt='Sos un tutor universitario para 1er año de Ingeniería Informática en Argentina. Explicá el tema de forma CLARA, VISUAL y FÁCIL DE ESCANEAR. El alumno tiene que poder entender el tema leyendo la explicación.\n\nTEMA: "'+panelTema.nombre+'"\nDESCRIPCIÓN: "'+panelTema.desc+'"\nDIFICULTAD: '+panelTema.dificultad+'\nENTRA EN: '+panelTema.parcial+feedCtx+'\n\nFORMATO OBLIGATORIO — seguilo exactamente:\n\n## 🎯 ¿Qué es esto y por qué importa?\n2-3 oraciones directas. Qué es, para qué sirve en la vida real y en ingeniería. Sin vueltas.\n\n## 🧩 Los conceptos clave\nPara CADA concepto importante: nombre en negrita, definición en una oración, ejemplo concreto en la siguiente línea. Máximo 3-4 líneas por concepto. Usá bullet points con →\n\n## 📐 Cómo funciona — paso a paso\nNumerado. Cada paso es una acción concreta. Corto y directo. Si hay una fórmula, ponela en una línea sola.\n\n## ✅ Ejemplo resuelto 1 — fácil\nEnunciado concreto. Solución numerada paso a paso. Cada paso con su explicación en una línea.\n\n## ✅ Ejemplo resuelto 2 — más difícil\nMismo formato. Que sea un caso que podría salir en el parcial.\n\n## ⚠️ Errores típicos\nBullet points cortos. Error → por qué está mal → cómo se hace bien.\n\n## 🔑 Para el parcial — recordá esto\n5-7 puntos clave. Una oración cada uno. Lo más importante que no podés olvidar.\n\nREGLAS:\n- Párrafos cortos, máximo 3 líneas\n- Bullet points para listas, nunca párrafos largos\n- Emojis en los títulos\n- Si hay algo matemático ponelo en una línea sola bien visible\n- Tono directo, como un compañero que sabe mucho\n\nSi el tema tiene funciones o gráficos matemáticos, agregá al final:\n## GRAFICO_INTERACTIVO\nCódigo JS puro con Chart.js (canvas id="ai-chart"), sliders en div id="ai-chart-controls" si aplica. Si no corresponde gráfico: NO_GRAFICO';
   try{
     const resp=await callGemini(prompt);
@@ -1102,12 +1325,14 @@ async function regenerarSimple(){
 }
 
 async function generateEjercicios(){
+  window._ejCorrectas={};  // reset score tracker
   const key=getGeminiKey();
   const area=document.getElementById('tp-ai-ejercicios-area');
   if(!key){noKeyError(area);return;}
   area.innerHTML='<div style="text-align:center;padding:40px 20px"><div style="display:inline-block;width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:12px"></div><div style="color:var(--text2);font-size:13px">Generando ejercicios...</div></div>';
   const feed=getFeed();
-  const feedCtx=feed?'\n\nMATERIAL DEL PROFE (basate en este estilo):\n'+feed:'';
+  const matFeed2=panelMateria?localStorage.getItem('mat_material_'+panelMateria.id)||'':'';
+  const feedCtx=((matFeed2?'\n\nMATERIAL GENERAL DE LA MATERIA:\n'+matFeed2:''))+(feed?'\n\nMATERIAL DEL PROFE (basate en este estilo):\n'+feed:'');
   const prompt='Sos un profe de '+panelMateria.nombre+' en Argentina (UCA). Generá exactamente 4 ejercicios para completar (NO multiple choice, el alumno escribe la respuesta) sobre "'+panelTema.nombre+'".\nContexto: "'+panelTema.desc+'"\nDificultad: '+panelTema.dificultad+feedCtx+'\n\nRespondé SOLO con JSON válido sin texto antes ni después ni markdown:\n{"ejercicios":[{"num":1,"enunciado":"texto completo del ejercicio","dificultad":"fácil","respuesta_corta":"resultado final en pocas palabras","procedimiento":"procedimiento completo paso a paso numerado"}]}\n\nVariá: 1 fácil, 2 medios, 1 difícil. Estilo parcial universitario argentino.';
   try{
     const resp=await callGemini(prompt);
@@ -1136,12 +1361,41 @@ function checkEjercicio(i){
   const norm=function(s){return s.toLowerCase().replace(/[^a-z0-9.,]/g,' ').replace(/\s+/g,' ').trim();};
   const nr=norm(ej.respuesta_corta); const ni=norm(input);
   const match=ni.includes(nr.slice(0,12))||nr.includes(ni.slice(0,12))||(nr.length<6&&ni.includes(nr));
+  // Track correct answers
+  if(!window._ejCorrectas) window._ejCorrectas={};
+  window._ejCorrectas[i]=match;
   if(match){
     res.className='ejercicio-resultado correcto';
     res.innerHTML='<strong>✅ ¡Correcto!</strong><br><br><strong>Procedimiento completo:</strong><br>'+ej.procedimiento.replace(/\n/g,'<br>');
   } else {
     res.className='ejercicio-resultado incorrecto';
     res.innerHTML='<strong>❌ No es correcto.</strong><br><br><strong>Respuesta:</strong> '+ej.respuesta_corta+'<br><br><strong>Procedimiento paso a paso:</strong><br>'+ej.procedimiento.replace(/\n/g,'<br>');
+  }
+  // Check if all ejercicios answered — calculate score
+  const total=window._ejercicioData.length;
+  const answered=Object.keys(window._ejCorrectas).length;
+  if(answered>=total){
+    const correctas=Object.values(window._ejCorrectas).filter(Boolean).length;
+    const pct=Math.round(correctas/total*100);
+    if(panelTema) localStorage.setItem('ejscore_'+panelTema.id, pct);
+    if(pct>=85){
+      // Auto-mark as done
+      showToast('🎉 '+pct+'% correcto — tema marcado como visto automáticamente!','var(--accent3)');
+      setTimeout(function(){
+        if(panelTema&&panelMateria){
+          panelTema.estado='done'; saveProgress(); bumpStreak();
+          calcDeadlines(); recalcQCY(); updateStats();
+          const row=document.getElementById('tr-'+panelTema.id);
+          if(row){row.className='tema-row done';const ck=row.querySelector('.tema-check');if(ck)ck.textContent='✓';}
+          renderMaterias('materias-grid');renderMaterias('materias-grid-2');
+          document.querySelectorAll('.status-bar-btn').forEach(function(b){b.classList.remove('active-studying','active-done');});
+          var btns=document.querySelectorAll('.status-bar-btn');
+          if(btns[1])btns[1].classList.add('active-done');
+        }
+      },800);
+    } else {
+      showToast('📚 '+pct+'% — necesitás 85% para marcar como visto. ¡Seguí practicando!','var(--accent2)');
+    }
   }
 }
 
@@ -1276,11 +1530,15 @@ function openTemaPanel(tId,mId){
 
       <div id="tppage-feed" style="display:none">
         <div class="feed-section">
+          <div class="section-title" style="margin-bottom:8px">Material de la materia (compartido con todos los temas)</div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.6">Material general de ${panelMateria?panelMateria.nombre:'la materia'}: programa, índice, apuntes generales. La IA lo usa como base para todos los temas.</div>
+          <textarea id="tp-matfeed-text" placeholder="Programa de la materia, índice general, apuntes del profe..." style="width:100%;min-height:100px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;color:var(--text);font-family:'Inter',sans-serif;font-size:12px;line-height:1.6;resize:vertical;outline:none;margin-bottom:8px">${panelMateria?localStorage.getItem('mat_material_'+panelMateria.id)||'':''}</textarea>
+          <button class="gen-btn-large" style="width:100%;margin-bottom:20px" onclick="saveMatFeed()">💾 Guardar material de la materia</button>
           <div class="section-title" style="margin-bottom:8px">Tu material para este tema</div>
           <div style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.6">Pegá apuntes, texto de PPT del profe, guías de ejercicios. La IA lo usa como contexto prioritario para generar explicaciones y ejercicios más fieles a tu cursada.</div>
           <textarea id="tp-feed-text" placeholder="Pegá apuntes, texto de diapositivas, guías de ejercicios...">${feedGuardado}</textarea>
           <div style="display:flex;gap:10px">
-            <button class="gen-btn-large" onclick="saveFeed()">💾 Guardar material</button>
+            <button class="gen-btn-large" onclick="saveFeed()">💾 Guardar material del tema</button>
             <button onclick="clearFeed()" style="padding:11px 20px;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-family:'Inter',sans-serif;font-size:13px">🗑 Borrar</button>
           </div>
           ${feedStatus}
@@ -1334,6 +1592,14 @@ function closeTemaPanel(e){ /* no-op, kept for compat */ }
 function setPanelStatus(estado){ setTemaStatus(estado); }
 function setTemaStatus(estado){
   if(!panelTema||!panelMateria)return;
+  // CHANGE 6: require exercises before marking as done
+  if(estado==='done'){
+    const ejScore=localStorage.getItem('ejscore_'+panelTema.id);
+    if(!ejScore||parseInt(ejScore)<85){
+      document.getElementById('modal-ejercicios-req').style.display='flex';
+      return;
+    }
+  }
   panelTema.estado=estado; saveProgress(); bumpStreak();
   document.querySelectorAll('.status-bar-btn').forEach(function(b){
     b.classList.remove('active-studying','active-done');
@@ -1620,7 +1886,7 @@ function resetSimulacro() {
 function chkOp(){} // kept for compat
 
 // ── NAVEGACIÓN ──
-const PAGES=['dashboard','materias','fechas','semana','promociones','detalle','tema','qcy'];
+const PAGES=['dashboard','materias','fechas','semana','promociones','detalle','tema','qcy','tareas'];
 function showPage(p){
   PAGES.forEach(x=>{const el=document.getElementById(`page-${x}`);if(el)el.style.display=x===p?'':'none';});
   document.querySelectorAll('.nav-item').forEach(el=>el.classList.toggle('active',el.getAttribute('onclick')?.includes(`'${p}'`)));
@@ -1629,6 +1895,7 @@ function showPage(p){
   if(p==='qcy')renderQCY();
   if(p==='materias')renderMaterias('materias-grid-2');
   if(p==='promociones')renderPromociones();
+  if(p==='tareas')renderTareasHoy();
 }
 
 
@@ -2049,7 +2316,7 @@ function renderQCY() {
   diasContainer.innerHTML = '';
 
   // Build study plan per day
-  // Strategy: distribute temas across the week weighted by what's due soon
+  // CHANGE 5: Always show first unseen (pending) temas, never skip ahead
   var allTemas = [];
   MATERIAS.forEach(function(m){
     m.temas.forEach(function(u){
@@ -2060,12 +2327,11 @@ function renderQCY() {
       });
     });
   });
-
-  // Sort by deadline
+  // Sort: studying first, then pending, in order as defined (no deadline-skip)
   allTemas.sort(function(a,b){
-    var da = a.tema.deadline||new Date(2026,11,31);
-    var db = b.tema.deadline||new Date(2026,11,31);
-    return da-db;
+    var sa=a.tema.estado==='studying'?0:1;
+    var sb=b.tema.estado==='studying'?0:1;
+    return sa-sb;
   });
 
   // Assign 2-3 temas per day, cycling through
@@ -2145,6 +2411,91 @@ function renderQCY() {
   }
 }
 
+// ── AGREGAR MATERIA (CHANGE 1) ──
+function openAddMateria(){
+  document.getElementById('modal-add-materia').style.display='flex';
+}
+function closeAddMateria(){
+  document.getElementById('modal-add-materia').style.display='none';
+}
+function saveNewMateria(){
+  var nombre=document.getElementById('am-nombre').value.trim();
+  if(!nombre){showToast('Escribí el nombre de la materia','var(--danger)');return;}
+  var codigo=document.getElementById('am-codigo').value.trim()||'Nueva materia';
+  var icon=document.getElementById('am-icon').value.trim()||'📘';
+  var color=document.getElementById('am-color').value||'#7c6af7';
+  var material=document.getElementById('am-material').value.trim();
+  var temasRaw=document.getElementById('am-temas').value.trim();
+  var parcial=document.getElementById('am-parcial').value.trim()||'A confirmar';
+  var tienePromo=document.getElementById('am-promo').value==='si';
+
+  // Parse temas: each line = "U1 — Titulo: Tema1, Tema2, ..."
+  var temas=[];
+  var nextId=Date.now();
+  temasRaw.split('\n').forEach(function(line){
+    line=line.trim();if(!line)return;
+    var colonIdx=line.indexOf(':');
+    var unidadNombre=colonIdx>-1?line.slice(0,colonIdx).trim():line;
+    var temasStr=colonIdx>-1?line.slice(colonIdx+1).trim():'';
+    var items=temasStr?temasStr.split(',').map(function(t){
+      return{id:nextId++,nombre:t.trim(),dificultad:'media',parcial:'P1',estado:'pending',desc:t.trim()};
+    }).filter(function(t){return t.nombre;}):[{id:nextId++,nombre:unidadNombre,dificultad:'media',parcial:'P1',estado:'pending',desc:unidadNombre}];
+    temas.push({unidad:unidadNombre,items:items});
+  });
+  if(temas.length===0) temas=[{unidad:'U1 — Temario',items:[{id:nextId++,nombre:'Pendiente de completar',dificultad:'media',parcial:'P1',estado:'pending',desc:''}]}];
+
+  var newId=MATERIAS.reduce(function(mx,m){return Math.max(mx,m.id);},0)+1;
+  var newMateria={
+    id:newId, nombre:nombre, codigo:codigo, icon:icon, color:color,
+    progreso:0, status:'pending', proxParcial:parcial, hsTotales:null, notebooklm:'',
+    promocion:{tiene:tienePromo, desc:tienePromo?'Condiciones por definir':'Sin modalidad de final corto.',
+      condicion:tienePromo?'Por definir':'—', beneficio:tienePromo?'Por definir':'Sin final corto'},
+    evaluacion:{p1:'Por definir',p2:'Por definir',final:'Por definir'},
+    temas:temas
+  };
+  // Save material if provided
+  if(material) localStorage.setItem('mat_material_'+newId,material);
+
+  MATERIAS.push(newMateria);
+  closeAddMateria();
+  renderMaterias('materias-grid');renderMaterias('materias-grid-2');
+  updateStats();
+  showToast('✅ Materia "'+nombre+'" agregada','var(--accent3)');
+  // Clear inputs
+  ['am-nombre','am-codigo','am-icon','am-temas','am-parcial','am-material'].forEach(function(id){
+    var el=document.getElementById(id);if(el)el.value='';
+  });
+}
+
+// ── MODAL AGREGAR EVENTO: extender para tarea con ejercicios (CHANGE 3) ──
+// Patch the add-event modal to show ejercicios fields when tipo=tarea
+(function patchAddEventModal(){
+  // Will be called after DOM ready
+  window.onTipoChange = function(){
+    var tipo=document.getElementById('ev-tipo').value;
+    var wrap=document.getElementById('ev-unidades-wrap');
+    var ejWrap=document.getElementById('ev-ejercicios-wrap');
+    var fechaFinWrap=document.getElementById('ev-fechafin-wrap');
+    if(tipo==='parcial'||tipo==='final'||tipo==='recuperatorio'){
+      wrap.style.display='block';
+      buildUnidadesChips();
+      document.getElementById('ev-materia').onchange=buildUnidadesChips;
+      if(ejWrap) ejWrap.style.display='none';
+      if(fechaFinWrap) fechaFinWrap.style.display='none';
+    } else if(tipo==='tarea'){
+      wrap.style.display='none';
+      if(ejWrap) ejWrap.style.display='block';
+      if(fechaFinWrap) fechaFinWrap.style.display='block';
+      document.getElementById('ev-materia').onchange=null;
+    } else {
+      wrap.style.display='none';
+      if(ejWrap) ejWrap.style.display='none';
+      if(fechaFinWrap) fechaFinWrap.style.display='none';
+      document.getElementById('ev-materia').onchange=null;
+    }
+  };
+})();
+
 // ── INIT ──
 loadProgress();
 calcDeadlines();
@@ -2152,6 +2503,73 @@ setDate();
 renderTodayCard();
 renderMaterias('materias-grid');
 updateStats();
+
+// Inject ejercicios fields into add-event modal after DOM is ready
+(function injectEjerciciosFields(){
+  var wrap=document.getElementById('ev-unidades-wrap');
+  if(!wrap) return;
+
+  // Add fecha fin field
+  var fechaFinDiv=document.createElement('div');
+  fechaFinDiv.id='ev-fechafin-wrap';
+  fechaFinDiv.style.display='none';
+  fechaFinDiv.innerHTML='<div style="font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Fecha límite para completarla</div>'
+    +'<input id="ev-fechafin" type="date" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-family:\'Inter\',sans-serif;font-size:13px;outline:none"/>';
+
+  // Add ejercicios count field
+  var ejDiv=document.createElement('div');
+  ejDiv.id='ev-ejercicios-wrap';
+  ejDiv.style.display='none';
+  ejDiv.innerHTML='<div style="font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Cantidad de ejercicios</div>'
+    +'<input id="ev-ejercicios-count" type="number" min="1" max="500" placeholder="ej: 20" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-family:\'Inter\',sans-serif;font-size:13px;outline:none"/>'
+    +'<div style="font-size:11px;color:var(--text2);margin-top:5px;line-height:1.5">Se van a repartir automáticamente entre la fecha de inicio y la fecha límite para que puedas llegar justo.</div>';
+
+  wrap.parentNode.insertBefore(fechaFinDiv, wrap);
+  wrap.parentNode.insertBefore(ejDiv, wrap);
+})();
+
+// Override saveEvent to handle tarea con ejercicios
+(function patchSaveEvent(){
+  var _orig = window.saveEvent;
+  window.saveEvent = function(){
+    var tipo=document.getElementById('ev-tipo').value;
+    if(tipo==='tarea'){
+      var materia=document.getElementById('ev-materia').value;
+      var desc=document.getElementById('ev-desc').value.trim()||'Tarea';
+      var fecha=document.getElementById('ev-fecha').value;
+      var fechaFin=document.getElementById('ev-fechafin')&&document.getElementById('ev-fechafin').value;
+      var countEl=document.getElementById('ev-ejercicios-count');
+      var count=countEl?parseInt(countEl.value)||0:0;
+
+      if(!fecha){showToast('Seleccioná una fecha de inicio','var(--danger)');return;}
+      if(!fechaFin||fechaFin<fecha) fechaFin=fecha;
+
+      if(count>0){
+        // Create tarea distribuida
+        var m=MATERIAS.find(function(x){return x.nombre===materia;});
+        var tarea={
+          id:'tarea_'+Date.now(),
+          tipo:'tarea_ejercicios',
+          materia:materia,
+          desc:desc,
+          fechaInicio:fecha,
+          fechaFin:fechaFin,
+          totalEjercicios:count,
+          color:m?m.color:'#6af7c2'
+        };
+        tarea=distribuirTareaEjercicios(tarea);
+        var tareasData=getTareasData();
+        tareasData.push(tarea);
+        saveTareasData(tareasData);
+        closeAddEvent();
+        showToast('✅ Tarea repartida en '+tarea.dayAssignments.length+' días','var(--accent3)');
+        renderTodayCard();
+        return;
+      }
+    }
+    _orig();
+  };
+})();
 </script>
 </body>
 </html>
