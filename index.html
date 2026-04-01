@@ -924,26 +924,56 @@ const FECHAS_DATA = [
   {materia:"Introducción a la Filosofía", color:"#f7c26a", tipo:"Recuperatorio", fecha:new Date(2026,5,17)},
 ];
 
-// ── PERSISTENCIA ──
-const STORE_KEY = 'studyos_v1';
+// ══════════════════════════════════════════════════
+// ── SUPABASE CONFIG ──
+// ══════════════════════════════════════════════════
+const SB_URL = 'https://qqckibkfmvkdbarribog.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxY2tpYmtmbXZrZGJhcnJpYm9nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwMDMzODYsImV4cCI6MjA5MDU3OTM4Nn0.sWigC7gpGUXHrbKKytne7WEgTlfBdMTyyF67qeuGGds';
 
-function saveProgress() {
-  try {
-    const d={};
-    MATERIAS.forEach(m=>{d[m.id]={};m.temas.forEach(u=>u.items.forEach(t=>{d[m.id][t.id]=t.estado;}));});
-    localStorage.setItem(STORE_KEY,JSON.stringify(d));
-  } catch(e){}
+async function sbFetch(path, opts={}){
+  const r = await fetch(SB_URL+'/rest/v1/'+path, {
+    headers: {
+      'apikey': SB_KEY,
+      'Authorization': 'Bearer '+SB_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': opts.prefer||'',
+      ...opts.headers
+    },
+    method: opts.method||'GET',
+    body: opts.body ? JSON.stringify(opts.body) : undefined
+  });
+  if(r.status===204||r.status===201) return null;
+  return r.json();
 }
 
-function loadProgress() {
-  try {
-    const raw=localStorage.getItem(STORE_KEY); if(!raw) return;
-    const d=JSON.parse(raw);
-    MATERIAS.forEach(m=>{if(!d[m.id])return;m.temas.forEach(u=>u.items.forEach(t=>{if(d[m.id][t.id])t.estado=d[m.id][t.id];}));});
-  } catch(e){}
+// ── PERSISTENCIA — PROGRESO ──
+async function saveProgress() {
+  const rows = [];
+  MATERIAS.forEach(m => m.temas.forEach(u => u.items.forEach(t => {
+    rows.push({ tema_id: t.id, estado: t.estado });
+  })));
+  // Upsert all in one call
+  await sbFetch('progreso', {
+    method: 'POST',
+    prefer: 'resolution=merge-duplicates',
+    headers: { 'Prefer': 'resolution=merge-duplicates' },
+    body: rows
+  });
 }
 
-// ── RACHA ──
+async function loadProgress() {
+  try {
+    const data = await sbFetch('progreso?select=tema_id,estado');
+    if(!data || !data.length) return;
+    const map = {};
+    data.forEach(r => { map[r.tema_id] = r.estado; });
+    MATERIAS.forEach(m => m.temas.forEach(u => u.items.forEach(t => {
+      if(map[t.id]) t.estado = map[t.id];
+    })));
+  } catch(e){ console.warn('loadProgress error', e); }
+}
+
+// ── RACHA — sigue en localStorage (no es crítico perderla) ──
 function getStreak() {
   try {
     const s=JSON.parse(localStorage.getItem('studyos_streak')||'{}');
@@ -1000,7 +1030,7 @@ function updateStats() {
 // 5. Si un tema se completa antes, el slot queda libre → avanza al siguiente
 // 6. Siempre genera el plan desde HOY hacia adelante, nunca queda stale
 
-var SCHED_KEY = 'studyos_schedule_v2';
+var SCHED_KEY = 'studyos_schedule_v2'; // kept as localStorage cache key
 
 // Cuántos temas por día por día de la semana: LUN-VIE=2, SAB-DOM=1
 function getSlotsForDay(dow){ return (dow===0||dow===6)?1:2; }
@@ -1043,7 +1073,24 @@ function interleaveByMateria(temas){
 function loadScheduleLog(){
   try{ return JSON.parse(localStorage.getItem(SCHED_KEY)||'{}'); }catch(e){ return {}; }
 }
-function saveScheduleLog(log){ localStorage.setItem(SCHED_KEY,JSON.stringify(log)); }
+function saveScheduleLog(log){
+  localStorage.setItem(SCHED_KEY,JSON.stringify(log));
+  // Async backup to Supabase
+  sbFetch('schedule_log', {
+    method:'POST',
+    headers:{'Prefer':'resolution=merge-duplicates'},
+    body:[{id:'main', data: JSON.stringify(log)}]
+  }).catch(function(){});
+}
+async function loadScheduleLogFromSB(){
+  try{
+    const data = await sbFetch('schedule_log?id=eq.main');
+    if(data && data[0] && data[0].data){
+      const log = JSON.parse(data[0].data);
+      localStorage.setItem(SCHED_KEY, JSON.stringify(log));
+    }
+  }catch(e){}
+}
 
 // Regenera el plan completo desde startDate hacia adelante, para N días
 // Devuelve array de { date (ISO string), temas: [{tId,mId,...}] }
@@ -1399,34 +1446,182 @@ let panelTema=null, panelMateria=null, panelUnidad=null, examenPuntajes={};
 
 function getGeminiKey(){ return localStorage.getItem('groq_api_key')||''; }
 function saveGeminiKey(){
-  const k=document.getElementById('gemini-key-input').value.trim();
+  const k=document.getElementById('gemini-key-input') && document.getElementById('gemini-key-input').value.trim();
   if(!k){showToast('Pegá tu API key primero','var(--danger)');return;}
   localStorage.setItem('groq_api_key',k);
   const s=document.getElementById('key-status');
-  s.style.display='block';s.style.color='var(--accent3)';s.textContent='✅ Key guardada en este dispositivo';
+  if(s){s.style.display='block';s.style.color='var(--accent3)';s.textContent='✅ Key guardada en este dispositivo';}
   showToast('🔑 API key guardada');
 }
 
+// ── PDF.JS HELPERS ──
+function loadPdfJs(cb){
+  if(window.pdfjsLib){cb();return;}
+  const s=document.createElement('script');
+  s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+  s.onload=function(){
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    cb();
+  };
+  document.head.appendChild(s);
+}
+async function extractPdfText(file){
+  return new Promise(function(resolve,reject){
+    loadPdfJs(async function(){
+      try{
+        const ab=await file.arrayBuffer();
+        const pdf=await pdfjsLib.getDocument({data:ab}).promise;
+        let text='';
+        for(let i=1;i<=pdf.numPages;i++){
+          const page=await pdf.getPage(i);
+          const tc=await page.getTextContent();
+          text+=tc.items.map(function(x){return x.str;}).join(' ')+'
+';
+        }
+        resolve(text.trim());
+      }catch(e){reject(e);}
+    });
+  });
+}
+
+// ── MATERIALES POR MATERIA (Supabase) ──
+// Cache local para no re-fetchear en cada generación
+var _materialesCache = {}; // materia_id -> array de {id,nombre,contenido}
+
+async function loadMaterialesMateria(materiaId){
+  if(_materialesCache[materiaId]) return _materialesCache[materiaId];
+  try{
+    const data = await sbFetch('materiales?materia_id=eq.'+materiaId+'&order=created_at.asc');
+    _materialesCache[materiaId] = data||[];
+    return _materialesCache[materiaId];
+  }catch(e){ return []; }
+}
+
+async function saveMaterial(materiaId, nombre, contenido){
+  const row = {
+    id: 'mat_'+materiaId+'_'+Date.now(),
+    materia_id: materiaId,
+    nombre: nombre,
+    contenido: contenido
+  };
+  try{
+    await sbFetch('materiales', { method:'POST', body:[row] });
+    if(!_materialesCache[materiaId]) _materialesCache[materiaId]=[];
+    _materialesCache[materiaId].push(row);
+    showToast('💾 Material guardado en la nube','var(--accent3)');
+  }catch(e){ showToast('❌ Error al guardar: '+e.message,'var(--danger)'); }
+}
+
+async function deleteMaterial(materialId, materiaId){
+  try{
+    await sbFetch('materiales?id=eq.'+materialId, { method:'DELETE' });
+    if(_materialesCache[materiaId]){
+      _materialesCache[materiaId] = _materialesCache[materiaId].filter(m=>m.id!==materialId);
+    }
+    showToast('🗑 Material eliminado');
+  }catch(e){ showToast('❌ Error al eliminar','var(--danger)'); }
+}
+
+// Junta todo el contenido de materiales de una materia para pasarle a la IA
+async function getMatContext(materiaId){
+  const mats = await loadMaterialesMateria(materiaId);
+  if(!mats.length) return '';
+  return mats.map(m=>'=== '+m.nombre+' ===
+'+m.contenido).join('
+
+');
+}
+
+// Render del panel de materiales en la página de detalle de materia
+async function renderMaterialesPanel(materiaId){
+  const container = document.getElementById('materiales-panel-'+materiaId);
+  if(!container) return;
+  container.innerHTML = '<div style="color:var(--text2);font-size:12px;padding:8px 0">Cargando materiales...</div>';
+  const mats = await loadMaterialesMateria(materiaId);
+  let html = '';
+  if(mats.length===0){
+    html = '<div style="color:var(--text2);font-size:12px;padding:8px 0;font-style:italic">Sin materiales cargados todavía.</div>';
+  } else {
+    mats.forEach(m=>{
+      html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:6px">'
+        +'<span style="font-size:16px">📄</span>'
+        +'<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+m.nombre+'</div>'
+        +'<div style="font-size:10px;color:var(--text2);margin-top:2px">'+m.contenido.length+' caracteres</div></div>'
+        +'<button onclick="deleteMaterial(''+m.id+'','+materiaId+').then(()=>renderMaterialesPanel('+materiaId+'))" style="background:rgba(247,106,106,0.1);border:1px solid rgba(247,106,106,0.2);color:var(--danger);border-radius:4px;padding:5px 10px;font-size:11px;cursor:pointer;font-family:Inter,sans-serif">🗑</button>'
+        +'</div>';
+    });
+  }
+  // Upload form
+  html += '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">'
+    +'<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text2);margin-bottom:8px">Agregar material</div>'
+    +'<input id="mat-nombre-'+materiaId+'" type="text" placeholder="Nombre del archivo / apunte (ej: Guía TP1)" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;color:var(--text);font-family:Inter,sans-serif;font-size:13px;outline:none;margin-bottom:8px"/>'
+    // Drop zone
+    +'<div id="mat-drop-'+materiaId+'" style="border:2px dashed var(--border);border-radius:var(--radius-sm);padding:16px;text-align:center;cursor:pointer;transition:border-color 0.2s;background:var(--bg);margin-bottom:8px" onclick="document.getElementById('mat-file-'+materiaId+'').click()" ondragover="event.preventDefault();this.style.borderColor='var(--accent)'" ondragleave="this.style.borderColor='var(--border)'" ondrop="handleMatFileDrop(event,'+materiaId+')">'
+    +'<div style="font-size:20px;margin-bottom:4px">📁</div>'
+    +'<div style="font-size:12px;color:var(--text2)">Subí un archivo o arrastralo acá</div>'
+    +'<div style="font-size:10px;color:var(--text2);margin-top:3px;opacity:0.7">PDF · TXT · MD — para PPT/Word exportá como PDF primero</div>'
+    +'</div>'
+    +'<input type="file" id="mat-file-'+materiaId+'" accept=".pdf,.txt,.md" style="display:none" onchange="handleMatFileInput(event,'+materiaId+')"/>'
+    +'<div id="mat-file-status-'+materiaId+'" style="font-size:11px;margin-bottom:8px;display:none"></div>'
+    +'<textarea id="mat-texto-'+materiaId+'" placeholder="O pegá el texto directamente acá..." style="width:100%;min-height:100px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;color:var(--text);font-family:Inter,sans-serif;font-size:12px;line-height:1.6;resize:vertical;outline:none;margin-bottom:8px"></textarea>'
+    +'<button onclick="submitMaterial('+materiaId+')" style="background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;width:100%">💾 Guardar material</button>'
+    +'</div>';
+  container.innerHTML = html;
+}
+
+async function submitMaterial(materiaId){
+  const nombre = (document.getElementById('mat-nombre-'+materiaId)||{}).value.trim();
+  const texto = (document.getElementById('mat-texto-'+materiaId)||{}).value.trim();
+  if(!nombre){ showToast('Poné un nombre al material','var(--danger)'); return; }
+  if(!texto){ showToast('No hay contenido para guardar','var(--danger)'); return; }
+  await saveMaterial(materiaId, nombre, texto);
+  renderMaterialesPanel(materiaId);
+}
+
+async function handleMatFileInput(event, materiaId){
+  const file = event.target.files && event.target.files[0];
+  if(file) await processMatFile(file, materiaId);
+  event.target.value='';
+}
+function handleMatFileDrop(event, materiaId){
+  event.preventDefault();
+  const file = event.dataTransfer.files && event.dataTransfer.files[0];
+  if(file) processMatFile(file, materiaId);
+}
+async function processMatFile(file, materiaId){
+  const statusEl = document.getElementById('mat-file-status-'+materiaId);
+  const texta = document.getElementById('mat-texto-'+materiaId);
+  const nombreEl = document.getElementById('mat-nombre-'+materiaId);
+  if(statusEl){ statusEl.style.display='block'; statusEl.style.color='var(--accent2)'; statusEl.textContent='⏳ Leyendo archivo...'; }
+  const ext = file.name.split('.').pop().toLowerCase();
+  let text = '';
+  if(ext==='pdf'){
+    try{ text = await extractPdfText(file); }
+    catch(e){ if(statusEl){statusEl.style.color='var(--danger)';statusEl.textContent='❌ Error al leer PDF: '+e.message;} return; }
+    if(!text||text.length<20){ if(statusEl){statusEl.style.color='var(--danger)';statusEl.textContent='⚠️ No se pudo extraer texto. Probá exportarlo como TXT.';} return; }
+  } else if(ext==='txt'||ext==='md'){
+    text = await new Promise(res=>{ const r=new FileReader(); r.onload=e=>res(e.target.result); r.readAsText(file); });
+  } else {
+    if(statusEl){statusEl.style.color='var(--danger)';statusEl.textContent='⚠️ Formato no soportado. Usá PDF, TXT o MD.';}
+    return;
+  }
+  if(texta) texta.value = text;
+  if(nombreEl && !nombreEl.value) nombreEl.value = file.name.replace(/\.[^.]+$/,'');
+  if(statusEl){ statusEl.style.color='var(--accent3)'; statusEl.textContent='✅ '+file.name+' listo ('+text.length+' caracteres) — completá el nombre y guardá'; }
+}
+
+// ── FEED POR TEMA (ahora usa materiales de materia como contexto) ──
+// getFeed / saveFeed / clearFeed ahora son solo helpers locales de sesión para compatibilidad
+// El contexto real viene de getMatContext()
 function getFeedKey(){ return panelTema?'feed_'+panelTema.id:''; }
 function saveFeed(){
-  const ta=document.getElementById('tp-feed-text');
-  const txt=ta?ta.value.trim():'';
-  if(getFeedKey()) localStorage.setItem(getFeedKey(),txt);
-  showToast('💾 Material guardado — la IA lo usará en la próxima generación');
+  showToast('ℹ️ El material se gestiona por materia — usá la sección "Mi Material" en la página de la materia','var(--accent2)');
 }
 function clearFeed(){
-  const ta=document.getElementById('tp-feed-text');
-  if(ta) ta.value='';
-  if(getFeedKey()) localStorage.removeItem(getFeedKey());
-  showToast('🗑 Material borrado');
+  showToast('ℹ️ Para borrar materiales, usá la sección "Mi Material" en la página de la materia','var(--accent2)');
 }
-function getFeed(){ return getFeedKey()?localStorage.getItem(getFeedKey())||'':''; }
-function saveMatFeed(){
-  const ta=document.getElementById('tp-matfeed-text');
-  const txt=ta?ta.value.trim():'';
-  if(panelMateria) localStorage.setItem('mat_material_'+panelMateria.id, txt);
-  showToast('💾 Material de la materia guardado — la IA lo usará en todos los temas');
-}
+function getFeed(){ return ''; } // context now comes from getMatContext()
+function saveMatFeed(){ saveFeed(); }
 
 function switchTab(tab){
   ['explicacion','ejercicios','examen','feed'].forEach(t=>{
@@ -1490,9 +1685,8 @@ async function generateExplicacion(){
   const area=document.getElementById('tp-ai-explain-area');
   if(!key){noKeyError(area);return;}
   area.innerHTML='<div style="text-align:center;padding:40px 20px"><div style="display:inline-block;width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:12px"></div><div style="color:var(--text2);font-size:13px">Generando tu explicación...</div></div>';
-  const feed=getFeed();
-  const matFeed=panelMateria?localStorage.getItem('mat_material_'+panelMateria.id)||'':'';
-  const feedCtx=(matFeed?'\n\nMATERIAL GENERAL DE LA MATERIA:\n'+matFeed:'')+(feed?'\n\nMATERIAL DEL PROFE PARA ESTE TEMA (prioridad máxima):\n'+feed:'');
+  const matCtx = panelMateria ? await getMatContext(panelMateria.id) : '';
+  const feedCtx = matCtx ? '\n\nMATERIAL DEL PROFE (usalo como base principal, seguí su enfoque y ejemplos):\n'+matCtx : '';
   const prompt='Sos un tutor universitario para 1er año de Ingeniería Informática en Argentina. Explicá el tema de forma CLARA, VISUAL y FÁCIL DE ESCANEAR. El alumno tiene que poder entender el tema leyendo la explicación.\n\nTEMA: "'+panelTema.nombre+'"\nDESCRIPCIÓN: "'+panelTema.desc+'"\nDIFICULTAD: '+panelTema.dificultad+'\nENTRA EN: '+panelTema.parcial+feedCtx+'\n\nFORMATO OBLIGATORIO — seguilo exactamente:\n\n## 🎯 ¿Qué es esto y por qué importa?\n2-3 oraciones directas. Qué es, para qué sirve en la vida real y en ingeniería. Sin vueltas.\n\n## 🧩 Los conceptos clave\nPara CADA concepto importante: nombre en negrita, definición en una oración, ejemplo concreto en la siguiente línea. Máximo 3-4 líneas por concepto. Usá bullet points con →\n\n## 📐 Cómo funciona — paso a paso\nNumerado. Cada paso es una acción concreta. Corto y directo. Si hay una fórmula, ponela en una línea sola.\n\n## ✅ Ejemplo resuelto 1 — fácil\nEnunciado concreto. Solución numerada paso a paso. Cada paso con su explicación en una línea.\n\n## ✅ Ejemplo resuelto 2 — más difícil\nMismo formato. Que sea un caso que podría salir en el parcial.\n\n## ⚠️ Errores típicos\nBullet points cortos. Error → por qué está mal → cómo se hace bien.\n\n## 🔑 Para el parcial — recordá esto\n5-7 puntos clave. Una oración cada uno. Lo más importante que no podés olvidar.\n\nREGLAS:\n- Párrafos cortos, máximo 3 líneas\n- Bullet points para listas, nunca párrafos largos\n- Emojis en los títulos\n- Si hay algo matemático ponelo en una línea sola bien visible\n- Tono directo, como un compañero que sabe mucho\n\nSi el tema tiene funciones o gráficos matemáticos, agregá al final:\n## GRAFICO_INTERACTIVO\nCódigo JS puro con Chart.js (canvas id="ai-chart"), sliders en div id="ai-chart-controls" si aplica. Si no corresponde gráfico: NO_GRAFICO';
   try{
     const resp=await callGemini(prompt);
@@ -1519,7 +1713,7 @@ async function generateExplicacion(){
 async function regenerarSimple(){
   const area=document.getElementById('tp-ai-explain-area');
   area.innerHTML='<div style="text-align:center;padding:40px 20px"><div style="display:inline-block;width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent2);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:12px"></div><div style="color:var(--text2);font-size:13px">Generando versión más simple...</div></div>';
-  const feed=getFeed();
+  const matCtx2 = panelMateria ? await getMatContext(panelMateria.id) : '';
   const prompt='Sos un tutor. Explicame "'+panelTema.nombre+'" de '+panelMateria.nombre+' de forma MUY SIMPLE, como si tuviera 15 años y nunca lo hubiera visto. Usá analogías de la vida cotidiana. Sin fórmulas complejas al principio. Máximo 400 palabras.'+(feed?' Material del profe: '+feed:'');
   try{
     const resp=await callGemini(prompt);
@@ -1533,9 +1727,8 @@ async function generateEjercicios(){
   const area=document.getElementById('tp-ai-ejercicios-area');
   if(!key){noKeyError(area);return;}
   area.innerHTML='<div style="text-align:center;padding:40px 20px"><div style="display:inline-block;width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:12px"></div><div style="color:var(--text2);font-size:13px">Generando ejercicios...</div></div>';
-  const feed=getFeed();
-  const matFeed2=panelMateria?localStorage.getItem('mat_material_'+panelMateria.id)||'':'';
-  const feedCtx=((matFeed2?'\n\nMATERIAL GENERAL DE LA MATERIA:\n'+matFeed2:''))+(feed?'\n\nMATERIAL DEL PROFE (basate en este estilo):\n'+feed:'');
+  const matCtx3 = panelMateria ? await getMatContext(panelMateria.id) : '';
+  const feedCtx = matCtx3 ? '\n\nMATERIAL DEL PROFE (basate en este estilo y ejemplos):\n'+matCtx3 : '';
   const prompt='Sos un profe de '+panelMateria.nombre+' en Argentina (UCA). Generá exactamente 4 ejercicios para completar (NO multiple choice, el alumno escribe la respuesta) sobre "'+panelTema.nombre+'".\nContexto: "'+panelTema.desc+'"\nDificultad: '+panelTema.dificultad+feedCtx+'\n\nRespondé SOLO con JSON válido sin texto antes ni después ni markdown:\n{"ejercicios":[{"num":1,"enunciado":"texto completo del ejercicio","dificultad":"fácil","respuesta_corta":"resultado final en pocas palabras","procedimiento":"procedimiento completo paso a paso numerado"}]}\n\nVariá: 1 fácil, 2 medios, 1 difícil. Estilo parcial universitario argentino.';
   try{
     const resp=await callGemini(prompt);
@@ -1609,8 +1802,8 @@ async function generateExamen(){
   if(!panelUnidad){showToast('Error: no hay unidad','var(--danger)');return;}
   area.innerHTML='<div style="text-align:center;padding:40px 20px"><div style="display:inline-block;width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:12px"></div><div style="color:var(--text2);font-size:13px">Armando tu examen de unidad...</div></div>';
   const temasU=panelUnidad.items.map(function(t){return t.nombre;}).join(', ');
-  const feed=getFeed();
-  const prompt='Sos profesor de '+panelMateria.nombre+' (UCA Argentina). Armá un examen parcial de la unidad "'+panelUnidad.unidad+'" con temas: '+temasU+'.\n'+(feed?'Material del profe: '+feed+'.\n':'')+'Generá exactamente 5 ejercicios para escribir (NO multiple choice).\nRespondé SOLO con JSON válido:\n{"titulo":"Examen: nombre_unidad","ejercicios":[{"num":1,"enunciado":"enunciado completo","puntaje":20,"respuesta_corta":"resultado final","procedimiento":"pasos completos numerados"}]}\nPuntaje total=100. Cubrí distintos temas. Estilo parcial universitario argentino.';
+  const matCtx4 = panelMateria ? await getMatContext(panelMateria.id) : '';
+  const prompt='Sos profesor de '+panelMateria.nombre+' (UCA Argentina). Armá un examen parcial de la unidad "'+panelUnidad.unidad+'" con temas: '+temasU+'.\n'+(matCtx4?'Material del profe: '+matCtx4+'.\n':'')+'Generá exactamente 5 ejercicios para escribir (NO multiple choice).\nRespondé SOLO con JSON válido:\n{"titulo":"Examen: nombre_unidad","ejercicios":[{"num":1,"enunciado":"enunciado completo","puntaje":20,"respuesta_corta":"resultado final","procedimiento":"pasos completos numerados"}]}\nPuntaje total=100. Cubrí distintos temas. Estilo parcial universitario argentino.';
   try{
     const resp=await callGemini(prompt);
     const clean=resp.replace(/```json|```/g,'').trim();
@@ -1733,22 +1926,21 @@ function openTemaPanel(tId,mId){
 
       <div id="tppage-feed" style="display:none">
         <div class="feed-section">
-          <div class="section-title" style="margin-bottom:8px">Material de la materia (compartido con todos los temas)</div>
-          <div style="font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.6">Material general de ${panelMateria?panelMateria.nombre:'la materia'}: programa, índice, apuntes generales. La IA lo usa como base para todos los temas.</div>
-          <textarea id="tp-matfeed-text" placeholder="Programa de la materia, índice general, apuntes del profe..." style="width:100%;min-height:100px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;color:var(--text);font-family:'Inter',sans-serif;font-size:12px;line-height:1.6;resize:vertical;outline:none;margin-bottom:8px">${panelMateria?localStorage.getItem('mat_material_'+panelMateria.id)||'':''}</textarea>
-          <button class="gen-btn-large" style="width:100%;margin-bottom:20px" onclick="saveMatFeed()">💾 Guardar material de la materia</button>
-          <div class="section-title" style="margin-bottom:8px">Tu material para este tema</div>
-          <div style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.6">Pegá apuntes, texto de PPT del profe, guías de ejercicios. La IA lo usa como contexto prioritario para generar explicaciones y ejercicios más fieles a tu cursada.</div>
-          <textarea id="tp-feed-text" placeholder="Pegá apuntes, texto de diapositivas, guías de ejercicios...">${feedGuardado}</textarea>
-          <div style="display:flex;gap:10px">
-            <button class="gen-btn-large" onclick="saveFeed()">💾 Guardar material del tema</button>
-            <button onclick="clearFeed()" style="padding:11px 20px;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-family:'Inter',sans-serif;font-size:13px">🗑 Borrar</button>
+          <div style="text-align:center;padding:24px 16px">
+            <div style="font-size:32px;margin-bottom:12px">📁</div>
+            <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px">El material se gestiona por materia</div>
+            <div style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:20px">
+              Para subir PDFs, apuntes y guías de <strong style="color:var(--text)">${panelMateria?panelMateria.nombre:'esta materia'}</strong>, andá a la página de la materia y usá la sección <strong style="color:var(--accent)">📁 Mi Material</strong>.<br><br>
+              La IA ya usa automáticamente todo el material que hayas subido para esta materia al generar explicaciones y ejercicios.
+            </div>
+            <button onclick="showDetalle(${panelMateria?panelMateria.id:0})" style="background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);padding:11px 24px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">
+              → Ir a ${panelMateria?panelMateria.nombre:'la materia'}
+            </button>
           </div>
-          ${feedStatus}
         </div>
         <div class="api-key-section">
           <div class="section-title" style="margin-bottom:6px">Configuración IA (Groq)</div>
-          <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Tu API key de <a href="https://console.groq.com" target="_blank" style="color:var(--accent)">console.groq.com</a> — se guarda solo en este dispositivo, nunca se sube a ningún lado</div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Tu API key de <a href="https://console.groq.com" target="_blank" style="color:var(--accent)">console.groq.com</a> — se guarda solo en este dispositivo</div>
           <input id="gemini-key-input" type="password" placeholder="Pegá tu API key de Groq acá"/>
           <button class="gen-btn-large" style="width:100%" onclick="saveGeminiKey()">🔑 Guardar key</button>
           ${keyStatus}
@@ -1873,14 +2065,23 @@ function showDetalle(id) {
     });
   });
 
-  html+=`</div><div class="section-title" style="margin-top:24px">Simulacro</div>
+  html+=`</div>
+  <div class="section-title" style="margin-top:24px">📁 Mi Material</div>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:24px">
+    <div style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.6">
+      Subí PDFs, apuntes, guías de ejercicios, PPTs del profe. La IA los usa como contexto para generar explicaciones y ejercicios más fieles a tu cursada. Se guardan en la nube.
+    </div>
+    <div id="materiales-panel-${m.id}"><div style="color:var(--text2);font-size:12px;padding:8px 0">Cargando...</div></div>
+  </div>
+  <div class="section-title" style="margin-top:8px">Simulacro</div>
   <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:32px">
     <button class="btn btn-primary" onclick="openExamen(${m.id})">✍️ Simulacro de ${m.nombre}</button>
-    
   </div>`;
 
   document.getElementById('detalle-content').innerHTML=html;
   document.getElementById('back-btn').onclick=()=>showPage('dashboard');
+  // Load materiales panel async
+  renderMaterialesPanel(m.id);
 }
 
 // ── FECHAS ──
@@ -2243,20 +2444,40 @@ const TIPO_CONFIG = {
   otro:         { label:'Otro',         emoji:'📌', color:'#8888a8' },
 };
 
+// Eventos: base hardcodeados + custom en Supabase
+var _eventosCache = null;
+
 function getEventos() {
+  const base = FECHAS_DATA.map(function(f,i){
+    return { id:'base_'+i, tipo:f.tipoKey||'parcial', materia:f.materia, desc:f.tipo,
+             fecha:f.fecha.toISOString().slice(0,10), color:f.color, unidades:[] };
+  });
+  const custom = _eventosCache || JSON.parse(localStorage.getItem('studyos_eventos_backup')||'[]');
+  return base.concat(custom).sort(function(a,b){return a.fecha>b.fecha?1:-1;});
+}
+
+async function loadEventos(){
   try {
-    const base = FECHAS_DATA.map(function(f,i){
-      return { id:'base_'+i, tipo:f.tipoKey||'parcial', materia:f.materia, desc:f.tipo,
-               fecha:f.fecha.toISOString().slice(0,10), color:f.color, unidades:[] };
-    });
-    const custom = JSON.parse(localStorage.getItem('studyos_eventos')||'[]');
-    return base.concat(custom).sort(function(a,b){return a.fecha>b.fecha?1:-1;});
-  } catch(e){ return []; }
+    const data = await sbFetch('eventos?select=*&order=fecha.asc');
+    if(data && Array.isArray(data)){ _eventosCache = data; localStorage.setItem('studyos_eventos_backup', JSON.stringify(data)); }
+  } catch(e){ console.warn('loadEventos error', e); }
 }
 
 function saveEventos(evs) {
   const custom = evs.filter(function(e){return !e.id.startsWith('base_');});
-  localStorage.setItem('studyos_eventos', JSON.stringify(custom));
+  _eventosCache = custom;
+  localStorage.setItem('studyos_eventos_backup', JSON.stringify(custom));
+  // Async sync to Supabase
+  syncEventosToSB(custom);
+}
+
+async function syncEventosToSB(custom){
+  try {
+    await sbFetch('eventos?id=neq.xxxxxxxx', { method:'DELETE' });
+    if(custom.length){
+      await sbFetch('eventos', { method:'POST', headers:{'Prefer':'resolution=merge-duplicates'}, body:custom });
+    }
+  } catch(e){ console.warn('syncEventos error', e); }
 }
 
 // ── CALENDARIO STATE ──
@@ -2668,12 +2889,20 @@ function saveNewMateria(){
 })();
 
 // ── INIT ──
-loadProgress();
-calcDeadlines();
-setDate();
-renderTodayCard();
-renderMaterias('materias-grid');
-updateStats();
+// ── INIT con Supabase ──
+async function initApp(){
+  try { await loadProgress(); } catch(e){ console.warn('loadProgress failed, using defaults', e); }
+  try { await loadEventos(); } catch(e){}
+  try { await loadScheduleLogFromSB(); } catch(e){}
+  calcDeadlines();
+  setDate();
+  renderTodayCard();
+  renderMaterias('materias-grid');
+  updateStats();
+  // Agregar tablas faltantes si no existen (schedule_log y eventos)
+  // ya se crean en Supabase con el SQL del setup
+}
+initApp();
 
 // Inject ejercicios fields into add-event modal after DOM is ready
 (function injectEjerciciosFields(){
