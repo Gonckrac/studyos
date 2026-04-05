@@ -1,0 +1,3174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>StudyOS — UCA Ingeniería Civil</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #1a1a24;
+    --border: #2a2a3a;
+    --accent: #7c6af7;
+    --accent2: #f7c26a;
+    --accent3: #6af7c2;
+    --danger: #f76a6a;
+    --text: #e8e8f0;
+    --text2: #8888a8;
+    --radius: 12px;
+    --radius-sm: 6px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; min-height: 100vh; overflow-x: hidden; }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  #app { display: flex; min-height: 100vh; justify-content: flex-start; }
+  #main { flex: 1; overflow-y: auto; padding: 32px 40px; }
+
+  #sidebar { width: 220px; min-width: 220px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 24px 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  .logo { padding: 0 20px 24px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+  .logo-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; color: var(--accent); letter-spacing: -0.5px; }
+  .logo-sub { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--text2); margin-top: 2px; }
+  .nav-section { padding: 0 12px; margin-bottom: 8px; }
+  .nav-label { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text2); padding: 0 8px; margin-bottom: 6px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: var(--radius-sm); cursor: pointer; color: var(--text2); transition: all 0.15s; font-size: 13px; border: 1px solid transparent; }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: rgba(124,106,247,0.15); color: var(--accent); border-color: rgba(124,106,247,0.2); }
+  .nav-icon { font-size: 15px; width: 18px; text-align: center; }
+  .sidebar-bottom { margin-top: auto; padding: 16px 12px 0; border-top: 1px solid var(--border); }
+  .cuatri-badge { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; font-family: 'Space Mono', monospace; font-size: 10px; color: var(--text2); line-height: 1.8; }
+  .cuatri-badge span { color: var(--accent2); font-weight: 700; }
+
+  .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 32px; }
+  .page-title { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
+  .page-title span { color: var(--accent); }
+  .page-date { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--text2); margin-top: 4px; }
+
+  .today-card { background: linear-gradient(135deg, rgba(124,106,247,0.12) 0%, rgba(106,247,194,0.06) 100%); border: 1px solid rgba(124,106,247,0.3); border-radius: var(--radius); padding: 20px 24px; margin-bottom: 28px; display: flex; align-items: center; gap: 20px; animation: fadeSlideIn 0.4s ease; }
+  .today-icon { font-size: 32px; }
+  .today-content { flex: 1; }
+  .today-label { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; }
+  .today-title { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .today-tasks { display: flex; gap: 8px; flex-wrap: wrap; }
+  .task-chip { background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; font-size: 12px; color: var(--text2); cursor: pointer; transition: all 0.15s; }
+  .task-chip:hover { border-color: var(--accent); color: var(--accent); }
+  .task-chip.done { text-decoration: line-through; opacity: 0.4; }
+
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; transition: border-color 0.2s; }
+  .stat-card:hover { border-color: var(--accent); }
+  .stat-label { font-size: 11px; color: var(--text2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.8px; }
+  .stat-value { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800; color: var(--text); }
+  .stat-value.accent { color: var(--accent); }
+  .stat-value.green { color: var(--accent3); }
+  .stat-value.yellow { color: var(--accent2); }
+  .stat-sub { font-size: 11px; color: var(--text2); margin-top: 3px; }
+
+  .section-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text2); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .materias-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 16px; margin-bottom: 32px; }
+  .materia-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; animation: fadeSlideIn 0.4s ease both; }
+  .materia-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--card-color, var(--accent)); }
+  .materia-card:hover { border-color: var(--card-color, var(--accent)); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+  .materia-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+  .materia-icon { font-size: 22px; }
+  .materia-status { font-size: 10px; padding: 3px 8px; border-radius: 20px; font-weight: 600; }
+  .status-pending { background: rgba(136,136,168,0.1); color: var(--text2); border: 1px solid rgba(136,136,168,0.2); }
+  .materia-name { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 4px; line-height: 1.2; }
+  .materia-code { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--text2); margin-bottom: 14px; }
+  .progress-wrap { margin-bottom: 10px; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--text2); margin-bottom: 5px; }
+  .progress-bar { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; background: var(--card-color, var(--accent)); transition: width 0.6s ease; }
+  .materia-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .parcial-info { font-size: 11px; color: var(--text2); }
+  .parcial-info span { color: var(--text); font-weight: 500; }
+  .temas-count { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--text2); }
+  .promo-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; padding: 3px 8px; border-radius: 10px; margin-top: 6px; }
+  .promo-posible { background: rgba(106,247,194,0.1); color: var(--accent3); border: 1px solid rgba(106,247,194,0.2); }
+  .promo-no { background: rgba(136,136,168,0.08); color: var(--text2); border: 1px solid var(--border); }
+
+  .back-btn { display: inline-flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 14px; font-size: 13px; color: var(--text2); cursor: pointer; margin-bottom: 24px; transition: all 0.15s; }
+  .back-btn:hover { color: var(--text); border-color: var(--accent); }
+  .detail-hero { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 24px; }
+  .detail-top { display: flex; gap: 20px; align-items: flex-start; margin-bottom: 16px; }
+  .detail-icon { font-size: 40px; }
+  .detail-name { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+  .detail-meta { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--text2); line-height: 1.6; margin-bottom: 8px; }
+  .detail-stats { display: flex; gap: 20px; flex-wrap: wrap; }
+  .detail-stat { text-align: center; }
+  .detail-stat-val { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; }
+  .detail-stat-lbl { font-size: 10px; color: var(--text2); text-transform: uppercase; }
+  .promo-box { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 16px; margin-top: 12px; }
+  .promo-box-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text2); margin-bottom: 6px; }
+  .promo-box-body { font-size: 12px; color: var(--text2); line-height: 1.6; }
+
+  .unidad-header { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; padding: 12px 0 8px; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
+  .tema-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: var(--radius-sm); cursor: pointer; transition: background 0.15s; border: 1px solid transparent; margin-bottom: 4px; }
+  .tema-row:hover { background: var(--surface2); }
+  .tema-row.active-row { background: rgba(124,106,247,0.1); border-color: rgba(124,106,247,0.2); }
+  .tema-check { width: 18px; height: 18px; border: 2px solid var(--border); border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 11px; transition: all 0.15s; }
+  .tema-row.done .tema-check { background: var(--accent3); border-color: var(--accent3); color: #000; }
+  /* studying state removed — only pending and done */
+  .tema-name { flex: 1; font-size: 13px; }
+  .tema-row.done .tema-name { text-decoration: line-through; color: var(--text2); }
+  .tema-dificultad { font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 600; flex-shrink: 0; }
+  .dif-alta { background: rgba(247,106,106,0.1); color: var(--danger); }
+  .dif-media { background: rgba(247,194,106,0.1); color: var(--accent2); }
+  .dif-baja { background: rgba(106,247,194,0.1); color: var(--accent3); }
+  .tema-parcial { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--text2); flex-shrink: 0; }
+  .tema-detail { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin: 4px 0 12px 30px; display: none; }
+  .tema-detail.open { display: block; animation: fadeSlideIn 0.2s ease; }
+  .tema-detail-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+  .tema-detail-body { font-size: 13px; color: var(--text2); line-height: 1.7; margin-bottom: 14px; }
+  .tema-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .btn { padding: 7px 14px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.15s; border: 1px solid var(--border); background: transparent; color: var(--text2); font-family: 'Inter', sans-serif; }
+  .btn:hover { color: var(--text); border-color: var(--text2); }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: white; }
+  .btn-primary:hover { opacity: 0.85; }
+  .btn-green { color: var(--accent3); border-color: rgba(106,247,194,0.3); }
+  .btn-green:hover { background: rgba(106,247,194,0.1); border-color: var(--accent3); }
+  .btn-yellow { color: var(--accent2); border-color: rgba(247,194,106,0.3); }
+  .btn-yellow:hover { background: rgba(247,194,106,0.1); }
+
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 100; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; width: 90%; max-width: 560px; max-height: 80vh; overflow-y: auto; animation: fadeSlideIn 0.25s ease; }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .modal-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; }
+  .modal-close { background: none; border: none; color: var(--text2); font-size: 20px; cursor: pointer; padding: 4px; }
+  .pregunta { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; margin-bottom: 12px; }
+  .pregunta-text { font-size: 13px; color: var(--text); margin-bottom: 12px; line-height: 1.5; }
+  .opciones { display: flex; flex-direction: column; gap: 6px; }
+  .opcion { padding: 8px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px; cursor: pointer; transition: all 0.15s; color: var(--text2); text-align: left; font-family: 'Inter', sans-serif; }
+  .opcion:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .opcion.correcta { border-color: var(--accent3); color: var(--accent3); background: rgba(106,247,194,0.05); }
+  .opcion.incorrecta { border-color: var(--danger); color: var(--danger); background: rgba(247,106,106,0.05); }
+
+  .week-plan { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 32px; }
+  .week-row { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border); gap: 14px; }
+  .week-row:last-child { border-bottom: none; }
+  .week-row.today-row { background: rgba(124,106,247,0.06); }
+  .week-dia { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--text2); width: 60px; flex-shrink: 0; }
+  .week-dia.hoy { color: var(--accent); font-weight: 700; }
+  .week-tasks-wrap { flex: 1; display: flex; gap: 6px; flex-wrap: wrap; }
+  .week-chip { font-size: 11px; padding: 3px 10px; border-radius: 10px; border: 1px solid var(--border); color: var(--text2); }
+  .week-time { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--text2); flex-shrink: 0; }
+
+  .fecha-item { display: flex; align-items: center; gap: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px; margin-bottom: 8px; }
+  .fecha-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .fecha-materia { font-size: 12px; color: var(--text2); width: 200px; flex-shrink: 0; }
+  .fecha-tipo { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; flex: 1; }
+  .fecha-dia { font-size: 12px; color: var(--text); flex-shrink: 0; margin-right: 8px; }
+  .dr-ok { background: rgba(106,247,194,0.1); color: var(--accent3); border-radius: 10px; padding: 2px 8px; font-family: 'Space Mono', monospace; font-size: 10px; }
+  .dr-warn { background: rgba(247,194,106,0.1); color: var(--accent2); border-radius: 10px; padding: 2px 8px; font-family: 'Space Mono', monospace; font-size: 10px; }
+  .dr-danger { background: rgba(247,106,106,0.1); color: var(--danger); border-radius: 10px; padding: 2px 8px; font-family: 'Space Mono', monospace; font-size: 10px; }
+
+  @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Unidades bloqueadas (requieren aprobar examen de unidad anterior) */
+  .unidad-bloqueada-header { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; padding: 12px 0 8px; border-bottom: 1px solid var(--border); margin-bottom: 8px; opacity: 0.5; display: flex; align-items: center; gap: 8px; }
+  .unidad-bloqueada-header .lock-icon { font-size: 13px; }
+  .unidad-bloqueada-notice { font-size: 11px; color: var(--text2); padding: 8px 14px 12px; font-style: italic; opacity: 0.6; }
+  .tema-row-locked { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: var(--radius-sm); margin-bottom: 4px; opacity: 0.3; cursor: not-allowed; border: 1px solid transparent; }
+  .tema-row-locked .tema-name { font-size: 13px; color: var(--text2); }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes toastIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+  /* Toast */
+  .toast { position:fixed; bottom:24px; right:24px; background:var(--surface2); border:1px solid var(--accent3); border-radius:var(--radius-sm); padding:10px 18px; font-size:13px; color:var(--accent3); z-index:999; animation:toastIn 0.3s ease; pointer-events:none; }
+
+  /* Panel lateral de tema */
+  .tema-panel-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); z-index:100; }
+  .tema-panel-overlay.open { display:block; }
+  .tema-panel { position:fixed; right:0; top:0; height:100vh; width:min(480px,100vw); background:var(--surface); border-left:1px solid var(--border); display:flex; flex-direction:column; transform:translateX(100%); transition:transform 0.3s ease; z-index:101; overflow:hidden; }
+  .tema-panel-overlay.open .tema-panel { transform:translateX(0); }
+  .tema-panel-head { padding:20px 22px; border-bottom:1px solid var(--border); display:flex; align-items:flex-start; gap:12px; }
+  .tema-panel-close { background:none; border:none; color:var(--text2); font-size:18px; cursor:pointer; padding:2px 6px; margin-left:auto; transition:color 0.15s; flex-shrink:0; }
+  .tema-panel-close:hover { color:var(--text); }
+  .tema-panel-name { font-family:'Syne',sans-serif; font-size:16px; font-weight:800; color:var(--text); line-height:1.3; }
+  .tema-panel-meta { font-size:11px; color:var(--text2); margin-top:4px; display:flex; gap:8px; flex-wrap:wrap; }
+  .tema-panel-body { flex:1; overflow-y:auto; padding:20px 22px; }
+  .tema-panel-desc { font-size:13px; color:var(--text2); line-height:1.8; margin-bottom:20px; background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px; }
+  .panel-section-title { font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--text2); margin-bottom:10px; }
+  .panel-actions { display:flex; flex-direction:column; gap:8px; margin-bottom:20px; }
+  .panel-btn { display:flex; align-items:center; gap:10px; padding:11px 14px; border-radius:var(--radius-sm); font-size:13px; cursor:pointer; transition:all 0.15s; border:1px solid var(--border); background:var(--surface2); color:var(--text2); text-align:left; font-family:'Inter',sans-serif; }
+  .panel-btn:hover { color:var(--text); border-color:var(--text2); }
+  .panel-btn-icon { font-size:16px; width:20px; text-align:center; }
+  .panel-btn-text { flex:1; }
+  .panel-btn-sub { font-size:10px; color:var(--text2); margin-top:1px; }
+  .panel-btn.accent { border-color:rgba(124,106,247,0.4); color:var(--accent); background:rgba(124,106,247,0.08); }
+  .panel-btn.accent:hover { background:rgba(124,106,247,0.15); }
+  .panel-btn.green { border-color:rgba(106,247,194,0.4); color:var(--accent3); background:rgba(106,247,194,0.06); }
+  .panel-btn.green:hover { background:rgba(106,247,194,0.12); }
+  .panel-btn.yellow { border-color:rgba(247,194,106,0.4); color:var(--accent2); background:rgba(247,194,106,0.06); }
+  .panel-btn.yellow:hover { background:rgba(247,194,106,0.12); }
+  .panel-status-row { display:flex; gap:8px; }
+  .panel-status-btn { flex:1; padding:9px; border-radius:var(--radius-sm); font-size:12px; font-weight:600; cursor:pointer; transition:all 0.15s; border:1px solid var(--border); background:transparent; color:var(--text2); font-family:'Inter',sans-serif; }
+  .panel-status-btn:hover { opacity:0.8; }
+  /* .panel-status-btn.s-studying removed — studying state eliminated */
+  .panel-status-btn.s-done { border-color:var(--accent3); color:var(--accent3); background:rgba(106,247,194,0.1); }
+  .copy-prompt-area { background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; font-size:11px; color:var(--text2); line-height:1.7; font-family:'Space Mono',monospace; white-space:pre-wrap; word-break:break-word; max-height:120px; overflow-y:auto; margin-bottom:8px; }
+
+  /* Tabs del panel */
+  .tp-tabs { display:flex; border-bottom:1px solid var(--border); background:var(--surface2); overflow-x:auto; flex-shrink:0; }
+  .tp-tab { padding:10px 14px; font-size:12px; font-weight:600; color:var(--text2); cursor:pointer; border-bottom:2px solid transparent; white-space:nowrap; transition:all 0.15s; }
+  .tp-tab:hover { color:var(--text); }
+  .tp-tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+
+  /* Prompt inicial de generación */
+  .tp-generate-prompt { text-align:center; padding:32px 20px; background:var(--surface2); border:1px dashed var(--border); border-radius:var(--radius); }
+  .tp-gen-btn { background:var(--accent); color:#fff; border:none; border-radius:var(--radius-sm); padding:10px 20px; font-size:13px; font-weight:600; cursor:pointer; font-family:'Inter',sans-serif; transition:opacity 0.15s; }
+  .tp-gen-btn:hover { opacity:0.85; }
+  .tp-gen-btn:disabled { opacity:0.4; cursor:not-allowed; }
+
+  /* Spinner inline */
+  @keyframes spin { to{transform:rotate(360deg)} }
+  .tp-spinner { display:inline-block; width:16px; height:16px; border:2px solid rgba(255,255,255,0.3); border-top-color:#fff; border-radius:50%; animation:spin 0.7s linear infinite; vertical-align:middle; margin-right:8px; }
+
+  /* Contenido generado */
+  .ai-content { font-size:15px; color:var(--text); line-height:1.9; text-align:left; }
+  .ai-content h2 { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; color:var(--accent); margin:32px 0 12px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+  .ai-content h2:first-child { margin-top:0; }
+  .ai-content h3 { font-family:'Syne',sans-serif; font-size:16px; font-weight:700; color:var(--accent2); margin:24px 0 10px; }
+  .ai-content p { margin-bottom:14px; color:var(--text); }
+  .ai-content ul { margin:10px 0 16px 0; padding:0; list-style:none; }
+  .ai-content ul li { padding:6px 0 6px 20px; position:relative; border-bottom:1px solid rgba(255,255,255,0.04); }
+  .ai-content ul li:last-child { border-bottom:none; }
+  .ai-content ul li::before { content:'→'; position:absolute; left:0; color:var(--accent); font-weight:700; }
+  .ai-content ol { margin:10px 0 16px 24px; }
+  .ai-content ol li { margin-bottom:8px; padding-left:4px; }
+  .ai-content code { background:var(--surface2); border:1px solid var(--border); border-radius:4px; padding:2px 7px; font-family:'Space Mono',monospace; font-size:12px; color:var(--accent3); }
+  .ai-content pre { background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:18px; overflow-x:auto; margin:16px 0; }
+  .ai-content pre code { background:none; border:none; padding:0; font-size:13px; }
+  .ai-content .callout { background:rgba(124,106,247,0.08); border-left:4px solid var(--accent); border-radius:0 10px 10px 0; padding:14px 20px; margin:18px 0; font-size:14px; }
+  .ai-content .ejemplo { background:rgba(106,247,194,0.06); border:1px solid rgba(106,247,194,0.2); border-radius:10px; padding:16px 20px; margin:16px 0; }
+  .ai-content .ejemplo::before { content:'Ejemplo'; display:block; font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--accent3); margin-bottom:8px; }
+  .ai-content strong { color:var(--text); font-weight:700; }
+  .ai-content em { color:var(--accent2); font-style:italic; }
+  .ai-content .grafico-wrap { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin:20px 0; }
+  .ai-content .grafico-title { font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--text2); margin-bottom:14px; }
+  .ai-content canvas { max-width:100%; border-radius:6px; }
+  .ai-content .resumen-box { background:linear-gradient(135deg,rgba(124,106,247,0.08),rgba(106,247,194,0.04)); border:1px solid rgba(124,106,247,0.2); border-radius:10px; padding:20px 24px; margin:20px 0; }
+  .ai-content .resumen-box h3 { margin-top:0; color:var(--accent3); }
+
+  /* Ejercicios para completar */
+  .ejercicio-card { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:14px; }
+  .ejercicio-num { font-family:'Space Mono',monospace; font-size:10px; color:var(--accent); margin-bottom:8px; font-weight:700; }
+  .ejercicio-enunciado { font-size:13px; color:var(--text); line-height:1.7; margin-bottom:12px; }
+  .ejercicio-input { width:100%; background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px; color:var(--text); font-family:'Inter',sans-serif; font-size:13px; resize:vertical; min-height:60px; outline:none; transition:border-color 0.15s; }
+  .ejercicio-input:focus { border-color:var(--accent); }
+  .ejercicio-check-btn { margin-top:8px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:7px 14px; font-size:12px; color:var(--text2); cursor:pointer; font-family:'Inter',sans-serif; transition:all 0.15s; }
+  .ejercicio-check-btn:hover { color:var(--text); border-color:var(--accent); }
+  .ejercicio-resultado { margin-top:10px; padding:12px 14px; border-radius:var(--radius-sm); font-size:12px; line-height:1.7; display:none; }
+  .ejercicio-resultado.correcto { background:rgba(106,247,194,0.08); border:1px solid rgba(106,247,194,0.25); color:var(--accent3); }
+  .ejercicio-resultado.incorrecto { background:rgba(247,106,106,0.06); border:1px solid rgba(247,106,106,0.2); color:var(--text); }
+
+  /* Examen con nota */
+  .examen-header { background:linear-gradient(135deg,rgba(124,106,247,0.12),rgba(106,247,194,0.06)); border:1px solid rgba(124,106,247,0.25); border-radius:var(--radius); padding:16px 20px; margin-bottom:20px; }
+  .examen-nota { font-family:'Syne',sans-serif; font-size:48px; font-weight:800; text-align:center; margin:16px 0 4px; }
+  .examen-analisis { font-size:12px; color:var(--text2); line-height:1.7; }
+
+  /* No entendí button */
+  .no-entendi-btn { display:inline-flex; align-items:center; gap:8px; background:rgba(247,194,106,0.1); border:1px solid rgba(247,194,106,0.3); border-radius:var(--radius-sm); padding:8px 14px; font-size:12px; color:var(--accent2); cursor:pointer; margin-top:16px; transition:all 0.15s; font-family:'Inter',sans-serif; }
+  .no-entendi-btn:hover { background:rgba(247,194,106,0.18); }
+
+  /* Página completa de tema */
+  .tema-page-header { margin-bottom:28px; }
+  .tema-page-name { font-family:'Syne',sans-serif; font-size:26px; font-weight:800; color:var(--text); margin-bottom:6px; line-height:1.2; }
+  .tema-page-meta { display:flex; gap:10px; flex-wrap:wrap; align-items:center; font-size:12px; color:var(--text2); margin-bottom:16px; }
+  .tema-page-tabs { display:flex; gap:0; border-bottom:2px solid var(--border); margin-bottom:28px; overflow-x:auto; }
+  .tema-page-tab { padding:12px 22px; font-size:13px; font-weight:600; color:var(--text2); cursor:pointer; border-bottom:3px solid transparent; margin-bottom:-2px; white-space:nowrap; transition:all 0.15s; }
+  .tema-page-tab:hover { color:var(--text); }
+  .tema-page-tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+  .tema-page-body { width:100%; }
+  #tppage-explicacion { width:100%; }
+  #tppage-ejercicios { width:100%; }
+  #tppage-examen { width:100%; }
+  #tppage-feed { width:100%; }
+  .status-bar { display:flex; gap:10px; margin-bottom:24px; }
+  .status-bar-btn { flex:1; padding:11px; border-radius:var(--radius-sm); font-size:13px; font-weight:600; cursor:pointer; transition:all 0.15s; border:1px solid var(--border); background:var(--surface); color:var(--text2); font-family:'Inter',sans-serif; }
+  /* .status-bar-btn.active-studying removed — studying state eliminated */
+  .status-bar-btn.active-done { border-color:var(--accent3); color:var(--accent3); background:rgba(106,247,194,0.1); }
+  .gen-card { background:var(--surface2); border:1px dashed var(--border); border-radius:var(--radius); padding:40px; text-align:center; max-width:560px; margin:0 auto; }
+  .gen-card-icon { font-size:32px; margin-bottom:12px; }
+  .gen-card-title { font-family:'Syne',sans-serif; font-size:18px; font-weight:700; color:var(--text); margin-bottom:8px; }
+  .gen-card-sub { font-size:13px; color:var(--text2); line-height:1.6; margin-bottom:20px; max-width:480px; margin-left:auto; margin-right:auto; }
+  .gen-btn-large { background:var(--accent); color:#fff; border:none; border-radius:var(--radius-sm); padding:13px 28px; font-size:14px; font-weight:700; cursor:pointer; font-family:'Inter',sans-serif; transition:opacity 0.15s; }
+  .gen-btn-large:hover { opacity:0.85; }
+  .feed-section { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:24px; }
+  .feed-section textarea { width:100%; min-height:200px; background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; color:var(--text); font-family:'Inter',sans-serif; font-size:13px; line-height:1.7; resize:vertical; outline:none; transition:border-color 0.15s; margin-bottom:12px; }
+  .feed-section textarea:focus { border-color:var(--accent); }
+  .api-key-section { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-top:20px; }
+  .api-key-section input { width:100%; background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px; color:var(--text); font-family:'Space Mono',monospace; font-size:12px; outline:none; transition:border-color 0.15s; margin-bottom:10px; }
+  .api-key-section input:focus { border-color:var(--accent); }
+
+  /* Racha */
+  .streak-badge { display:inline-flex; align-items:center; gap:5px; background:rgba(247,194,106,0.1); border:1px solid rgba(247,194,106,0.25); border-radius:20px; padding:4px 10px; font-size:11px; font-weight:600; color:var(--accent2); margin-left:8px; }
+
+  /* Calendario */
+  .cal-day { min-height:52px; border-radius:6px; padding:4px; cursor:pointer; position:relative; background:var(--surface2); transition:all 0.1s; display:flex; flex-direction:column; gap:2px; }
+  .cal-day:hover { border:1px solid var(--border); }
+  .cal-day.today { background:rgba(124,106,247,0.15); border:1px solid rgba(124,106,247,0.4); }
+  .cal-day.empty { background:transparent; cursor:default; }
+  .cal-day-num { font-size:11px; font-weight:700; color:var(--text2); }
+  .cal-day.today .cal-day-num { color:var(--accent); }
+  .cal-dot { height:5px; border-radius:3px; width:100%; }
+  .cal-dot-label { font-size:9px; font-weight:600; color:#fff; padding:1px 3px; border-radius:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .evento-chip { display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 14px; margin-bottom:8px; cursor:pointer; transition:all 0.15s; }
+  .evento-chip:hover { border-color:var(--accent); }
+  .evento-chip-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .evento-chip-info { flex:1; }
+  .evento-chip-title { font-size:13px; font-weight:600; color:var(--text); }
+  .evento-chip-meta { font-size:11px; color:var(--text2); margin-top:2px; }
+  .evento-chip-dias { font-family:'Space Mono',monospace; font-size:11px; flex-shrink:0; }
+  .ev-delete { background:none; border:none; color:var(--text2); cursor:pointer; padding:4px 8px; font-size:14px; opacity:0.5; }
+  .ev-delete:hover { opacity:1; color:var(--danger); }
+
+  /* QCY */
+  .qcy-mini-day { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 8px; text-align:center; }
+  .qcy-mini-day.today { background:rgba(124,106,247,0.12); border-color:rgba(124,106,247,0.4); }
+  .qcy-mini-day.has-event { border-color:var(--accent2); }
+  .qcy-mini-nombre { font-size:10px; font-weight:700; color:var(--text2); text-transform:uppercase; letter-spacing:1px; }
+  .qcy-mini-num { font-size:20px; font-weight:800; font-family:'Syne',sans-serif; color:var(--text); }
+  .qcy-mini-day.today .qcy-mini-num { color:var(--accent); }
+  .qcy-dia-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px 20px; margin-bottom:12px; display:flex; gap:16px; }
+  .qcy-dia-card.today { border-color:rgba(124,106,247,0.4); background:rgba(124,106,247,0.04); }
+  .qcy-dia-label { width:56px; flex-shrink:0; }
+  .qcy-dia-nombre { font-family:'Space Mono',monospace; font-size:10px; font-weight:700; color:var(--text2); text-transform:uppercase; }
+  .qcy-dia-num { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; color:var(--text); line-height:1; }
+  .qcy-dia-card.today .qcy-dia-nombre { color:var(--accent); }
+  .qcy-dia-card.today .qcy-dia-num { color:var(--accent); }
+  .qcy-chips { flex:1; display:flex; flex-wrap:wrap; gap:6px; align-items:flex-start; }
+  .qcy-chip { display:inline-flex; align-items:center; gap:5px; padding:5px 11px; border-radius:20px; font-size:12px; font-weight:500; border:1px solid; white-space:nowrap; }
+  .qcy-chip-event { font-size:11px; padding:4px 10px; border-radius:4px; font-weight:700; }
+  .qcy-empty { color:var(--text2); font-size:13px; padding:4px 0; font-style:italic; }
+
+    @media (max-width: 768px) { #sidebar { display: none; } #main { padding: 16px; } .stats-row { grid-template-columns: repeat(2, 1fr); } .materias-grid { grid-template-columns: 1fr; } .today-card { flex-direction: column; } .tema-panel { width:100vw; } }
+</style>
+</head>
+<body>
+<div id="app">
+
+<nav id="sidebar">
+  <div class="logo">
+    <div class="logo-title">StudyOS</div>
+    <div class="logo-sub">// UCA · Ing. Informática</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Principal</div>
+    <div class="nav-item active" onclick="showPage('dashboard')"><span class="nav-icon">⬡</span> Dashboard</div>
+    <div class="nav-item" onclick="showPage('materias')"><span class="nav-icon">📚</span> Materias</div>
+    <div class="nav-item" onclick="showPage('fechas')"><span class="nav-icon">📅</span> Fechas clave</div>
+    <div class="nav-item" onclick="showPage('semana')"><span class="nav-icon">🗓</span> Esta semana</div>
+    <div class="nav-item" onclick="showPage('qcy')"><span class="nav-icon">📆</span> QCY — Plan semanal</div>
+  </div>
+  <div class="nav-section" style="margin-top:8px">
+    <div class="nav-label">Herramientas</div>
+    <div class="nav-item" onclick="openExamen()"><span class="nav-icon">✍️</span> Simulacro</div>
+    <div class="nav-item" onclick="showPage('promociones')"><span class="nav-icon">🎯</span> Finales cortos</div>
+    <div class="nav-item" onclick="openAddMateria()"><span class="nav-icon">➕</span> Agregar materia</div>
+    <div class="nav-item" onclick="showPage('tareas')"><span class="nav-icon">✅</span> Tareas de hoy</div>
+  </div>
+</nav>
+</nav>
+
+<main id="main">
+
+  <div id="page-dashboard">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Buen día 👋</div>
+        <div class="page-date" id="fecha-hoy"></div>
+      </div>
+    </div>
+    <div class="today-card" style="cursor:pointer" onclick="showPage('tareas')">
+      <div class="today-icon">⚡</div>
+      <div class="today-content">
+        <div class="today-label">Para hoy · tocá para ver en detalle</div>
+        <div class="today-title">Lunes de arranque — 3 bloques</div>
+        <div class="today-tasks" id="today-tasks-preview"></div>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Materias activas</div>
+        <div class="stat-value accent">5</div>
+        <div class="stat-sub">+ Química (pronto)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Próxima fecha</div>
+        <div class="stat-value yellow" style="display:flex;align-items:baseline;gap:5px">
+          <span id="dias-prox">65</span><span style="font-size:14px;font-weight:400;color:var(--accent2)">días</span>
+        </div>
+        <div class="stat-sub" id="label-prox">Parcial Filosofía · 3 Jun</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Temas vistos</div>
+        <div class="stat-value green" id="temas-vistos">0</div>
+        <div class="stat-sub" id="temas-total">de — en total</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Finales cortos</div>
+        <div class="stat-value accent">3</div>
+        <div class="stat-sub">posibles si nota ≥7</div>
+      </div>
+    </div>
+    <div class="section-title">Materias</div>
+    <div class="materias-grid" id="materias-grid"></div>
+  </div>
+
+  <div id="page-materias" style="display:none">
+    <div class="page-header"><div><div class="page-title">Mis <span>Materias</span></div><div class="page-date">1° semestre 2026</div></div></div>
+    <div class="materias-grid" id="materias-grid-2"></div>
+  </div>
+
+  <div id="page-fechas" style="display:none">
+    <div class="page-header" style="justify-content:space-between;align-items:center">
+      <div><div class="page-title">Fechas <span>Clave</span></div><div class="page-date">Calendarios · Parciales · Finales</div></div>
+      <button onclick="openAddEvent()" style="background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">+ Agregar fecha</button>
+    </div>
+    <!-- Calendario -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <button onclick="calPrev()" style="background:none;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text2);padding:6px 12px;cursor:pointer;font-size:16px">‹</button>
+        <div id="cal-month-title" style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--text)"></div>
+        <button onclick="calNext()" style="background:none;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text2);padding:6px 12px;cursor:pointer;font-size:16px">›</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:8px">
+        <div style="text-align:center;font-size:10px;font-weight:700;color:var(--text2);padding:4px">LUN</div>
+        <div style="text-align:center;font-size:10px;font-weight:700;color:var(--text2);padding:4px">MAR</div>
+        <div style="text-align:center;font-size:10px;font-weight:700;color:var(--text2);padding:4px">MIÉ</div>
+        <div style="text-align:center;font-size:10px;font-weight:700;color:var(--text2);padding:4px">JUE</div>
+        <div style="text-align:center;font-size:10px;font-weight:700;color:var(--text2);padding:4px">VIE</div>
+        <div style="text-align:center;font-size:10px;font-weight:700;color:var(--text2);padding:4px">SÁB</div>
+        <div style="text-align:center;font-size:10px;font-weight:700;color:var(--text2);padding:4px">DOM</div>
+      </div>
+      <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px"></div>
+      <!-- Leyenda -->
+      <div id="cal-legend" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)"></div>
+    </div>
+    <!-- Eventos en orden cronológico -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div class="section-title" style="margin-bottom:0">Próximos eventos</div>
+    </div>
+    <div id="eventos-lista"></div>
+  </div>
+
+  <!-- MODAL agregar evento -->
+  <div id="modal-add-event" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px;width:90%;max-width:480px;animation:fadeSlideIn 0.2s ease">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800">+ Nueva fecha</div>
+        <button onclick="closeAddEvent()" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer">✕</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Tipo</div>
+          <select id="ev-tipo" onchange="onTipoChange()" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none">
+            <option value="tarea">📋 Tarea / TP</option>
+            <option value="parcial">📝 Parcial</option>
+            <option value="final">🎓 Final</option>
+            <option value="recuperatorio">🔄 Recuperatorio</option>
+            <option value="otro">📌 Otro</option>
+          </select>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Materia</div>
+          <select id="ev-materia" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none">
+          </select>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Descripción (opcional)</div>
+          <input id="ev-desc" type="text" placeholder="ej: Unidades 1-3, TP grupal..." style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none"/>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Fecha</div>
+          <input id="ev-fecha" type="date" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none"/>
+        </div>
+        <!-- Unidades (solo para parcial/final) -->
+        <div id="ev-unidades-wrap" style="display:none">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:1px">¿Qué unidades entran? (tocá para seleccionar)</div>
+          <div id="ev-unidades-chips" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+        </div>
+        <button onclick="saveEvent()" style="background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;margin-top:4px">Guardar fecha</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="page-semana" style="display:none">
+    <div class="page-header"><div><div class="page-title">Esta <span>Semana</span></div><div class="page-date">Plan de estudio sugerido</div></div></div>
+    <div class="week-plan" id="week-plan"></div>
+  </div>
+
+  <!-- QCY PAGE -->
+  <div id="page-qcy" style="display:none">
+    <div class="page-header" style="justify-content:space-between;align-items:center">
+      <div><div class="page-title">📆 <span>QCY</span> — Plan semanal</div><div class="page-date">Qué Cursás Y estudiás cada día</div></div>
+      <div style="display:flex;gap:8px">
+        <button onclick="qcyPrev()" style="background:none;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text2);padding:6px 14px;cursor:pointer;font-size:16px">‹</button>
+        <div id="qcy-week-label" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 16px;font-size:13px;color:var(--text);display:flex;align-items:center"></div>
+        <button onclick="qcyNext()" style="background:none;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text2);padding:6px 14px;cursor:pointer;font-size:16px">›</button>
+      </div>
+    </div>
+    <!-- Mini calendario de la semana -->
+    <div id="qcy-mini-cal" style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:24px"></div>
+    <!-- Plan día a día -->
+    <div id="qcy-dias"></div>
+  </div>
+
+  <div id="page-promociones" style="display:none">
+    <div class="page-header"><div><div class="page-title">Finales <span>Cortos</span></div><div class="page-date">Condiciones de promoción por materia</div></div></div>
+    <div id="promo-content"></div>
+  </div>
+
+  <div id="page-detalle" style="display:none">
+    <button class="back-btn" id="back-btn">← Volver al dashboard</button>
+    <div id="detalle-content"></div>
+  </div>
+
+  <!-- PÁGINA COMPLETA DE TEMA -->
+  <div id="page-tema" style="display:none">
+    <button class="back-btn" id="tema-back-btn">← Volver a la materia</button>
+    <div id="tema-page-content"></div>
+  </div>
+
+  <!-- PÁGINA TAREAS DE HOY -->
+  <div id="page-tareas" style="display:none">
+    <div class="page-header">
+      <div><div class="page-title">Tareas de <span>hoy</span></div><div class="page-date" id="tareas-fecha-label"></div></div>
+    </div>
+    <div id="tareas-hoy-content"></div>
+  </div>
+
+</main>
+</div>
+
+<!-- Panel lateral de tema -->
+<!-- AI Panel completo -->
+<div class="tema-panel-overlay" id="tema-panel-overlay" onclick="closeTemaPanel(event)">
+  <div class="tema-panel" id="tema-panel">
+
+    <!-- Header -->
+    <div class="tema-panel-head">
+      <div style="flex:1;min-width:0">
+        <div class="tema-panel-name" id="tp-name">—</div>
+        <div class="tema-panel-meta" id="tp-meta"></div>
+      </div>
+      <button class="tema-panel-close" onclick="closeTemaPanel()">✕</button>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tp-tabs">
+      <div class="tp-tab active" id="tab-explicacion" onclick="switchTab('explicacion')">📖 Explicación</div>
+      <div class="tp-tab" id="tab-ejercicios" onclick="switchTab('ejercicios')">✏️ Ejercicios</div>
+      <div class="tp-tab" id="tab-examen" onclick="switchTab('examen')">📝 Examen unidad</div>
+      <div class="tp-tab" id="tab-feed" onclick="switchTab('feed')">📎 Mi material</div>
+    </div>
+
+    <!-- Body -->
+    <div class="tema-panel-body" id="tp-body">
+
+      <!-- TAB: EXPLICACION -->
+      <div id="tp-explicacion">
+        <div class="panel-section-title" style="margin-bottom:12px">Estado</div>
+        <div class="panel-status-row" style="margin-bottom:20px" id="tp-status-row"></div>
+        <div id="tp-ai-explain-area">
+          <div class="tp-generate-prompt">
+            <div style="font-size:22px;margin-bottom:8px">🧠</div>
+            <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px">Explicación con IA</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6">La IA va a generar una explicación completa del tema usando el programa de la materia y el material que hayas cargado. Incluye gráficos interactivos cuando aplica.</div>
+            <button class="tp-gen-btn" onclick="generateExplicacion()">✨ Generar explicación</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: EJERCICIOS -->
+      <div id="tp-ejercicios" style="display:none">
+        <div id="tp-ai-ejercicios-area">
+          <div class="tp-generate-prompt">
+            <div style="font-size:22px;margin-bottom:8px">✏️</div>
+            <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px">Ejercicios para practicar</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6">La IA genera ejercicios basados en el programa y tu material cargado. Son para completar, no multiple choice. Si te equivocás, explica el procedimiento completo.</div>
+            <button class="tp-gen-btn" onclick="generateEjercicios()">✨ Generar ejercicios</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: EXAMEN UNIDAD -->
+      <div id="tp-examen" style="display:none">
+        <div id="tp-ai-examen-area">
+          <div class="tp-generate-prompt">
+            <div style="font-size:22px;margin-bottom:8px">📝</div>
+            <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px">Examen de la unidad completa</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6">Examen con ejercicios de todos los temas de esta unidad. Con nota, análisis y corrección completa. Estilo parcial universitario.</div>
+            <button class="tp-gen-btn" onclick="generateExamen()">📝 Tomar examen</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: FEED DE MATERIAL -->
+      <div id="tp-feed" style="display:none">
+        <div class="panel-section-title">Tu material para este tema</div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.6">
+          Pegá acá apuntes, texto de PPT del profe, guías de ejercicios, o lo que tengas. La IA lo usa para generar explicaciones y ejercicios más fieles a tu cursada.
+        </div>
+        <textarea id="tp-feed-text" placeholder="Pegá apuntes, texto de diapositivas, guías de ejercicios..." style="width:100%;min-height:180px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;color:var(--text);font-family:'Inter',sans-serif;font-size:12px;line-height:1.7;resize:vertical;outline:none;transition:border-color 0.15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+          <button class="tp-gen-btn" style="flex:1" onclick="saveFeed()">💾 Guardar material</button>
+          <button class="panel-btn" style="flex:1" onclick="clearFeed()">🗑 Borrar</button>
+        </div>
+        <div id="tp-feed-status" style="font-size:11px;color:var(--accent3);margin-top:8px;display:none"></div>
+
+        <!-- Config API key -->
+        <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border)">
+          <div class="panel-section-title">Configuración IA (Groq)</div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Tu API key de <a href="https://console.groq.com" target="_blank" style="color:var(--accent)">console.groq.com</a> — se guarda solo en este dispositivo</div>
+          <input id="gemini-key-input" type="password" placeholder="Pegá tu API key de Groq acá"
+            style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-family:'Space Mono',monospace;font-size:11px;outline:none;transition:border-color 0.15s;margin-bottom:8px"
+            onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"
+          />
+          <button class="tp-gen-btn" style="width:100%" onclick="saveGeminiKey()">🔑 Guardar key</button>
+          <div id="key-status" style="font-size:11px;margin-top:6px;display:none"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast" style="display:none"></div>
+
+<!-- MODAL AGREGAR MATERIA -->
+<div id="modal-add-materia" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px;width:90%;max-width:540px;max-height:88vh;overflow-y:auto;animation:fadeSlideIn 0.2s ease">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800">➕ Nueva materia</div>
+      <button onclick="closeAddMateria()" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Nombre de la materia</div>
+        <input id="am-nombre" type="text" placeholder="ej: Álgebra Lineal" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none"/>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Código / descripción breve</div>
+        <input id="am-codigo" type="text" placeholder="ej: Ing. Informática · 2°sem 2026" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none"/>
+      </div>
+      <div style="display:flex;gap:10px">
+        <div style="flex:1">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Ícono</div>
+          <input id="am-icon" type="text" placeholder="📘" maxlength="2" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:20px;text-align:center;outline:none"/>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Color</div>
+          <input id="am-color" type="color" value="#7c6af7" style="width:100%;height:42px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;padding:3px"/>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Material general de la materia (opcional)</div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:6px;line-height:1.5">Pegá el programa, índice, descripción. La IA lo usa como contexto base para todos los temas.</div>
+        <textarea id="am-material" placeholder="Pegá el programa de la materia, temario, descripción general..." style="width:100%;min-height:100px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:12px;line-height:1.6;resize:vertical;outline:none"></textarea>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Unidades y temas</div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:8px;line-height:1.5">Escribí cada línea como: <code style="background:var(--surface2);padding:2px 5px;border-radius:3px;color:var(--accent3)">U1 — Nombre: Tema 1, Tema 2, Tema 3</code></div>
+        <textarea id="am-temas" placeholder="U1 — Funciones: Variables y dominio, Operaciones, Funciones elementales&#10;U2 — Límites: Definición, Operaciones con límites&#10;U3 — Derivadas: Definición, Reglas de derivación" style="width:100%;min-height:120px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:12px;line-height:1.7;resize:vertical;outline:none"></textarea>
+      </div>
+      <div style="display:flex;gap:8px">
+        <div style="flex:1">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Próximo parcial</div>
+          <input id="am-parcial" type="text" placeholder="ej: 15 May 2026" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none"/>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:1px">¿Tiene final corto?</div>
+          <select id="am-promo" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none">
+            <option value="no">No</option>
+            <option value="si">Sí</option>
+          </select>
+        </div>
+      </div>
+      <button onclick="saveNewMateria()" style="background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;margin-top:4px">✅ Agregar materia</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL AVISO EJERCICIOS REQUERIDOS -->
+<div id="modal-ejercicios-req" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:300;align-items:center;justify-content:center">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px;width:90%;max-width:440px;animation:fadeSlideIn 0.2s ease;text-align:center">
+    <div style="font-size:36px;margin-bottom:12px">✏️</div>
+    <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:8px">Antes de marcar como visto...</div>
+    <div style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:20px">Perfecto, ya estudiaste el tema. Pero para que cuente como visto tenés que completar los ejercicios y tenerlos bien.<br><br>Completá los ejercicios de práctica y si salís bien (85% o más), el tema se marca automáticamente como visto.</div>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button onclick="document.getElementById('modal-ejercicios-req').style.display='none';switchTemaTab('ejercicios')" style="background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);padding:11px 22px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">✏️ Ir a ejercicios</button>
+      <button onclick="document.getElementById('modal-ejercicios-req').style.display='none'" style="background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:var(--radius-sm);padding:11px 22px;font-size:13px;cursor:pointer;font-family:'Inter',sans-serif">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-examen">
+  <div class="modal" style="max-width:640px;width:95%">
+    <div class="modal-header">
+      <div class="modal-title">✍️ Simulacro</div>
+      <button class="modal-close" onclick="document.getElementById('modal-examen').classList.remove('open')">✕</button>
+    </div>
+    <!-- Step 1: configurar -->
+    <div id="sim-config">
+      <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:20px">
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Materia</div>
+          <select id="sim-materia" onchange="simUpdateUnidades()" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none"></select>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Unidades (podés elegir varias)</div>
+          <div id="sim-unidades" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Temas (opcional — dejá vacío para todos los de la unidad)</div>
+          <div id="sim-temas" style="display:flex;flex-wrap:wrap;gap:6px;max-height:120px;overflow-y:auto"></div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <div style="flex:1">
+            <div style="font-size:11px;color:var(--text2);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Cantidad de ejercicios</div>
+            <select id="sim-cantidad" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none">
+              <option value="3">3 ejercicios</option>
+              <option value="5" selected>5 ejercicios</option>
+              <option value="8">8 ejercicios</option>
+            </select>
+          </div>
+        </div>
+        <button onclick="startSimulacro()" style="background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">✍️ Generar simulacro con IA</button>
+      </div>
+    </div>
+    <!-- Step 2: simulacro en curso -->
+    <div id="sim-body" style="display:none"></div>
+  </div>
+</div>
+
+<script src="content.js"></script>
+<script>
+const MATERIAS = [
+  {
+    id:1, nombre:"Cálculo Elemental", codigo:"Ing. Informática · 1°sem 2026", icon:"📐", color:"#7c6af7",
+    progreso:0, status:"pending", proxParcial:"A confirmar", hsTotales:128,
+    notebooklm:"",
+    promocion:{ tiene:true, desc:"Promedio de los dos parciales ≥ 7 → final corto que evalúa solo Unidades 6, 7 y 8. Promedio 4–6 → todo el programa.", condicion:"Promedio parciales ≥ 7", beneficio:"Final solo U6 (Primitivas) + U7 (Integral) + U8 (Series)" },
+    evaluacion:{ p1:"Unidades 1–3 · SIN recuperatorio", p2:"Unidades 1–6 · CON recuperatorio · aprueba la cursada", final:"Escrito. Promedio ≥7 → solo U6-8. Promedio 4-6 → todo el programa." },
+    temas:[
+      {unidad:"U1 — Funciones", items:[
+        {id:101,nombre:"Variables, funciones, dominio e imagen",dificultad:"baja",parcial:"P1",estado:"pending",desc:"Variables y constantes. Dominio e imagen. Paridad e imparidad. Inyectividad, suryectividad y biyectividad. Función inversa. Uso de GeoGebra."},
+        {id:102,nombre:"Operaciones entre funciones",dificultad:"baja",parcial:"P1",estado:"pending",desc:"Suma, producto, cociente y composición de funciones. Crecimiento y decrecimiento."},
+        {id:103,nombre:"Funciones elementales",dificultad:"media",parcial:"P1",estado:"pending",desc:"Funciones trigonométricas. Función exponencial y función logaritmo. Graficar e interpretar con GeoGebra."},
+      ]},
+      {unidad:"U2 — Límite", items:[
+        {id:104,nombre:"Definición y tipos de límite",dificultad:"media",parcial:"P1",estado:"pending",desc:"Límite de una función en un punto y en infinito. Límites finitos e infinitos. Infinitésimos. Límites laterales."},
+        {id:105,nombre:"Operaciones con límites",dificultad:"media",parcial:"P1",estado:"pending",desc:"Operaciones algebraicas con límites. Indeterminaciones. Límites fundamentales."},
+      ]},
+      {unidad:"U3 — Continuidad", items:[
+        {id:106,nombre:"Definición y teoremas de continuidad",dificultad:"media",parcial:"P1",estado:"pending",desc:"Definición de continuidad en un punto y en un intervalo. Continuidad de operaciones entre funciones. Teorema del valor intermedio."},
+      ]},
+      {unidad:"U4 — Derivada: nociones básicas", items:[
+        {id:107,nombre:"Definición de derivada",dificultad:"media",parcial:"P2",estado:"pending",desc:"Definición y propiedades básicas. Noción geométrica: tangente a una curva. Recta tangente y normal."},
+        {id:108,nombre:"Reglas de derivación",dificultad:"media",parcial:"P2",estado:"pending",desc:"Derivada de las funciones elementales. Reglas de derivación (suma, producto, cociente). Regla de la cadena. Derivada de la función inversa."},
+      ]},
+      {unidad:"U5 — Derivada: aplicaciones", items:[
+        {id:109,nombre:"Extremos y Teoremas del valor medio",dificultad:"alta",parcial:"P2",estado:"pending",desc:"Extremos locales. Teorema de Fermat. Teoremas de Rolle, Lagrange y Cauchy."},
+        {id:110,nombre:"Taylor y L'Hospital",dificultad:"alta",parcial:"P2",estado:"pending",desc:"Aproximación lineal. Diferencial. Polinomio de Taylor. Regla de L'Hospital para límites indeterminados."},
+        {id:111,nombre:"Estudio completo de funciones",dificultad:"alta",parcial:"P2",estado:"pending",desc:"Crecimiento/decrecimiento, extremos, concavidad/convexidad, puntos de inflexión, asíntotas. Problemas de máximos y mínimos."},
+      ]},
+      {unidad:"U6 — Primitivas ⭐ (entra en final corto)", items:[
+        {id:112,nombre:"Función primitiva y métodos de integración",dificultad:"alta",parcial:"P2/Final",estado:"pending",desc:"Definición de función primitiva. Métodos de integración: sustitución, partes, fracciones parciales."},
+      ]},
+      {unidad:"U7 — Integral definida ⭐ (final corto)", items:[
+        {id:113,nombre:"Integral definida y Teorema Fundamental",dificultad:"alta",parcial:"Final",estado:"pending",desc:"Integral definida. Propiedades. Teorema Fundamental del Cálculo. Regla de Barrow. Integrales impropias."},
+        {id:114,nombre:"Aplicaciones geométricas y físicas",dificultad:"media",parcial:"Final",estado:"pending",desc:"Cálculo de áreas entre curvas. Otras aplicaciones físicas de la integral definida."},
+      ]},
+      {unidad:"U8 — Sucesiones y Series ⭐ (final corto)", items:[
+        {id:115,nombre:"Sucesiones y su límite",dificultad:"media",parcial:"Final",estado:"pending",desc:"Definición de sucesión, ejemplos. Límite de una sucesión. Sucesiones monótonas y acotadas."},
+        {id:116,nombre:"Series y criterios de convergencia",dificultad:"alta",parcial:"Final",estado:"pending",desc:"Series numéricas. Criterios de convergencia (ratio, raíz, comparación, integral)."},
+      ]},
+    ],
+    examenes:[
+      {pregunta:"¿Cuál es el dominio de f(x) = √(x−2)?",opciones:["x ≥ 2","x > 2","Todos los reales","x ≤ 2"],correcta:0},
+      {pregunta:"Una función f es continua en x=a si:",opciones:["El límite existe y es igual a f(a)","Solo si f(a) está definida","El límite lateral es finito","f'(a) existe"],correcta:0},
+      {pregunta:"La derivada de f(x) = x³ usando la regla de potencias es:",opciones:["3x²","x²","3x","x⁴/4"],correcta:0},
+    ]
+  },
+  {
+    id:2, nombre:"Informática General", codigo:"Ing. Informática · 1°sem 2026", icon:"💻", color:"#6af7c2",
+    progreso:0, status:"pending", proxParcial:"A confirmar", hsTotales:80, notebooklm:"",
+    promocion:{ tiene:false, desc:"Sin modalidad de final corto. Requiere dos parciales aprobados (o sus recuperatorios). El examen final incluye parte teórica (opción múltiple) y dos ejercicios prácticos integradores en Python.", condicion:"—", beneficio:"Sin final corto" },
+    evaluacion:{ p1:"Unidades 1–4 · con recuperatorio", p2:"Unidades 5–7 · con recuperatorio", final:"Escrito. Teórica: opción múltiple. Práctica: 2 ejercicios Python integradores. Aprueba con ≥4." },
+    temas:[
+      {unidad:"U1 — Introducción a la Programación", items:[
+        {id:201,nombre:"Computadora y etapas de resolución",dificultad:"baja",parcial:"P1",estado:"pending",desc:"Esquema: entrada, salida, procesador, memoria, almacenamiento. Etapas: análisis, diseño, algoritmo, codificación, compilación, ejecución, prueba."},
+        {id:202,nombre:"Sistemas numéricos y conversión",dificultad:"media",parcial:"P1",estado:"pending",desc:"Decimal, binario, hexadecimal, octal. Conversión entre bases. Método directo binario↔decimal."},
+        {id:203,nombre:"Python: variables, tipos y operadores",dificultad:"baja",parcial:"P1",estado:"pending",desc:"IDE Thonny. Palabras reservadas. Tipos: int, str, float, bool. Conversión de tipos. Operadores aritméticos y de concatenación."},
+      ]},
+      {unidad:"U2 — Funciones", items:[
+        {id:204,nombre:"Funciones propias: parámetros y retorno",dificultad:"media",parcial:"P1",estado:"pending",desc:"Declarar función propia. Pasaje de parámetros. Valores de retorno. Alcance de variables: locales, no locales y globales."},
+        {id:205,nombre:"Funciones booleanas y bibliotecas",dificultad:"media",parcial:"P1",estado:"pending",desc:"Función booleana (retorno bool). Bibliotecas y funciones built-in. Generación de números aleatorios."},
+      ]},
+      {unidad:"U3 — Condicionales", items:[
+        {id:206,nombre:"Lógica proposicional y condicionales",dificultad:"media",parcial:"P1",estado:"pending",desc:"Operadores lógicos y relacionales. Tabla de verdad. Condicionales simples, anidadas y múltiples. Control de flujo."},
+        {id:207,nombre:"Algoritmos de búsqueda con condicionales",dificultad:"media",parcial:"P1",estado:"pending",desc:"Búsquedas del máximo, mínimo y por igualdad. Funciones booleanas complejas."},
+      ]},
+      {unidad:"U4 — Ciclos de Repetición", items:[
+        {id:208,nombre:"for, while y range()",dificultad:"media",parcial:"P1",estado:"pending",desc:"Concepto de ciclos. Ciclos for y while. Función range(). Ciclos anidados."},
+        {id:209,nombre:"Algoritmos con ciclos",dificultad:"alta",parcial:"P1",estado:"pending",desc:"Máximo, mínimo, ciclos anidados, acumuladores, sumadores y banderas. Integración de algoritmos."},
+      ]},
+      {unidad:"U5 — Cadenas de Caracteres", items:[
+        {id:210,nombre:"Strings: acceso, slices y operaciones",dificultad:"media",parcial:"P2",estado:"pending",desc:"Concepto de cadena e inmutabilidad. Acceso por índice, slices. Recorrido con ciclos. Codificación ASCII."},
+        {id:211,nombre:"Algoritmos de procesamiento de strings",dificultad:"alta",parcial:"P2",estado:"pending",desc:"Procesamiento, modificación y búsqueda en strings."},
+      ]},
+      {unidad:"U6 — Colecciones", items:[
+        {id:212,nombre:"Listas, tuplas y diccionarios",dificultad:"alta",parcial:"P2",estado:"pending",desc:"Mutabilidad. Crear, obtener, agregar/insertar, eliminar. Recorrido y procesamiento. Algoritmos de búsqueda y ordenamiento."},
+        {id:213,nombre:"Matrices y listas de listas",dificultad:"alta",parcial:"P2",estado:"pending",desc:"Listas de listas para implementar matrices. Procesamiento de datos en colecciones."},
+      ]},
+      {unidad:"U7 — Archivos", items:[
+        {id:214,nombre:"Archivos de texto y CSV",dificultad:"media",parcial:"P2",estado:"pending",desc:"Archivos de texto y CSV. Apertura (escritura, lectura, apéndice), cierre. Recorrido y procesamiento. Carga de datos en colecciones."},
+      ]},
+    ],
+    examenes:[
+      {pregunta:"¿Cuál es el resultado de 5 // 2 en Python?",opciones:["2","2.5","3","1"],correcta:0},
+      {pregunta:"El alcance de una variable definida dentro de una función es:",opciones:["Local","Global","No local","Universal"],correcta:0},
+      {pregunta:"¿Qué imprime print([1,2,3][1:3])?",opciones:["[2, 3]","[1, 2]","[1, 2, 3]","[3]"],correcta:0},
+    ]
+  },
+  {
+    id:3, nombre:"Introducción a la Filosofía", codigo:"1° AM · 1°sem 2026", icon:"🧠", color:"#f7c26a",
+    progreso:0, status:"pending", proxParcial:"3 Jun 2026", notebooklm:"",
+    cronograma:[
+      {mes:"Marzo",unidades:"Unidad I"},
+      {mes:"Abril",unidades:"Unidad II"},
+      {mes:"Mayo",unidades:"Unidades III–IV"},
+      {mes:"Junio",unidades:"Unidad V + PARCIAL 3/6 + RECUP 17/6"},
+      {mes:"Julio/Dic/Feb",unidades:"EXÁMENES FINALES (8:30 hs)"},
+    ],
+    promocion:{ tiene:true, desc:"Nota >7 en el parcial sin haberlo recuperado → accedés a un coloquio integrador. Válido solo para el 1er turno de julio, dos llamados. Con 4–6 o habiendo recuperado → examen oral completo ante tribunal.", condicion:"Nota >7 en parcial, sin recuperar", beneficio:"Coloquio integrador (solo 1er turno Julio)" },
+    evaluacion:{ p1:"Parcial escrito individual · 3 Jun 2026 · preguntas conceptuales Unidades I–V · recuperatorio 17 Jun", p2:"Trabajo práctico grupal (estudio de caso) · exposición oral con soporte informático · a lo largo de toda la cursada", final:"Final oral ante tribunal (toda la materia). O coloquio integrador si nota >7 sin haber recuperado." },
+    temas:[
+      {unidad:"U I — El Hombre busca respuesta · Marzo", items:[
+        {id:301,nombre:"Viktor Frankl: sentido, libertad, responsabilidad (TP1)",dificultad:"media",parcial:"P1",estado:"pending",desc:"Situaciones límite. Vida de Frankl. Los tres pilares: Sentido (lógos), Libertad y Responsabilidad. Noodinámica. Vacío existencial y nihilismo. Comparación con las otras escuelas de Viena (Freud, Adler)."},
+        {id:302,nombre:"Fe y Razón — Fides et Ratio",dificultad:"media",parcial:"P1",estado:"pending",desc:"Principales caminos de respuesta a los grandes interrogantes de fe y razón en Oriente y Occidente. Relaciones entre fe y razón según Juan Pablo II."},
+      ]},
+      {unidad:"U II — ¿Qué es Filosofía? · Abril", items:[
+        {id:303,nombre:"Historia y definición de Filosofía (TP2, TP6)",dificultad:"media",parcial:"P1",estado:"pending",desc:"Breve historia de la filosofía. Definición etimológica (amor a la sabiduría) y real/esencial. Objeto. División en partes principales. Comienzo histórico: Thales y los presocráticos."},
+        {id:304,nombre:"Condiciones del filosofar (TP2-b, TP3)",dificultad:"baja",parcial:"P1",estado:"pending",desc:"Ocio, inteligencia, asombro/admiración, ignorancia y duda, problemas religiosos e interrogantes de las ciencias, angustia y situaciones límite."},
+        {id:305,nombre:"Filosofía y otros saberes (TP4, TP5)",dificultad:"media",parcial:"P1",estado:"pending",desc:"Jerarquía, relaciones e integración entre Filosofía y otros saberes: conocimiento pre-científico/experiencial, científico y religioso."},
+      ]},
+      {unidad:"U III — Antropología Filosófica · Mayo", items:[
+        {id:306,nombre:"El hombre como ser peculiar",dificultad:"media",parcial:"P1",estado:"pending",desc:"El hombre como misterio. Diferencias con el animal: inteligencia, libertad, apertura al ser. Corrientes: materialismo, espiritualismo, dualismo, personalismo."},
+        {id:307,nombre:"Cuerpo y alma: visión filosófica",dificultad:"alta",parcial:"P1",estado:"pending",desc:"Composición del ser humano. El alma: concepciones platónica y aristotélica. La unidad sustancial del hombre según la escolástica."},
+        {id:308,nombre:"Dimensiones del hombre: apertura y trascendencia",dificultad:"media",parcial:"P1",estado:"pending",desc:"El hombre como ser abierto al mundo, a los demás y a Dios. Dimensión religiosa del ser humano. Trascendencia e inmanencia."},
+      ]},
+      {unidad:"U IV — Vida Propiamente Humana · Mayo", items:[
+        {id:309,nombre:"Inteligencia, voluntad y libertad",dificultad:"alta",parcial:"P1",estado:"pending",desc:"La inteligencia: naturaleza, actos y objetos. La voluntad: naturaleza, actos y objetos. Libertad humana: tipos, límites, determinismos. Lo voluntario e involuntario."},
+        {id:310,nombre:"La persona humana",dificultad:"alta",parcial:"P1",estado:"pending",desc:"Etimología y noción de 'persona' a través de la historia. Concepciones clásicas y modernas. Ser con dignidad, libertad, individualidad, temporalidad y socialidad."},
+        {id:311,nombre:"El hombre como problema: grandes corrientes",dificultad:"alta",parcial:"P1",estado:"pending",desc:"El mito, la revelación, monismo, dualismo, personalismo. Filosofía griega: Platón y Aristóteles. Influencia en Santo Tomás. Pensamiento moderno: Descartes, Kant."},
+      ]},
+      {unidad:"U V — La Persona y sus Ámbitos · Junio ← PARCIAL", items:[
+        {id:312,nombre:"Bien individual, bien común y vida social",dificultad:"media",parcial:"P1",estado:"pending",desc:"Individualismo liberal y colectivismo moderno. El hombre como ser social. Dimensiones y niveles del amor personal. Persona, amor, sexualidad y familia."},
+        {id:313,nombre:"Persona, naturaleza y cultura",dificultad:"media",parcial:"P1",estado:"pending",desc:"Concepciones de naturaleza humana. La cultura: noción, dimensiones, relativismo cultural. El trabajo humano. Técnica y mundo humano. Vida económica."},
+      ]},
+    ],
+    examenes:[
+      {pregunta:"¿Cuáles son los tres pilares de la concepción de Frankl?",opciones:["Sentido, Libertad y Responsabilidad","Razón, Amor y Voluntad","Cuerpo, Alma y Espíritu","Libertad, Igualdad y Fraternidad"],correcta:0},
+      {pregunta:"La definición etimológica de Filosofía significa:",opciones:["Amor a la sabiduría","Ciencia del ser","Búsqueda de la verdad","Estudio del hombre"],correcta:0},
+      {pregunta:"El asombro como origen del filosofar es condición tratada en:",opciones:["La Unidad II, condiciones del filosofar","La Unidad I, junto con Frankl","La Unidad IV, sobre la inteligencia","La Unidad V, sobre cultura"],correcta:0},
+    ]
+  },
+  {
+    id:4, nombre:"Introducción a la Ingeniería", codigo:"Ciclo Común · 1°sem", icon:"⚙️", color:"#f76a6a",
+    progreso:0, status:"pending", proxParcial:"A confirmar", hsTotales:45, notebooklm:"",
+    promocion:{ tiene:true, desc:"Nota >7 en el parcial escrito Y en el trabajo práctico grupal, sin haber desaprobado ninguna instancia → coloquio integrador abreviado, válido solo para el 1er turno de examen. Con 4–6 → examen oral completo ante tribunal.", condicion:"Nota >7 en parcial individual Y en TP grupal, sin recuperar", beneficio:"Coloquio integrador (1er turno)" },
+    evaluacion:{ p1:"Parcial escrito individual · preguntas conceptuales sobre todo el programa · con recuperatorio", p2:"Trabajo práctico grupal (estudio de caso). Exposición oral. A lo largo de toda la cursada.", final:"Examen oral ante tribunal. O coloquio integrador si nota >7 en ambas instancias sin recuperar." },
+    temas:[
+      {unidad:"U1 — La Racionalidad", items:[
+        {id:401,nombre:"Racionalidad técnica vs. científica",dificultad:"media",parcial:"P1",estado:"pending",desc:"La ingeniería como resolución de problemas por vía técnica. Diferencia con la racionalidad científica. Heurística. Indicador de eficiencia e imperativo de su maximización."},
+        {id:402,nombre:"Modelo de barrilete y restricciones",dificultad:"media",parcial:"P1",estado:"pending",desc:"Tensiones del 'modelo de barrilete'. La definición de objetivos. Ponderación de resultados y concepciones ideológicas. El concepto de restricción en el diseño."},
+      ]},
+      {unidad:"U2 — La Metodología", items:[
+        {id:403,nombre:"Metodología del diseño: modelo de cinco etapas",dificultad:"media",parcial:"P1",estado:"pending",desc:"El diseño y su relación con empresa y sociedad. Principio de indeterminación forma-función. Modelo de cinco etapas. Flexibilidad interpretativa."},
+        {id:404,nombre:"Constructivismo y grupos sociales",dificultad:"baja",parcial:"P1",estado:"pending",desc:"Los problemas solo adquieren relevancia cuando un grupo social los reconoce. No existen problemas aislados de un entorno de intereses."},
+      ]},
+      {unidad:"U3 — La Cultura", items:[
+        {id:405,nombre:"Tecnología, cultura y normatividad",dificultad:"media",parcial:"P1",estado:"pending",desc:"Tecnología autónoma vs. controlada socialmente. Tecnología como instrumento neutral vs. cargada de valores e intereses. Implicancias normativas para la formación ingenieril."},
+      ]},
+      {unidad:"U4 — La Naturaleza", items:[
+        {id:406,nombre:"Ingeniería y desarrollo sustentable",dificultad:"media",parcial:"P1",estado:"pending",desc:"Concepto de 'desarrollo sustentable'. La ingeniería frente al mundo sostenible. Crítica al eco-eficiencia. Metodologías alternativas: diseño de la cuna a la cuna, propuestas decrecentistas."},
+      ]},
+    ],
+    examenes:[
+      {pregunta:"¿Qué distingue la racionalidad técnica de la científica?",opciones:["La técnica resuelve problemas; la ciencia comprende la realidad","La técnica es más rigurosa que la ciencia","No hay diferencia relevante","La ciencia prioriza la eficiencia"],correcta:0},
+      {pregunta:"¿Qué expresa el 'modelo de barrilete' en Intro a la Ingeniería?",opciones:["Tensión entre eficiencia, restricciones y valores sociales","El diseño es un proceso puramente técnico","Los objetivos de la ingeniería son universales","La naturaleza es un recurso ilimitado"],correcta:0},
+    ]
+  },
+  {
+    id:5, nombre:"Química I", codigo:"Ing. Informática · 1°sem 2026", icon:"🧪", color:"#a78bfa",
+    progreso:0, status:"pending", proxParcial:"A confirmar", hsTotales:18, notebooklm:"",
+    promocion:{ tiene:false, desc:"Material semanal en aula virtual. La participación virtual suma en la evaluación.", condicion:"Por confirmar", beneficio:"Por confirmar" },
+    evaluacion:{p1:"Parcial escrito — temas U1 y U2", p2:"Parcial escrito — temas U3 y U4", final:"Examen final integrador"},
+    temas:[
+      {unidad:"U1 — Química y sistemas materiales", items:[
+        {id:501,nombre:"La química y sus objetos de estudio",dificultad:"baja",parcial:"P1",estado:"pending",desc:"Materia, propiedades, cambios físicos y químicos. Propiedades extensivas e intensivas. Clasificación de la materia."},
+        {id:502,nombre:"Sistemas materiales",dificultad:"baja",parcial:"P1",estado:"pending",desc:"Mezclas homogéneas y heterogéneas. Métodos de separación. Sustancias puras, elementos y compuestos."},
+      ]},
+      {unidad:"U2 — Leyes y nomenclatura", items:[
+        {id:503,nombre:"Leyes fundamentales de la química",dificultad:"media",parcial:"P1",estado:"pending",desc:"Ley de conservación de la masa, ley de proporciones definidas, ley de proporciones múltiples. Teoría atómica de Dalton."},
+        {id:504,nombre:"Nomenclatura inorgánica",dificultad:"media",parcial:"P1",estado:"pending",desc:"Nomenclatura de óxidos, hidróxidos, ácidos y sales. Sistemas IUPAC, Stock y tradicional. Valencias más comunes."},
+      ]},
+      {unidad:"U3 — Estequiometría", items:[
+        {id:505,nombre:"Estequiometría",dificultad:"alta",parcial:"P2",estado:"pending",desc:"El mol y número de Avogadro. Masa molar. Cálculos estequiométricos. Reactivo limitante y rendimiento de reacción."},
+      ]},
+      {unidad:"U4 — Estado gaseoso y soluciones", items:[
+        {id:506,nombre:"Estado gaseoso",dificultad:"alta",parcial:"P2",estado:"pending",desc:"Leyes de los gases ideales (Boyle, Charles, Gay-Lussac). Ley general del gas ideal PV=nRT. Mezclas gaseosas y presiones parciales."},
+        {id:507,nombre:"Soluciones",dificultad:"media",parcial:"P2",estado:"pending",desc:"Concentración: molaridad, molalidad, % masa. Diluciones. Solubilidad. Propiedades coligativas."},
+      ]},
+    ],
+    examenes:[
+      {pregunta:"¿Cuál es la diferencia entre una mezcla homogénea y una heterogénea?",opciones:["Homogénea: composición uniforme; heterogénea: fases distinguibles","Homogénea tiene más componentes","Heterogénea siempre tiene sólidos","No hay diferencia práctica"],correcta:0},
+      {pregunta:"¿Qué establece la ley de conservación de la masa?",opciones:["La masa total de reactivos = masa total de productos","La masa se convierte en energía","Los productos pesan más que los reactivos","Solo aplica a reacciones de combustión"],correcta:0},
+    ]
+  }
+];
+
+// FECHAS_DATA was hardcoded. Now all exam dates are managed by the user
+// via the Calendario page ("+ Agregar fecha") and persisted in Supabase.
+const FECHAS_DATA = [];
+
+// ══════════════════════════════════════════════════
+// ── SUPABASE CONFIG ──
+// ══════════════════════════════════════════════════
+const SB_URL = 'https://qqckibkfmvkdbarribog.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxY2tpYmtmbXZrZGJhcnJpYm9nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwMDMzODYsImV4cCI6MjA5MDU3OTM4Nn0.sWigC7gpGUXHrbKKytne7WEgTlfBdMTyyF67qeuGGds';
+
+async function sbFetch(path, opts={}){
+  const r = await fetch(SB_URL+'/rest/v1/'+path, {
+    headers: {
+      'apikey': SB_KEY,
+      'Authorization': 'Bearer '+SB_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': opts.prefer||'',
+      ...opts.headers
+    },
+    method: opts.method||'GET',
+    body: opts.body ? JSON.stringify(opts.body) : undefined
+  });
+  if(r.status===204||r.status===201) return null;
+  return r.json();
+}
+
+// ── PERSISTENCIA — PROGRESO ──
+async function saveProgress() {
+  const rows = [];
+  MATERIAS.forEach(function(m, mIdx){
+    m.temas.forEach(function(u, uIdx){
+      // Save unit exam approval state
+      if(u.examenAprobado){
+        rows.push({ tema_id: 'unit_exam_'+m.id+'_'+uIdx, estado: 'passed', ej_score: null });
+      }
+      u.items.forEach(function(t){
+        // Read score from localStorage (source of truth for current session)
+        var scoreRaw = localStorage.getItem('ejscore_'+t.id);
+        var score = scoreRaw !== null ? parseInt(scoreRaw) : null;
+        rows.push({ tema_id: String(t.id), estado: t.estado, ej_score: isNaN(score) ? null : score });
+      });
+    });
+  });
+  // Upsert all in one call (requires ej_score column: ALTER TABLE progreso ADD COLUMN IF NOT EXISTS ej_score int)
+  await sbFetch('progreso', {
+    method: 'POST',
+    prefer: 'resolution=merge-duplicates',
+    headers: { 'Prefer': 'resolution=merge-duplicates' },
+    body: rows
+  });
+}
+
+async function loadProgress() {
+  try {
+    const data = await sbFetch('progreso?select=tema_id,estado,ej_score');
+    if(!data || !data.length) return;
+    const map = {};
+    data.forEach(r => { map[String(r.tema_id)] = r; });
+    MATERIAS.forEach(function(m, mIdx) {
+      m.temas.forEach(function(u, uIdx) {
+        // Load unit exam approval
+        var unitKey = 'unit_exam_'+m.id+'_'+uIdx;
+        if(map[unitKey] && map[unitKey].estado === 'passed') u.examenAprobado = true;
+        u.items.forEach(function(t) {
+          var rec = map[String(t.id)];
+          if(rec){
+            // Migrate studying → pending (studying state removed)
+            t.estado = rec.estado === 'studying' ? 'pending' : rec.estado;
+            // Restore exercise score to localStorage if present
+            if(rec.ej_score !== null && rec.ej_score !== undefined){
+              localStorage.setItem('ejscore_'+t.id, String(rec.ej_score));
+            }
+          }
+        });
+      });
+    });
+  } catch(e){ console.warn('loadProgress error', e); }
+}
+
+// ── RACHA — sigue en localStorage (no es crítico perderla) ──
+function getStreak() {
+  try {
+    const s=JSON.parse(localStorage.getItem('studyos_streak')||'{}');
+    const hoy=new Date().toDateString();
+    if(s.lastDate===hoy) return s.count||1;
+    const ayer=new Date(); ayer.setDate(ayer.getDate()-1);
+    const count=s.lastDate===ayer.toDateString()?(s.count||0)+1:1;
+    localStorage.setItem('studyos_streak',JSON.stringify({lastDate:hoy,count}));
+    return count;
+  } catch(e){return 1;}
+}
+function bumpStreak(){
+  try{const hoy=new Date().toDateString();const s=JSON.parse(localStorage.getItem('studyos_streak')||'{}');localStorage.setItem('studyos_streak',JSON.stringify({lastDate:hoy,count:s.count||1}));}catch(e){}
+}
+
+// ── TOAST ──
+function showToast(msg, color) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.style.borderColor=color||'var(--accent3)'; t.style.color=color||'var(--accent3)';
+  t.style.display='block'; clearTimeout(t._to);
+  t._to=setTimeout(()=>t.style.display='none',2800);
+}
+
+// ── UTILS ──
+function calcDias(fecha){const hoy=new Date();hoy.setHours(0,0,0,0);return Math.round((fecha-hoy)/86400000);}
+function diasCls(d){return d>30?'dr-ok':d>14?'dr-warn':'dr-danger';}
+
+function setDate() {
+  const now=new Date();
+  const streak=getStreak();
+  const sb=streak>1?`<span class="streak-badge">🔥 ${streak} días seguidos</span>`:'';
+  document.getElementById('fecha-hoy').innerHTML=now.toLocaleDateString('es-AR',{weekday:'long',year:'numeric',month:'long',day:'numeric'})+sb;
+}
+
+function updateStats() {
+  let v=0,t=0;
+  MATERIAS.forEach(m=>m.temas.forEach(u=>u.items.forEach(i=>{t++;if(i.estado==='done')v++;})));
+  document.getElementById('temas-vistos').textContent=v;
+  document.getElementById('temas-total').textContent=`de ${t} en total`;
+  // Next exam from user-loaded events
+  var hoy=new Date(); hoy.setHours(0,0,0,0);
+  var proxEv=null;
+  getEventos().forEach(function(ev){
+    if(ev.tipo==='parcial'||ev.tipo==='final'||ev.tipo==='recuperatorio'){
+      var d=new Date(ev.fecha+'T00:00:00');
+      var dias=Math.round((d-hoy)/86400000);
+      if(dias>=0&&(!proxEv||dias<proxEv.dias)) proxEv={dias:dias,label:(TIPO_CONFIG[ev.tipo]||{label:ev.tipo}).label+' · '+(ev.materia||'')};
+    }
+  });
+  if(proxEv){
+    document.getElementById('dias-prox').textContent=proxEv.dias;
+    document.getElementById('label-prox').textContent=proxEv.label;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ── SMART SCHEDULER — Motor de planificación inteligente ──
+// ══════════════════════════════════════════════════════════════════
+//
+// LÓGICA:
+// 1. Recolecta TODOS los temas pendientes de TODAS las materias en orden
+// 2. Intercala materias (round-robin) para no cargar una sola materia por día
+// 3. Persiste en localStorage qué se completó cada día (scheduleLog)
+// 4. Si un día pasó y un tema no se marcó como done → lo reinserta adelante
+// 5. Si un tema se completa antes, el slot queda libre → avanza al siguiente
+// 6. Siempre genera el plan desde HOY hacia adelante, nunca queda stale
+
+var SCHED_KEY = 'studyos_schedule_v2'; // kept as localStorage cache key
+
+// Cuántos temas por día por día de la semana: LUN-VIE=2, SAB-DOM=1
+function getSlotsForDay(dow){ return (dow===0||dow===6)?1:2; }
+
+// Capacidad de horas de estudio por día (para scheduler ponderado)
+// LUN-VIE=3hs, SAB-DOM=1.5hs. Se usa cuando los temas tienen estimatedHours.
+function getHoursForDay(dow){ return (dow===0||dow===6)?1.5:3; }
+
+// Todos los temas pendientes (no done), en orden de materia y unidad.
+// Incluye estimatedHours y weight para el scheduler ponderado (null = fallback a slots).
+function getAllPendingTemas(){
+  var all=[];
+  MATERIAS.forEach(function(m){
+    m.temas.forEach(function(u, uIdx){
+      // Skip locked units
+      if(!isUnidadUnlocked(m, uIdx)) return;
+      u.items.forEach(function(t){
+        if(t.estado!=='done'){
+          all.push({
+            tId:t.id, mId:m.id, tNombre:t.nombre, mNombre:m.nombre,
+            mIcon:m.icon, mColor:m.color, uNombre:u.unidad, estado:t.estado,
+            estimatedHours: t.estimatedHours||null, // null → use slot-based fallback
+            weight: t.weight||null                  // 1-3 difficulty weight (null → 1)
+          });
+        }
+      });
+    });
+  });
+  return all;
+}
+
+// Intercala temas de distintas materias para que cada día tenga variedad
+// Algoritmo: round-robin por materia
+function interleaveByMateria(temas){
+  // Group by materia
+  var byMat={};
+  var order=[];
+  temas.forEach(function(t){
+    if(!byMat[t.mId]){ byMat[t.mId]=[]; order.push(t.mId); }
+    byMat[t.mId].push(t);
+  });
+  var result=[];
+  var maxLen=0;
+  order.forEach(function(id){ maxLen=Math.max(maxLen,byMat[id].length); });
+  for(var i=0;i<maxLen;i++){
+    order.forEach(function(id){ if(byMat[id][i]) result.push(byMat[id][i]); });
+  }
+  return result;
+}
+
+// Carga el scheduleLog: { "2026-03-31": { tId: "done"|"pending" } }
+function loadScheduleLog(){
+  try{ return JSON.parse(localStorage.getItem(SCHED_KEY)||'{}'); }catch(e){ return {}; }
+}
+function saveScheduleLog(log){
+  localStorage.setItem(SCHED_KEY,JSON.stringify(log));
+  // Async backup to Supabase
+  sbFetch('schedule_log', {
+    method:'POST',
+    headers:{'Prefer':'resolution=merge-duplicates'},
+    body:[{id:'main', data: JSON.stringify(log)}]
+  }).catch(function(){});
+}
+async function loadScheduleLogFromSB(){
+  try{
+    const data = await sbFetch('schedule_log?id=eq.main');
+    if(data && data[0] && data[0].data){
+      const log = JSON.parse(data[0].data);
+      localStorage.setItem(SCHED_KEY, JSON.stringify(log));
+    }
+  }catch(e){}
+}
+
+// Regenera el plan completo desde startDate hacia adelante, para N días
+// Devuelve array de { date (ISO string), temas: [{tId,mId,...}] }
+function buildSchedulePlan(startDate, numDays){
+  var log=loadScheduleLog();
+  var pending=interleaveByMateria(getAllPendingTemas());
+
+  // IDs de temas ya completados globalmente — keyed as String for consistency
+  var doneIds={};
+  MATERIAS.forEach(function(m){
+    m.temas.forEach(function(u){
+      u.items.forEach(function(t){ if(t.estado==='done') doneIds[String(t.id)]=true; });
+    });
+  });
+
+  // Remove done from pending
+  pending=pending.filter(function(t){ return !doneIds[String(t.tId)]; });
+
+  // Collect overdue temas (scheduled in past, not completed). Deduplicated via Set.
+  var hoy=new Date(); hoy.setHours(0,0,0,0);
+  var overdueSet={};
+  Object.keys(log).sort().forEach(function(dateStr){
+    var d=new Date(dateStr+'T00:00:00'); d.setHours(0,0,0,0);
+    if(d<hoy){
+      var dayLog=log[dateStr];
+      Object.keys(dayLog).forEach(function(tIdStr){
+        var tId=String(tIdStr);
+        if(dayLog[tIdStr]!=='done' && !doneIds[tId]){
+          overdueSet[tId]=true; // Set deduplicates naturally
+        }
+      });
+    }
+  });
+
+  // Move overdue temas to the front of pending (they're already in pending — just reorder)
+  var overdueKeys=Object.keys(overdueSet);
+  if(overdueKeys.length>0){
+    var overdueItems=pending.filter(function(t){ return overdueSet[String(t.tId)]; });
+    var rest=pending.filter(function(t){ return !overdueSet[String(t.tId)]; });
+    pending=overdueItems.concat(rest);
+  }
+
+  // Assign temas to days. Use pending as a queue — always take from front and remove.
+  // This prevents any item from appearing in multiple days due to index drift.
+  var plan=[];
+  for(var i=0;i<numDays;i++){
+    var d=new Date(startDate); d.setDate(startDate.getDate()+i);
+    var dow=d.getDay();
+    var slots=getSlotsForDay(dow);
+    var dateStr=d.toISOString().slice(0,10);
+    var dayLog=log[dateStr]||{};
+    var dayTemas=[];
+
+    // Determine if we use hour-based or slot-based scheduling.
+    // Hour-based activates when ANY pending tema has estimatedHours set.
+    var useHours=pending.some(function(t){ return t.estimatedHours!=null; });
+    var dayCapacity=useHours?getHoursForDay(dow):slots;
+
+    var committed=Object.keys(dayLog);
+    if(committed.length>0){
+      // Day has a committed log — restore committed items from pending queue
+      committed.forEach(function(tIdStr){
+        var tId=String(tIdStr);
+        var idx=pending.findIndex(function(t){ return String(t.tId)===tId; });
+        if(idx!==-1){
+          dayTemas.push(Object.assign({},pending[idx],{logStatus:dayLog[tIdStr]}));
+          pending.splice(idx,1); // Remove from queue to prevent duplicate assignment
+        }
+      });
+      // Fill remaining capacity from queue front if day is today or future
+      if(d>=hoy){
+        var usedCapacity=useHours
+          ?dayTemas.reduce(function(s,t){ return s+(t.estimatedHours||1); },0)
+          :dayTemas.length;
+        while(usedCapacity<dayCapacity && pending.length>0){
+          var next=pending[0];
+          var cost=useHours?(next.estimatedHours||1):1;
+          if(usedCapacity+cost>dayCapacity+0.01) break; // won't fit
+          dayTemas.push(Object.assign({},next,{logStatus:'pending'}));
+          pending.splice(0,1);
+          usedCapacity+=cost;
+        }
+      }
+    } else {
+      // No log yet — assign from queue front up to capacity
+      var usedCapacity=0;
+      while(usedCapacity<dayCapacity && pending.length>0){
+        var next=pending[0];
+        var cost=useHours?(next.estimatedHours||1):1;
+        if(usedCapacity+cost>dayCapacity+0.01) break;
+        dayTemas.push(Object.assign({},next,{logStatus:'pending'}));
+        pending.splice(0,1);
+        usedCapacity+=cost;
+      }
+      // Save to log (so we can track skips later)
+      if(d>=hoy && dayTemas.length>0){
+        var newLog={};
+        dayTemas.forEach(function(t){ newLog[String(t.tId)]='pending'; });
+        log[dateStr]=newLog;
+      }
+    }
+
+    plan.push({date:dateStr,d:d,dow:dow,temas:dayTemas});
+  }
+  saveScheduleLog(log);
+  return plan;
+}
+
+// Marca un tema del log como hecho (siempre String key para consistencia)
+function markScheduledTema(tId, dateStr){
+  var log=loadScheduleLog();
+  if(!log[dateStr]) log[dateStr]={};
+  log[dateStr][String(tId)]='done';
+  saveScheduleLog(log);
+}
+
+// Cuando un tema se marca como done globalmente, actualizamos el log y recalculamos
+// ── DESBLOQUEO DE UNIDADES ──
+// La primera unidad de cada materia está siempre desbloqueada.
+// La unidad N está desbloqueada si la unidad N-1 tiene examenAprobado=true.
+function isUnidadUnlocked(materia, unidadIndex){
+  if(unidadIndex===0) return true;
+  var prev=materia.temas[unidadIndex-1];
+  return !!(prev && prev.examenAprobado);
+}
+
+// Aprueba el examen de la unidad actual y persiste
+function approveUnitExam(){
+  if(!panelUnidad||!panelMateria) return;
+  var uIdx=panelMateria.temas.indexOf(panelUnidad);
+  if(uIdx<0) return;
+  panelUnidad.examenAprobado=true;
+  saveProgress();
+  var nextU=panelMateria.temas[uIdx+1];
+  if(nextU){
+    showToast('🔓 Unidad aprobada — '+nextU.unidad.split('—')[0].trim()+' desbloqueada','var(--accent3)');
+  } else {
+    showToast('🎉 Todas las unidades de '+panelMateria.nombre+' completadas','var(--accent3)');
+  }
+  // Refresh detalle view if open
+  var detPage=document.getElementById('page-detalle');
+  if(detPage&&detPage.style.display!=='none') showDetalle(panelMateria.id);
+}
+
+function onTemaDoneInScheduler(tId){
+  var hoyStr=new Date().toISOString().slice(0,10);
+  markScheduledTema(tId,hoyStr);
+  renderTodayCard();
+  renderSemana();
+  recalcQCY();
+}
+
+// Obtener plan de HOY (para la today card y la página de tareas)
+function getTodayPlan(){
+  var hoy=new Date(); hoy.setHours(0,0,0,0);
+  var plan=buildSchedulePlan(hoy,1);
+  return plan[0]?plan[0].temas:[];
+}
+
+// Get all temas de hoy incluyendo tareas manuales
+function getTareasDeHoyList(){
+  var hoy=new Date();hoy.setHours(0,0,0,0);
+  var hoyStr=hoy.toISOString().slice(0,10);
+  var items=[];
+
+  // 1. Tareas con ejercicios programadas para hoy
+  var tareasData=getTareasData();
+  tareasData.forEach(function(tarea){
+    if(tarea.tipo==='tarea_ejercicios'){
+      var assigns=(tarea.dayAssignments||[]).filter(function(a){return a.fecha===hoyStr;});
+      assigns.forEach(function(a){
+        items.push({tipo:'tarea',label:tarea.materia+' · '+a.label,tareaId:tarea.id,color:tarea.color||'var(--accent2)'});
+      });
+    }
+  });
+
+  // 2. Temas del scheduler de hoy
+  var todayTemas=getTodayPlan();
+  var log=loadScheduleLog();
+  var dayLog=log[hoyStr]||{};
+  todayTemas.forEach(function(t){
+    var isDone=t.estado==='done'||dayLog[t.tId]==='done';
+    items.push({tipo:'tema',label:t.mIcon+' '+t.mNombre.split(' ')[0]+' · '+t.tNombre,
+      temaId:t.tId,materiaId:t.mId,color:t.mColor,done:isDone});
+  });
+
+  return items;
+}
+
+// ── PLAN "ESTA SEMANA" (usa scheduler) ──
+function buildSemana(){
+  var hoy=new Date();hoy.setHours(0,0,0,0);
+  var dow=hoy.getDay();
+  var lunes=new Date(hoy); lunes.setDate(hoy.getDate()-(dow===0?6:dow-1));
+  var diasNom=['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'];
+  var plan=buildSchedulePlan(lunes,7);
+  return plan.map(function(day){
+    var tasks=day.temas.map(function(t){
+      var done=t.estado==='done'||t.logStatus==='done';
+      return (done?'✅ ':'')+(t.mIcon)+' '+(t.mNombre.split(' ')[0])+' · '+t.tNombre;
+    });
+    if(tasks.length===0) tasks=['🎉 Todo visto'];
+    return{dia:diasNom[day.d.getDay()]+' '+day.d.getDate(),hoy:day.d.getTime()===hoy.getTime(),tasks:tasks,hs:getSlotsForDay(day.dow)*1.5+'hs'};
+  });
+}
+
+// ── TODAY CARD ──
+function renderTodayCard(){
+  var dow=new Date().getDay();
+  var noms=['domingo de repaso','lunes de arranque','martes de trabajo','miércoles de código','jueves de estudio','viernes de práctica','sábado de repaso'];
+  var tt=document.querySelector('.today-title');
+  var tc=document.getElementById('today-tasks-preview');
+  var items=getTareasDeHoyList();
+  var bloques=items.filter(function(x){return !x.done;}).length;
+  if(tt) tt.textContent=noms[dow]+' — '+Math.max(bloques,0)+' bloques pendientes';
+  if(tc){
+    if(items.length===0){
+      tc.innerHTML='<span class="task-chip">🎉 Sin pendientes hoy</span>';
+    } else {
+      tc.innerHTML=items.slice(0,4).map(function(item){
+        return '<span class="task-chip'+(item.done?' done':'')+'">'+item.label+'</span>';
+      }).join('')+(items.length>4?'<span class="task-chip">+'+(items.length-4)+' más...</span>':'');
+    }
+  }
+}
+
+// ── TAREAS DE HOY (CHANGE 3 + CHANGE 4) ──
+function getTareasData(){
+  try{return JSON.parse(localStorage.getItem('studyos_tareas')||'[]');}catch(e){return [];}
+}
+function saveTareasData(d){localStorage.setItem('studyos_tareas',JSON.stringify(d));}
+
+// When a tarea tipo "ejercicios" is saved (from "Agregar fecha"), split it across days
+function distribuirTareaEjercicios(tarea){
+  // tarea: {id, materia, desc, fechaInicio, fechaFin, totalEjercicios, tipo:'tarea_ejercicios', color}
+  var inicio=new Date(tarea.fechaInicio+'T00:00:00');
+  var fin=new Date(tarea.fechaFin+'T00:00:00');
+  var diasTotal=Math.max(1,Math.round((fin-inicio)/86400000)+1);
+  var porDia=Math.ceil(tarea.totalEjercicios/diasTotal);
+  var restante=tarea.totalEjercicios;
+  var assignments=[];
+  for(var i=0;i<diasTotal&&restante>0;i++){
+    var d=new Date(inicio);d.setDate(inicio.getDate()+i);
+    var cantidad=Math.min(porDia,restante);
+    var desde=tarea.totalEjercicios-restante+1;
+    assignments.push({fecha:d.toISOString().slice(0,10),label:tarea.desc+' Ej. '+desde+'-'+(desde+cantidad-1),cantidad:cantidad});
+    restante-=cantidad;
+  }
+  tarea.dayAssignments=assignments;
+  return tarea;
+}
+
+function renderTareasHoy(){
+  var hoy=new Date();hoy.setHours(0,0,0,0);
+  var hoyStr=hoy.toISOString().slice(0,10);
+  var lbl=document.getElementById('tareas-fecha-label');
+  if(lbl)lbl.textContent=hoy.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
+
+  var cont=document.getElementById('tareas-hoy-content');if(!cont)return;
+  var log=loadScheduleLog();
+  var dayLog=log[hoyStr]||{};
+
+  // Get today's plan from scheduler
+  var todayTemas=getTodayPlan();
+  var tareasData=getTareasData();
+  var tareaItems=[];
+  tareasData.forEach(function(tarea){
+    if(tarea.tipo==='tarea_ejercicios'){
+      var assigns=(tarea.dayAssignments||[]).filter(function(a){return a.fecha===hoyStr;});
+      assigns.forEach(function(a){ tareaItems.push({tarea:tarea,assign:a}); });
+    }
+  });
+
+  if(todayTemas.length===0 && tareaItems.length===0){
+    cont.innerHTML='<div style="text-align:center;padding:48px 20px;color:var(--text2);font-size:15px">🎉 ¡No tenés nada pendiente para hoy!</div>';
+    return;
+  }
+
+  var html='';
+
+  // Tareas manuales
+  if(tareaItems.length>0){
+    html+='<div class="section-title">📋 Tareas con fecha</div>';
+    tareaItems.forEach(function(item){
+      var tarea=item.tarea; var a=item.assign;
+      var isDone=dayLog['t_'+tarea.id+a.fecha]==='done';
+      html+='<div style="background:var(--surface);border:1px solid var(--border);border-left:4px solid '+(tarea.color||'var(--accent2)')+';border-radius:var(--radius);padding:16px 20px;margin-bottom:10px;display:flex;align-items:center;gap:14px;'+(isDone?'opacity:0.5':'')+'"">';
+      html+='<span style="font-size:20px">📋</span>';
+      html+='<div style="flex:1"><div style="font-weight:600;font-size:14px;color:var(--text)'+(isDone?';text-decoration:line-through':'')+'">'+tarea.materia+' · '+a.label+'</div><div style="font-size:11px;color:var(--text2);margin-top:3px">'+a.cantidad+' ejercicios para hoy</div></div>';
+      if(!isDone){
+        html+='<button onclick="markTareaManualDone(this,\'t_'+tarea.id+a.fecha+'\')" style="background:rgba(106,247,194,0.1);border:1px solid rgba(106,247,194,0.3);color:var(--accent3);border-radius:var(--radius-sm);padding:7px 14px;font-size:12px;cursor:pointer;font-family:Inter,sans-serif">✓ Hecha</button>';
+      } else {
+        html+='<span style="color:var(--accent3);font-size:13px">✅ Lista</span>';
+      }
+      html+='</div>';
+    });
+  }
+
+  // Temas del scheduler
+  if(todayTemas.length>0){
+    html+='<div class="section-title" style="margin-top:'+( tareaItems.length>0?'20px':'0')+'">📖 Temas para estudiar hoy</div>';
+    // Status banner
+    var doneCount=todayTemas.filter(function(t){ return t.estado==='done'||dayLog[t.tId]==='done'; }).length;
+    var total=todayTemas.length;
+    var pct=Math.round(doneCount/total*100);
+    html+='<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px">'
+      +'<div style="flex:1"><div style="font-size:12px;color:var(--text2);margin-bottom:6px">Progreso de hoy</div>'
+      +'<div style="height:6px;background:var(--bg);border-radius:3px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:var(--accent3);border-radius:3px;transition:width 0.4s"></div></div></div>'
+      +'<div style="font-family:\'Space Mono\',monospace;font-size:13px;color:'+(pct===100?'var(--accent3)':'var(--text)')+'">'+doneCount+'/'+total+'</div>'
+      +'</div>';
+
+    todayTemas.forEach(function(t){
+      var isDone=t.estado==='done'||dayLog[t.tId]==='done';
+      html+='<div style="background:var(--surface);border:1px solid '+(isDone?'rgba(106,247,194,0.3)':'var(--border)')+';border-left:4px solid '+t.mColor+';border-radius:var(--radius);padding:16px 20px;margin-bottom:10px;'+(isDone?'opacity:0.6':'')+'display:flex;align-items:flex-start;gap:14px">';
+      html+='<div style="width:22px;height:22px;border-radius:50%;border:2px solid '+(isDone?'var(--accent3)':t.mColor)+';display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;color:'+(isDone?'var(--accent3)':t.mColor)+';margin-top:1px">'+(isDone?'✓':'○')+'</div>';
+      html+='<div style="flex:1;min-width:0">';
+      html+='<div style="font-weight:600;font-size:14px;color:var(--text)'+(isDone?';text-decoration:line-through':'')+';line-height:1.3">'+t.tNombre+'</div>';
+      html+='<div style="font-size:11px;color:var(--text2);margin-top:3px">'+t.mIcon+' '+t.mNombre+' · '+t.uNombre.split('—')[0].trim()+'</div>';
+      html+='</div>';
+      html+='<div style="display:flex;gap:8px;flex-shrink:0">';
+      if(!isDone){
+        html+='<button onclick="openTemaPanel('+t.tId+','+t.mId+')" style="background:rgba(124,106,247,0.1);border:1px solid rgba(124,106,247,0.3);color:var(--accent);border-radius:var(--radius-sm);padding:7px 12px;font-size:12px;cursor:pointer;font-family:Inter,sans-serif">📖 Estudiar</button>';
+        html+='<button onclick="markTemaHoyDone(this,'+t.tId+')" style="background:rgba(106,247,194,0.08);border:1px solid rgba(106,247,194,0.25);color:var(--accent3);border-radius:var(--radius-sm);padding:7px 12px;font-size:12px;cursor:pointer;font-family:Inter,sans-serif">✓ Listo</button>';
+      } else {
+        html+='<span style="color:var(--accent3);font-size:13px;padding:7px 0">✅ Hecho</span>';
+      }
+      html+='</div>';
+      html+='</div>';
+    });
+
+    if(doneCount===total && total>0){
+      html+='<div style="text-align:center;padding:20px;background:rgba(106,247,194,0.06);border:1px solid rgba(106,247,194,0.2);border-radius:var(--radius);margin-top:8px">'
+        +'<div style="font-size:24px;margin-bottom:6px">🎉</div>'
+        +'<div style="font-family:\'Syne\',sans-serif;font-size:16px;font-weight:700;color:var(--accent3)">¡Día completado!</div>'
+        +'<div style="font-size:12px;color:var(--text2);margin-top:4px">Todos los temas de hoy están listos. El plan de mañana ya está armado.</div>'
+        +'</div>';
+    }
+  }
+
+  cont.innerHTML=html;
+}
+
+function markTareaManualDone(btn,key){
+  var hoyStr=new Date().toISOString().slice(0,10);
+  var log=loadScheduleLog();
+  if(!log[hoyStr]) log[hoyStr]={};
+  log[hoyStr][key]='done';
+  saveScheduleLog(log);
+  renderTareasHoy();
+  renderTodayCard();
+  showToast('✅ Tarea marcada como hecha','var(--accent3)');
+}
+
+function markTemaHoyDone(btn,tId){
+  var hoyStr=new Date().toISOString().slice(0,10);
+  markScheduledTema(tId,hoyStr);
+  renderTareasHoy();
+  renderTodayCard();
+  showToast('✅ Tema marcado — cronograma actualizado','var(--accent3)');
+}
+
+function checkTareaDone(btn){
+  btn.textContent='✅ ¡Listo!'; btn.disabled=true; btn.style.opacity='0.5';
+  showToast('✅ Tarea marcada como hecha','var(--accent3)');
+}
+
+// ── RENDER MATERIAS ──
+function renderMaterias(cid) {
+  const c=document.getElementById(cid);if(!c)return;c.innerHTML='';
+  MATERIAS.forEach((m,i)=>{
+    const tot=m.temas.reduce((a,u)=>a+u.items.length,0);
+    const done=m.temas.reduce((a,u)=>a+u.items.filter(t=>t.estado==='done').length,0);
+    const pct=tot?Math.round(done/tot*100):0;
+    const el=document.createElement('div');
+    el.className='materia-card';el.style.cssText=`--card-color:${m.color};animation-delay:${i*0.06}s`;
+    el.innerHTML=`
+      <div class="materia-header"><span class="materia-icon">${m.icon}</span><span class="materia-status status-pending">${done===tot&&tot>0?'✅ Completa':'Por arrancar'}</span></div>
+      <div class="materia-name">${m.nombre}</div>
+      <div class="materia-code">${m.codigo}</div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Temario visto</span><span>${pct}%</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+      </div>
+      ${m.promocion.tiene?'<span class="promo-badge promo-posible">🎯 Final corto posible</span>':'<span class="promo-badge promo-no">📋 Sin final corto</span>'}
+      <div class="materia-footer">
+        <div class="parcial-info">Parcial: <span>${m.proxParcial}</span></div>
+        <div class="temas-count">${done}/${tot} temas</div>
+      </div>`;
+    el.onclick=()=>showDetalle(m.id);
+    c.appendChild(el);
+  });
+}
+
+// ── PANEL LATERAL DE TEMA — GEMINI POWERED ──
+let panelTema=null, panelMateria=null, panelUnidad=null, examenPuntajes={};
+
+function getGeminiKey(){ return localStorage.getItem('groq_api_key')||''; }
+function saveGeminiKey(){
+  const k=document.getElementById('gemini-key-input') && document.getElementById('gemini-key-input').value.trim();
+  if(!k){showToast('Pegá tu API key primero','var(--danger)');return;}
+  localStorage.setItem('groq_api_key',k);
+  const s=document.getElementById('key-status');
+  if(s){s.style.display='block';s.style.color='var(--accent3)';s.textContent='✅ Key guardada en este dispositivo';}
+  showToast('🔑 API key guardada');
+}
+
+// ── PDF.JS HELPERS ──
+function loadPdfJs(cb){
+  if(window.pdfjsLib){cb();return;}
+  const s=document.createElement('script');
+  s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+  s.onload=function(){
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    cb();
+  };
+  document.head.appendChild(s);
+}
+async function extractPdfText(file){
+  return new Promise(function(resolve,reject){
+    loadPdfJs(async function(){
+      try{
+        const ab=await file.arrayBuffer();
+        const pdf=await pdfjsLib.getDocument({data:ab}).promise;
+        let text='';
+        for(let i=1;i<=pdf.numPages;i++){
+          const page=await pdf.getPage(i);
+          const tc=await page.getTextContent();
+          text+=tc.items.map(function(x){return x.str;}).join(' ')+'\n';
+        }
+        resolve(text.trim());
+      }catch(e){reject(e);}
+    });
+  });
+}
+
+// ── MATERIALES POR MATERIA (Supabase) ──
+// Cache local para no re-fetchear en cada generación
+var _materialesCache = {}; // materia_id -> array de {id,nombre,contenido}
+
+async function loadMaterialesMateria(materiaId){
+  if(_materialesCache[materiaId]) return _materialesCache[materiaId];
+  try{
+    const data = await sbFetch('materiales?materia_id=eq.'+materiaId+'&order=created_at.asc');
+    _materialesCache[materiaId] = data||[];
+    return _materialesCache[materiaId];
+  }catch(e){ return []; }
+}
+
+async function saveMaterial(materiaId, nombre, contenido){
+  const row = {
+    id: 'mat_'+materiaId+'_'+Date.now(),
+    materia_id: materiaId,
+    nombre: nombre,
+    contenido: contenido
+  };
+  try{
+    await sbFetch('materiales', { method:'POST', body:[row] });
+    if(!_materialesCache[materiaId]) _materialesCache[materiaId]=[];
+    _materialesCache[materiaId].push(row);
+    showToast('💾 Material guardado en la nube','var(--accent3)');
+  }catch(e){ showToast('❌ Error al guardar: '+e.message,'var(--danger)'); }
+}
+
+async function deleteMaterial(materialId, materiaId){
+  try{
+    await sbFetch('materiales?id=eq.'+materialId, { method:'DELETE' });
+    if(_materialesCache[materiaId]){
+      _materialesCache[materiaId] = _materialesCache[materiaId].filter(m=>m.id!==materialId);
+    }
+    showToast('🗑 Material eliminado');
+  }catch(e){ showToast('❌ Error al eliminar','var(--danger)'); }
+}
+
+// Junta todo el contenido de materiales de una materia para pasarle a la IA
+async function getMatContext(materiaId){
+  const mats = await loadMaterialesMateria(materiaId);
+  if(!mats.length) return '';
+  return mats.map(m=>'=== '+m.nombre+' ===\n'+m.contenido).join('\n\n');
+}
+
+// Render del panel de materiales en la página de detalle de materia
+async function renderMaterialesPanel(materiaId){
+  const container = document.getElementById('materiales-panel-'+materiaId);
+  if(!container) return;
+  container.innerHTML = '<div style="color:var(--text2);font-size:12px;padding:8px 0">Cargando materiales...</div>';
+  const mats = await loadMaterialesMateria(materiaId);
+  let html = '';
+  if(mats.length===0){
+    html = '<div style="color:var(--text2);font-size:12px;padding:8px 0;font-style:italic">Sin materiales cargados todavía.</div>';
+  } else {
+    mats.forEach(m=>{
+      html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:6px">'
+        +'<span style="font-size:16px">📄</span>'
+        +'<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+m.nombre+'</div>'
+        +'<div style="font-size:10px;color:var(--text2);margin-top:2px">'+m.contenido.length+' caracteres</div></div>'
+        +'<button onclick="deleteMaterial('+JSON.stringify(m.id)+','+materiaId+').then(()=>renderMaterialesPanel('+materiaId+'))" style="background:rgba(247,106,106,0.1);border:1px solid rgba(247,106,106,0.2);color:var(--danger);border-radius:4px;padding:5px 10px;font-size:11px;cursor:pointer;font-family:Inter,sans-serif">🗑</button>'
+        +'</div>';
+    });
+  }
+  // Upload form
+  html += '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">'
+    +'<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text2);margin-bottom:8px">Agregar material</div>'
+    +'<input id="mat-nombre-'+materiaId+'" type="text" placeholder="Nombre del archivo / apunte (ej: Guía TP1)" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;color:var(--text);font-family:Inter,sans-serif;font-size:13px;outline:none;margin-bottom:8px"/>'
+    // Drop zone
+    +'<div id="mat-drop-'+materiaId+'" style="border:2px dashed var(--border);border-radius:var(--radius-sm);padding:16px;text-align:center;cursor:pointer;transition:border-color 0.2s;background:var(--bg);margin-bottom:8px" onclick="document.getElementById(&quot;mat-file-'+materiaId+'&quot;).click()" ondragover="event.preventDefault();this.style.borderColor=&quot;var(--accent)&quot;" ondragleave="this.style.borderColor=&quot;var(--border)&quot;" ondrop="handleMatFileDrop(event,'+materiaId+')">'
+    +'<div style="font-size:20px;margin-bottom:4px">📁</div>'
+    +'<div style="font-size:12px;color:var(--text2)">Subí un archivo o arrastralo acá</div>'
+    +'<div style="font-size:10px;color:var(--text2);margin-top:3px;opacity:0.7">PDF · TXT · MD — para PPT/Word exportá como PDF primero</div>'
+    +'</div>'
+    +'<input type="file" id="mat-file-'+materiaId+'" accept=".pdf,.txt,.md" style="display:none" onchange="handleMatFileInput(event,'+materiaId+')"/>'
+    +'<div id="mat-file-status-'+materiaId+'" style="font-size:11px;margin-bottom:8px;display:none"></div>'
+    +'<textarea id="mat-texto-'+materiaId+'" placeholder="O pegá el texto directamente acá..." style="width:100%;min-height:100px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;color:var(--text);font-family:Inter,sans-serif;font-size:12px;line-height:1.6;resize:vertical;outline:none;margin-bottom:8px"></textarea>'
+    +'<button onclick="submitMaterial('+materiaId+')" style="background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;width:100%">💾 Guardar material</button>'
+    +'</div>';
+  container.innerHTML = html;
+}
+
+async function submitMaterial(materiaId){
+  const nombre = (document.getElementById('mat-nombre-'+materiaId)||{}).value.trim();
+  const texto = (document.getElementById('mat-texto-'+materiaId)||{}).value.trim();
+  if(!nombre){ showToast('Poné un nombre al material','var(--danger)'); return; }
+  if(!texto){ showToast('No hay contenido para guardar','var(--danger)'); return; }
+  await saveMaterial(materiaId, nombre, texto);
+  renderMaterialesPanel(materiaId);
+}
+
+async function handleMatFileInput(event, materiaId){
+  const file = event.target.files && event.target.files[0];
+  if(file) await processMatFile(file, materiaId);
+  event.target.value='';
+}
+function handleMatFileDrop(event, materiaId){
+  event.preventDefault();
+  const file = event.dataTransfer.files && event.dataTransfer.files[0];
+  if(file) processMatFile(file, materiaId);
+}
+async function processMatFile(file, materiaId){
+  const statusEl = document.getElementById('mat-file-status-'+materiaId);
+  const texta = document.getElementById('mat-texto-'+materiaId);
+  const nombreEl = document.getElementById('mat-nombre-'+materiaId);
+  if(statusEl){ statusEl.style.display='block'; statusEl.style.color='var(--accent2)'; statusEl.textContent='⏳ Leyendo archivo...'; }
+  const ext = file.name.split('.').pop().toLowerCase();
+  let text = '';
+  if(ext==='pdf'){
+    try{ text = await extractPdfText(file); }
+    catch(e){ if(statusEl){statusEl.style.color='var(--danger)';statusEl.textContent='❌ Error al leer PDF: '+e.message;} return; }
+    if(!text||text.length<20){ if(statusEl){statusEl.style.color='var(--danger)';statusEl.textContent='⚠️ No se pudo extraer texto. Probá exportarlo como TXT.';} return; }
+  } else if(ext==='txt'||ext==='md'){
+    text = await new Promise(res=>{ const r=new FileReader(); r.onload=e=>res(e.target.result); r.readAsText(file); });
+  } else {
+    if(statusEl){statusEl.style.color='var(--danger)';statusEl.textContent='⚠️ Formato no soportado. Usá PDF, TXT o MD.';}
+    return;
+  }
+  if(texta) texta.value = text;
+  if(nombreEl && !nombreEl.value) nombreEl.value = file.name.replace(/\.[^.]+$/,'');
+  if(statusEl){ statusEl.style.color='var(--accent3)'; statusEl.textContent='✅ '+file.name+' listo ('+text.length+' caracteres) — completá el nombre y guardá'; }
+}
+
+// ── FEED POR TEMA (ahora usa materiales de materia como contexto) ──
+// getFeed / saveFeed / clearFeed ahora son solo helpers locales de sesión para compatibilidad
+// El contexto real viene de getMatContext()
+function getFeedKey(){ return panelTema?'feed_'+panelTema.id:''; }
+function saveFeed(){
+  showToast('ℹ️ El material se gestiona por materia — usá la sección "Mi Material" en la página de la materia','var(--accent2)');
+}
+function clearFeed(){
+  showToast('ℹ️ Para borrar materiales, usá la sección "Mi Material" en la página de la materia','var(--accent2)');
+}
+function getFeed(){ return ''; } // context now comes from getMatContext()
+function saveMatFeed(){ saveFeed(); }
+
+function switchTab(tab){
+  ['explicacion','ejercicios','examen','feed'].forEach(t=>{
+    document.getElementById('tp-'+t).style.display=t===tab?'block':'none';
+    document.getElementById('tab-'+t).classList.toggle('active',t===tab);
+  });
+}
+
+async function callGemini(prompt){
+  const key=getGeminiKey();
+  if(!key) throw new Error('NO_KEY');
+  const r=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+    body:JSON.stringify({model:'llama-3.3-70b-versatile',messages:[{role:'user',content:prompt}],max_tokens:8192,temperature:0.7})
+  });
+  const d=await r.json();
+  if(d.error) throw new Error(d.error.message||JSON.stringify(d.error));
+  return d.choices?.[0]?.message?.content||'';
+}
+
+function renderMd(t){
+  return t
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/```python([\s\S]*?)```/g,function(_,c){return '<pre><code>'+c.trim()+'</code></pre>';})
+    .replace(/```([\s\S]*?)```/g,function(_,c){return '<pre><code>'+c.trim()+'</code></pre>';})
+    .replace(/`([^`\n]+)`/g,'<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*([^*\n]+)\*/g,'<em>$1</em>')
+    .replace(/^## (.+)$/gm,'<h2>$1</h2>')
+    .replace(/^### (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^> (.+)$/gm,'<div class="callout">$1</div>')
+    .replace(/^- (.+)$/gm,'<li>$1</li>')
+    .replace(/(<li>[\s\S]+?<\/li>)/g,'<ul>$1</ul>')
+    .replace(/<\/ul>\s*<ul>/g,'')
+    .replace(/\n\n+/g,'</p><p>')
+    .replace(/^(?!<[hucpdl]|<li|<pre)(.+)$/gm,'<p>$1</p>')
+    .replace(/<p><\/p>/g,'');
+}
+
+function loadChartJs(cb){
+  if(window.Chart){cb();return;}
+  const s=document.createElement('script');
+  s.src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js';
+  s.onload=cb; document.head.appendChild(s);
+}
+
+// Safe chart renderer — parses JSON data from AI, never executes arbitrary code.
+// Expected JSON: {"type":"bar|line|pie|doughnut","title":"...","labels":[...],"datasets":[{"label":"...","data":[...],"color":"#hex"}],"xLabel":"...","yLabel":"..."}
+function renderSafeChart(jsonStr){
+  try{
+    var data=JSON.parse(jsonStr.replace(/```json|```/g,'').trim());
+    if(!data||data.type==='none'||!data.labels||!data.datasets) return;
+    var canvas=document.getElementById('ai-chart');
+    if(!canvas) return;
+    var isPolar=(data.type==='pie'||data.type==='doughnut');
+    var palette=['#7c6af7','#6af7c2','#f7c26a','#f76a6a','#a78bfa','#34d399'];
+    var datasets=data.datasets.map(function(ds,i){
+      var col=ds.color||palette[i%palette.length];
+      return {
+        label:ds.label||'',
+        data:ds.data||[],
+        backgroundColor:isPolar
+          ?(data.labels||[]).map(function(_,j){return palette[j%palette.length]+'99';})
+          :col+'33',
+        borderColor:col,
+        borderWidth:2,
+        tension:0.35,
+        fill:false,
+        pointRadius:data.type==='line'?3:undefined
+      };
+    });
+    new Chart(canvas,{
+      type:data.type,
+      data:{labels:data.labels,datasets:datasets},
+      options:{
+        responsive:true,
+        plugins:{
+          legend:{labels:{color:'#e8e8f0',font:{size:11}}},
+          title:{display:!!data.title,text:data.title||'',color:'#e8e8f0',font:{size:13,weight:'600'}}
+        },
+        scales:isPolar?{}:{
+          x:{ticks:{color:'#8888a8'},grid:{color:'#2a2a3a'},title:{display:!!data.xLabel,text:data.xLabel||'',color:'#8888a8'}},
+          y:{ticks:{color:'#8888a8'},grid:{color:'#2a2a3a'},title:{display:!!data.yLabel,text:data.yLabel||'',color:'#8888a8'}}
+        }
+      }
+    });
+  }catch(e){
+    var g=document.querySelector('.grafico-wrap');if(g)g.style.display='none';
+  }
+}
+
+function goToFeedTab(){switchTemaTab('feed');}
+function noKeyError(area){
+  var h='<div class="tp-generate-prompt">';
+  h+='<div style="font-size:22px;margin-bottom:8px">🔑</div>';
+  h+='<div style="font-size:14px;font-weight:600;color:var(--danger);margin-bottom:8px">Falta la API key de Groq</div>';
+  h+='<div style="font-size:12px;color:var(--text2);margin-bottom:16px">Andá a la tab Mi material y configurá tu key gratuita de console.groq.com</div>';
+  h+='<button class="tp-gen-btn" onclick="goToFeedTab()">Configurar key →</button>';
+  h+='</div>';
+  area.innerHTML=h;
+}
+
+async function generateExplicacion(){
+  const key=getGeminiKey();
+  const area=document.getElementById('tp-ai-explain-area');
+  if(!key){noKeyError(area);return;}
+  area.innerHTML='<div style="text-align:center;padding:40px 20px"><div style="display:inline-block;width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:12px"></div><div style="color:var(--text2);font-size:13px">Generando tu explicación...</div></div>';
+  const matCtx = panelMateria ? await getMatContext(panelMateria.id) : '';
+  const feedCtx = matCtx ? '\n\nMATERIAL DEL PROFE (usalo como base principal, seguí su enfoque y ejemplos):\n'+matCtx : '';
+  const prompt='Sos un tutor universitario para 1er año de Ingeniería Informática en Argentina. Explicá el tema de forma CLARA, VISUAL y FÁCIL DE ESCANEAR. El alumno tiene que poder entender el tema leyendo la explicación.\n\nTEMA: "'+panelTema.nombre+'"\nDESCRIPCIÓN: "'+panelTema.desc+'"\nDIFICULTAD: '+panelTema.dificultad+'\nENTRA EN: '+panelTema.parcial+feedCtx+'\n\nFORMATO OBLIGATORIO — seguilo exactamente:\n\n## 🎯 ¿Qué es esto y por qué importa?\n2-3 oraciones directas. Qué es, para qué sirve en la vida real y en ingeniería. Sin vueltas.\n\n## 🧩 Los conceptos clave\nPara CADA concepto importante: nombre en negrita, definición en una oración, ejemplo concreto en la siguiente línea. Máximo 3-4 líneas por concepto. Usá bullet points con →\n\n## 📐 Cómo funciona — paso a paso\nNumerado. Cada paso es una acción concreta. Corto y directo. Si hay una fórmula, ponela en una línea sola.\n\n## ✅ Ejemplo resuelto 1 — fácil\nEnunciado concreto. Solución numerada paso a paso. Cada paso con su explicación en una línea.\n\n## ✅ Ejemplo resuelto 2 — más difícil\nMismo formato. Que sea un caso que podría salir en el parcial.\n\n## ⚠️ Errores típicos\nBullet points cortos. Error → por qué está mal → cómo se hace bien.\n\n## 🔑 Para el parcial — recordá esto\n5-7 puntos clave. Una oración cada uno. Lo más importante que no podés olvidar.\n\nREGLAS:\n- Párrafos cortos, máximo 3 líneas\n- Bullet points para listas, nunca párrafos largos\n- Emojis en los títulos\n- Si hay algo matemático ponelo en una línea sola bien visible\n- Tono directo, como un compañero que sabe mucho\n\nSi el tema tiene funciones o gráficos matemáticos, agregá al final:\n## GRAFICO_INTERACTIVO\nRespondé con JSON exacto (sin markdown, sin código JS):\n{"type":"bar|line|pie|doughnut","title":"titulo","labels":["L1","L2"],"datasets":[{"label":"serie","data":[n1,n2],"color":"#7c6af7"}],"xLabel":"eje x","yLabel":"eje y"}\nSi no corresponde gráfico: {"type":"none"}';
+  try{
+    const resp=await callGemini(prompt);
+    const gMatch=resp.match(/## GRAFICO_INTERACTIVO[\s\S]*?\n([\s\S]*)$/);
+    const textoMain=resp.replace(/## GRAFICO_INTERACTIVO[\s\S]*/,'');
+    const gCode=gMatch?gMatch[1].trim():'';
+    let html='<div class="ai-content">'+renderMd(textoMain)+'</div>';
+    html+='<button class="no-entendi-btn" onclick="regenerarSimple()">🤔 No entendí, explicame más simple</button>';
+    if(gCode&&gCode!=='NO_GRAFICO'&&gCode.length>20){
+      html+='<div class="grafico-wrap" style="margin-top:20px"><div class="grafico-title">📊 Gráfico interactivo</div><div id="ai-chart-controls"></div><canvas id="ai-chart" height="260"></canvas></div>';
+    }
+    area.innerHTML=html;
+    area.className=''; area.style.cssText='width:100%';
+    try{localStorage.setItem('expl_'+panelTema.id,html);}catch(e){}
+    if(gCode&&gCode!=='NO_GRAFICO'&&gCode.length>10){
+      loadChartJs(function(){ renderSafeChart(gCode); });
+    }
+  }catch(e){
+    if(e.message==='NO_KEY'){noKeyError(area);}
+    else{area.innerHTML='<div class="tp-generate-prompt"><div style="font-size:22px;margin-bottom:8px">⚠️</div><div style="font-size:13px;color:var(--danger);margin-bottom:12px">'+e.message+'</div><button class="tp-gen-btn" onclick="generateExplicacion()">Reintentar</button></div>';}
+  }
+}
+
+async function regenerarSimple(){
+  const area=document.getElementById('tp-ai-explain-area');
+  area.innerHTML='<div style="text-align:center;padding:40px 20px"><div style="display:inline-block;width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent2);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:12px"></div><div style="color:var(--text2);font-size:13px">Generando versión más simple...</div></div>';
+  const matCtx2 = panelMateria ? await getMatContext(panelMateria.id) : '';
+  const prompt='Sos un tutor. Explicame "'+panelTema.nombre+'" de '+panelMateria.nombre+' de forma MUY SIMPLE, como si tuviera 15 años y nunca lo hubiera visto. Usá analogías de la vida cotidiana. Sin fórmulas complejas al principio. Máximo 400 palabras.'+(feed?' Material del profe: '+feed:'');
+  try{
+    const resp=await callGemini(prompt);
+    area.innerHTML='<div class="ai-content">'+renderMd(resp)+'</div><div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap"><button class="no-entendi-btn" onclick="generateExplicacion()">🔄 Ver explicación completa</button></div>';
+  }catch(e){area.innerHTML='<div style="color:var(--danger);font-size:13px;padding:16px">Error: '+e.message+'</div>';}
+}
+
+async function generateEjercicios(){
+  window._ejCorrectas={};  // reset score tracker
+  const key=getGeminiKey();
+  const area=document.getElementById('tp-ai-ejercicios-area');
+  if(!key){noKeyError(area);return;}
+  area.innerHTML='<div style="text-align:center;padding:40px 20px"><div style="display:inline-block;width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:12px"></div><div style="color:var(--text2);font-size:13px">Generando ejercicios...</div></div>';
+  const matCtx3 = panelMateria ? await getMatContext(panelMateria.id) : '';
+  const feedCtx = matCtx3 ? '\n\nMATERIAL DEL PROFE (basate en este estilo y ejemplos):\n'+matCtx3 : '';
+  const prompt='Sos un profe de '+panelMateria.nombre+' en Argentina (UCA). Generá exactamente 4 ejercicios para completar (NO multiple choice, el alumno escribe la respuesta) sobre "'+panelTema.nombre+'".\nContexto: "'+panelTema.desc+'"\nDificultad: '+panelTema.dificultad+feedCtx+'\n\nRespondé SOLO con JSON válido sin texto antes ni después ni markdown:\n{"ejercicios":[{"num":1,"enunciado":"texto completo del ejercicio","dificultad":"fácil","respuesta_corta":"resultado final en pocas palabras","procedimiento":"procedimiento completo paso a paso numerado"}]}\n\nVariá: 1 fácil, 2 medios, 1 difícil. Estilo parcial universitario argentino.';
+  try{
+    const resp=await callGemini(prompt);
+    const clean=resp.replace(/```json|```/g,'').trim();
+    const data=JSON.parse(clean);
+    let html='';
+    window._ejercicioData=data.ejercicios;
+    data.ejercicios.forEach(function(ej,i){
+      const dc=ej.dificultad==='difícil'?'var(--danger)':ej.dificultad==='medio'?'var(--accent2)':'var(--accent3)';
+      html+='<div class="ejercicio-card"><div class="ejercicio-num">EJERCICIO '+ej.num+' · <span style="color:'+dc+'">'+ej.dificultad.toUpperCase()+'</span></div><div class="ejercicio-enunciado">'+ej.enunciado+'</div><textarea class="ejercicio-input" id="ej-input-'+i+'" placeholder="Escribí tu respuesta acá..."></textarea><button class="ejercicio-check-btn" onclick="checkEjercicio('+i+')">✓ Verificar respuesta</button><div class="ejercicio-resultado" id="ej-res-'+i+'"></div></div>';
+    });
+    html+='<button class="tp-gen-btn" style="width:100%;margin-top:8px" onclick="generateEjercicios()">🔄 Nuevos ejercicios</button>';
+    area.innerHTML=html; area.className=''; area.style.cssText='width:100%';
+  }catch(e){
+    area.innerHTML='<div class="tp-generate-prompt"><div style="font-size:22px;margin-bottom:8px">⚠️</div><div style="font-size:13px;color:var(--danger);margin-bottom:12px">'+e.message+'</div><button class="tp-gen-btn" onclick="generateEjercicios()">Reintentar</button></div>';
+  }
+}
+
+function checkEjercicio(i){
+  const ej=window._ejercicioData&&window._ejercicioData[i];
+  if(!ej)return;
+  const input=document.getElementById('ej-input-'+i).value.trim();
+  const res=document.getElementById('ej-res-'+i);
+  if(!input){showToast('Escribí tu respuesta primero','var(--accent2)');return;}
+  res.style.display='block';
+  const norm=function(s){return s.toLowerCase().replace(/[^a-z0-9.,]/g,' ').replace(/\s+/g,' ').trim();};
+  const nr=norm(ej.respuesta_corta); const ni=norm(input);
+  const match=ni.includes(nr.slice(0,12))||nr.includes(ni.slice(0,12))||(nr.length<6&&ni.includes(nr));
+  // Track correct answers
+  if(!window._ejCorrectas) window._ejCorrectas={};
+  window._ejCorrectas[i]=match;
+  if(match){
+    res.className='ejercicio-resultado correcto';
+    res.innerHTML='<strong>✅ ¡Correcto!</strong><br><br><strong>Procedimiento completo:</strong><br>'+ej.procedimiento.replace(/\n/g,'<br>');
+  } else {
+    res.className='ejercicio-resultado incorrecto';
+    res.innerHTML='<strong>❌ No es correcto.</strong><br><br><strong>Respuesta:</strong> '+ej.respuesta_corta+'<br><br><strong>Procedimiento paso a paso:</strong><br>'+ej.procedimiento.replace(/\n/g,'<br>');
+  }
+  // Check if all ejercicios answered — calculate score
+  const total=window._ejercicioData.length;
+  const answered=Object.keys(window._ejCorrectas).length;
+  if(answered>=total){
+    const correctas=Object.values(window._ejCorrectas).filter(Boolean).length;
+    const pct=Math.round(correctas/total*100);
+    if(panelTema) localStorage.setItem('ejscore_'+panelTema.id, pct);
+    if(pct>=85){
+      // Auto-mark as done (score already saved to localStorage above)
+      showToast('🎉 '+pct+'% correcto — tema marcado como visto automáticamente!','var(--accent3)');
+      setTimeout(function(){
+        if(panelTema&&panelMateria){
+          panelTema.estado='done'; saveProgress(); bumpStreak();
+          calcDeadlines(); recalcQCY(); updateStats();
+          onTemaDoneInScheduler(panelTema.id);
+          const row=document.getElementById('tr-'+panelTema.id);
+          if(row){row.className='tema-row done';const ck=row.querySelector('.tema-check');if(ck)ck.textContent='✓';}
+          renderMaterias('materias-grid');renderMaterias('materias-grid-2');
+          document.querySelectorAll('.status-bar-btn').forEach(function(b){b.classList.remove('active-done');});
+          var btns=document.querySelectorAll('.status-bar-btn');
+          if(btns[0])btns[0].classList.add('active-done');
+        }
+      },800);
+    } else {
+      showToast('📚 '+pct+'% — necesitás 85% para marcar como visto. ¡Seguí practicando!','var(--accent2)');
+    }
+  }
+}
+
+async function generateExamen(){
+  const key=getGeminiKey();
+  const area=document.getElementById('tp-ai-examen-area');
+  if(!key){noKeyError(area);return;}
+  if(!panelUnidad){showToast('Error: no hay unidad','var(--danger)');return;}
+  area.innerHTML='<div style="text-align:center;padding:40px 20px"><div style="display:inline-block;width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:12px"></div><div style="color:var(--text2);font-size:13px">Armando tu examen de unidad...</div></div>';
+  const temasU=panelUnidad.items.map(function(t){return t.nombre;}).join(', ');
+  const matCtx4 = panelMateria ? await getMatContext(panelMateria.id) : '';
+  const prompt='Sos profesor de '+panelMateria.nombre+' (UCA Argentina). Armá un examen parcial de la unidad "'+panelUnidad.unidad+'" con temas: '+temasU+'.\n'+(matCtx4?'Material del profe: '+matCtx4+'.\n':'')+'Generá exactamente 5 ejercicios para escribir (NO multiple choice).\nRespondé SOLO con JSON válido:\n{"titulo":"Examen: nombre_unidad","ejercicios":[{"num":1,"enunciado":"enunciado completo","puntaje":20,"respuesta_corta":"resultado final","procedimiento":"pasos completos numerados"}]}\nPuntaje total=100. Cubrí distintos temas. Estilo parcial universitario argentino.';
+  try{
+    const resp=await callGemini(prompt);
+    const clean=resp.replace(/```json|```/g,'').trim();
+    const data=JSON.parse(clean);
+    let html='<div class="examen-header"><div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent2);margin-bottom:4px">📝 '+data.titulo+'</div><div style="font-size:12px;color:var(--text2)">'+panelMateria.nombre+' · '+temasU+'</div></div>';
+    window._examenData=data.ejercicios;
+    data.ejercicios.forEach(function(ej,i){
+      html+='<div class="ejercicio-card"><div class="ejercicio-num">EJERCICIO '+ej.num+' · <span style="color:var(--accent)">'+ej.puntaje+' pts</span></div><div class="ejercicio-enunciado">'+ej.enunciado+'</div><textarea class="ejercicio-input" id="ex-input-'+i+'" placeholder="Tu respuesta..."></textarea><button class="ejercicio-check-btn" onclick="checkExamen('+i+')">✓ Entregar respuesta</button><div class="ejercicio-resultado" id="ex-res-'+i+'"></div></div>';
+    });
+    const pts=data.ejercicios.map(function(e){return e.puntaje;}).join(',');
+    html+='<button class="tp-gen-btn" style="width:100%;margin-top:12px" onclick="calcNotaFinal('+pts+')">📊 Ver nota final</button>';
+    area.innerHTML=html;
+  }catch(e){
+    area.innerHTML='<div class="tp-generate-prompt"><div style="font-size:22px;margin-bottom:8px">⚠️</div><div style="font-size:13px;color:var(--danger);margin-bottom:12px">'+e.message+'</div><button class="tp-gen-btn" onclick="generateExamen()">Reintentar</button></div>';
+  }
+}
+
+function checkExamen(i){
+  const ej=window._examenData&&window._examenData[i];
+  if(!ej)return;
+  const input=document.getElementById('ex-input-'+i).value.trim();
+  const res=document.getElementById('ex-res-'+i);
+  if(!input){showToast('Escribí tu respuesta primero','var(--accent2)');return;}
+  res.style.display='block';
+  const norm=function(s){return s.toLowerCase().replace(/[^a-z0-9.,]/g,' ').replace(/\s+/g,' ').trim();};
+  const nr=norm(ej.respuesta_corta); const ni=norm(input);
+  const match=ni.includes(nr.slice(0,12))||nr.includes(ni.slice(0,12))||(nr.length<6&&ni.includes(nr));
+  examenPuntajes[i]=match?ej.puntaje:0;
+  if(match){
+    res.className='ejercicio-resultado correcto';
+    res.innerHTML='<strong>✅ Correcto (+'+ej.puntaje+' pts)</strong><br><br><strong>Procedimiento:</strong><br>'+ej.procedimiento.replace(/\n/g,'<br>');
+  } else {
+    res.className='ejercicio-resultado incorrecto';
+    res.innerHTML='<strong>❌ Incorrecto (0 pts)</strong><br><br><strong>Respuesta:</strong> '+ej.respuesta_corta+'<br><br><strong>Procedimiento:</strong><br>'+ej.procedimiento.replace(/\n/g,'<br>');
+  }
+}
+
+function calcNotaFinal(){
+  const puntajes=Array.from(arguments);
+  const total=puntajes.reduce(function(a,b){return a+b;},0);
+  const obtenido=Object.values(examenPuntajes).reduce(function(a,b){return a+b;},0);
+  const pct=Math.round(obtenido/total*100);
+  const nota=Math.min(10,Math.round(pct/10));
+  const color=nota>=7?'var(--accent3)':nota>=4?'var(--accent2)':'var(--danger)';
+  const emoji=nota>=8?'🎉':nota>=6?'💪':nota>=4?'📚':'😅';
+  const analisis=nota>=8?'Excelente. Dominás los conceptos de esta unidad.':nota>=6?'Buena base. Repasá los ejercicios erróneos antes del parcial.':nota>=4?'Aprobado, pero reforzá los temas donde erraste.':'Necesitás repasar toda la unidad. No te rindas, es para eso que practicamos.';
+  const area=document.getElementById('tp-ai-examen-area');
+  const div=document.createElement('div');
+  div.className='examen-header'; div.style.marginBottom='20px';
+
+  // Unlock next unit if passing (nota >= 6)
+  var unlockHtml='';
+  if(nota>=6 && panelUnidad && !panelUnidad.examenAprobado){
+    var uIdx=panelMateria?panelMateria.temas.indexOf(panelUnidad):-1;
+    var nextU=panelMateria&&uIdx>=0?panelMateria.temas[uIdx+1]:null;
+    unlockHtml='<div style="margin-top:12px;padding:10px 14px;background:rgba(106,247,194,0.08);border:1px solid rgba(106,247,194,0.2);border-radius:8px;font-size:12px;color:var(--accent3)">'
+      +(nextU?'🔓 Aprobado — '+nextU.unidad.split('\u2014')[0].trim()+' desbloqueada':'🎉 Todas las unidades completadas')
+      +'</div>';
+    // Mark unit as approved
+    setTimeout(approveUnitExam, 500);
+  } else if(nota>=6 && panelUnidad && panelUnidad.examenAprobado){
+    unlockHtml='<div style="margin-top:12px;font-size:12px;color:var(--accent3)">✅ Esta unidad ya estaba aprobada</div>';
+  }
+
+  div.innerHTML='<div class="examen-nota" style="color:'+color+'">'+emoji+' '+nota+'/10</div>'
+    +'<div style="text-align:center;font-size:13px;color:'+color+';margin-bottom:8px">'+obtenido+'/'+total+' puntos ('+pct+'%)</div>'
+    +'<div class="examen-analisis">'+analisis+'</div>'
+    +unlockHtml
+    +'<div style="margin-top:12px;text-align:center"><button class="tp-gen-btn" onclick="examenPuntajes={};generateExamen()">🔄 Nuevo examen</button></div>';
+  area.insertBefore(div,area.firstChild);
+  examenPuntajes={};
+}
+
+function openTemaPanel(tId,mId){
+  const m=MATERIAS.find(function(x){return x.id===mId;});
+  let tema=null, unidad=null, unidadIndex=-1;
+  m&&m.temas.forEach(function(u,uIdx){var f=u.items.find(function(x){return x.id===tId;});if(f){tema=f;unidad=u;unidadIndex=uIdx;}});
+  if(!tema||!m)return;
+  // Block access to locked units
+  if(!isUnidadUnlocked(m, unidadIndex)){
+    var prevU=m.temas[unidadIndex-1];
+    showToast('🔒 Aprobá el examen de "'+( prevU?prevU.unidad.split('\u2014')[0].trim():'la unidad anterior')+'" para desbloquear','var(--accent2)');
+    return;
+  }
+  panelTema=tema; panelMateria=m; panelUnidad=unidad; examenPuntajes={};
+
+  const dc=tema.dificultad==='alta'?'🔴 Alta':tema.dificultad==='media'?'🟡 Media':'🟢 Baja';
+  const meses2=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  const dlStr=tema.deadline?' · 📅 listo para el '+tema.deadline.getDate()+' '+meses2[tema.deadline.getMonth()]:'';
+  const stCls2=tema.estado==='done'?'active-done':'';
+  const existingKey=getGeminiKey();
+  const keyStatus=existingKey?'<div style="font-size:11px;color:var(--accent3);margin-top:6px">✅ Key configurada</div>':'';
+
+  const html=`
+    <div class="tema-page-header">
+      <div class="tema-page-name">${tema.nombre}</div>
+      <div class="tema-page-meta">
+        <span>${dc}</span><span>·</span><span>${tema.parcial}</span>
+        <span>·</span><span style="color:${m.color}">${m.nombre}</span>
+        <span style="color:var(--accent2)">${dlStr}</span>
+      </div>
+      <div class="status-bar">
+        <button class="status-bar-btn ${stCls2}" onclick="setTemaStatus('done')">✓ Marcar como visto</button>
+      </div>
+    </div>
+
+    <div class="tema-page-tabs">
+      <div class="tema-page-tab active" id="tptab-explicacion" onclick="switchTemaTab('explicacion')">📖 Explicación</div>
+      <div class="tema-page-tab" id="tptab-ejercicios" onclick="switchTemaTab('ejercicios')">✏️ Ejercicios</div>
+      <div class="tema-page-tab" id="tptab-examen" onclick="switchTemaTab('examen')">📝 Examen unidad</div>
+      <div class="tema-page-tab" id="tptab-feed" onclick="switchTemaTab('feed')">📎 Mi material</div>
+    </div>
+
+    <div class="tema-page-body">
+      <div id="tppage-explicacion">
+        <div class="gen-card" id="tp-ai-explain-area">
+          <div class="gen-card-icon">🧠</div>
+          <div class="gen-card-title">Explicación con IA</div>
+          <div class="gen-card-sub">La IA genera una explicación completa usando el programa de la materia y tu material cargado. Incluye gráficos interactivos cuando aplica.</div>
+          <button class="gen-btn-large" onclick="generateExplicacion()">✨ Generar explicación</button>
+        </div>
+      </div>
+
+      <div id="tppage-ejercicios" style="display:none">
+        <div class="gen-card" id="tp-ai-ejercicios-area">
+          <div class="gen-card-icon">✏️</div>
+          <div class="gen-card-title">Ejercicios para practicar</div>
+          <div class="gen-card-sub">La IA genera ejercicios para completar basados en el programa. Si te equivocás, explica el procedimiento completo paso a paso.</div>
+          <button class="gen-btn-large" onclick="generateEjercicios()">✨ Generar ejercicios</button>
+        </div>
+      </div>
+
+      <div id="tppage-examen" style="display:none">
+        <div class="gen-card" id="tp-ai-examen-area">
+          <div class="gen-card-icon">📝</div>
+          <div class="gen-card-title">Examen: ${unidad?unidad.unidad:'esta unidad'}</div>
+          <div class="gen-card-sub">Examen completo de todos los temas de la unidad, con nota y análisis. Estilo parcial universitario argentino.</div>
+          <button class="gen-btn-large" onclick="generateExamen()">📝 Tomar examen</button>
+        </div>
+      </div>
+
+      <div id="tppage-feed" style="display:none">
+        <div class="feed-section">
+          <div style="text-align:center;padding:24px 16px">
+            <div style="font-size:32px;margin-bottom:12px">📁</div>
+            <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px">El material se gestiona por materia</div>
+            <div style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:20px">
+              Para subir PDFs, apuntes y guías de <strong style="color:var(--text)">${panelMateria?panelMateria.nombre:'esta materia'}</strong>, andá a la página de la materia y usá la sección <strong style="color:var(--accent)">📁 Mi Material</strong>.<br><br>
+              La IA ya usa automáticamente todo el material que hayas subido para esta materia al generar explicaciones y ejercicios.
+            </div>
+            <button onclick="showDetalle(${panelMateria?panelMateria.id:0})" style="background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);padding:11px 24px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">
+              → Ir a ${panelMateria?panelMateria.nombre:'la materia'}
+            </button>
+          </div>
+        </div>
+        <div class="api-key-section">
+          <div class="section-title" style="margin-bottom:6px">Configuración IA (Groq)</div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Tu API key de <a href="https://console.groq.com" target="_blank" style="color:var(--accent)">console.groq.com</a> — se guarda solo en este dispositivo</div>
+          <input id="gemini-key-input" type="password" placeholder="Pegá tu API key de Groq acá"/>
+          <button class="gen-btn-large" style="width:100%" onclick="saveGeminiKey()">🔑 Guardar key</button>
+          ${keyStatus}
+          <div id="key-status" style="font-size:11px;margin-top:6px;display:none"></div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('tema-page-content').innerHTML=html;
+
+  // Back button goes to materia detalle
+  document.getElementById('tema-back-btn').onclick=function(){
+    showDetalle(mId);
+  };
+
+  showPage('tema');
+  // Cargar contenido: localStorage > pre-built CLASES > gen-card
+  setTimeout(function(){
+    var area=document.getElementById('tp-ai-explain-area');
+    if(area){
+      var saved=localStorage.getItem('expl_'+tema.id);
+      if(saved){
+        area.innerHTML=saved; area.className=''; area.style.cssText='width:100%';
+        loadChartJs(function(){});
+      } else if(window.CLASES && CLASES[tId]){
+        area.innerHTML=CLASES[tId].html;
+        area.className=''; area.style.cssText='width:100%';
+      }
+    }
+    // Inyectar examen de unidad pre-generado si existe
+    var examArea=document.getElementById('tp-ai-examen-area');
+    if(examArea && window.EXAMENES_UNIDAD){
+      var ek=String(m.id)+'_'+unidadIndex;
+      if(EXAMENES_UNIDAD[ek]){
+        examArea.innerHTML=EXAMENES_UNIDAD[ek].html;
+        examArea.className=''; examArea.style.cssText='width:100%';
+      }
+    }
+  },50);
+}
+
+function switchTemaTab(tab){
+  ['explicacion','ejercicios','examen','feed'].forEach(function(t){
+    var el=document.getElementById('tppage-'+t);
+    var tb=document.getElementById('tptab-'+t);
+    if(el) el.style.display=t===tab?'block':'none';
+    if(tb) tb.classList.toggle('active',t===tab);
+  });
+}
+
+// Keep old switchTab for compatibility (feed panel key config)
+function switchTab(tab){ switchTemaTab(tab); }
+
+function closeTemaPanel(e){ /* no-op, kept for compat */ }
+
+
+function setPanelStatus(estado){ setTemaStatus(estado); }
+function setTemaStatus(estado){
+  if(!panelTema||!panelMateria) return;
+  // Only 'done' is a valid transition (studying state removed)
+  if(estado !== 'done') return;
+  // Already done — idempotent
+  if(panelTema.estado === 'done') return;
+
+  // Guard: require score >= 85% to mark as done
+  const ejScoreRaw = localStorage.getItem('ejscore_'+panelTema.id);
+  const ejScore = ejScoreRaw !== null ? parseInt(ejScoreRaw) : -1;
+  if(isNaN(ejScore) || ejScore < 85){
+    const modal = document.getElementById('modal-ejercicios-req');
+    if(modal) modal.style.display = 'flex';
+    return; // STOP — state NOT changed
+  }
+
+  // Validation passed — apply state change
+  panelTema.estado = 'done';
+  saveProgress();
+  bumpStreak();
+
+  // Update status bar UI
+  document.querySelectorAll('.status-bar-btn').forEach(function(b){
+    b.classList.remove('active-done');
+  });
+  var btns = document.querySelectorAll('.status-bar-btn');
+  if(btns[0]) btns[0].classList.add('active-done');
+
+  // Post-done side effects
+  calcDeadlines();
+  recalcQCY();
+  onTemaDoneInScheduler(panelTema.id);
+  updateStats();
+  const row = document.getElementById('tr-'+panelTema.id);
+  if(row){ row.className='tema-row done'; const ck=row.querySelector('.tema-check'); if(ck) ck.textContent='✓'; }
+  renderMaterias('materias-grid'); renderMaterias('materias-grid-2');
+  showToast('✅ Tema completado — cronograma actualizado');
+}
+
+// ── DETALLE ──
+function showDetalle(id) {
+  const m=MATERIAS.find(x=>x.id===id);if(!m)return;
+  showPage('detalle');
+  const tot=m.temas.reduce((a,u)=>a+u.items.length,0);
+  const done=m.temas.reduce((a,u)=>a+u.items.filter(t=>t.estado==='done').length,0);
+
+  let cronHtml='';
+  if(m.cronograma){cronHtml=`<div class="section-title">Cronograma</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px">${m.cronograma.map(c=>`<div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:12px;"><span style="color:var(--accent2);font-family:'Space Mono',monospace;font-size:10px;">${c.mes}</span><br>${c.unidades}</div>`).join('')}</div>`;}
+
+  let html=`<div class="detail-hero" style="border-top:3px solid ${m.color}">
+    <div class="detail-top"><div class="detail-icon">${m.icon}</div>
+    <div style="flex:1"><div class="detail-name" style="color:${m.color}">${m.nombre}</div>
+    <div class="detail-meta">${m.codigo}${m.hsTotales?` · ${m.hsTotales}hs totales`:''}<br>Parcial: ${m.proxParcial}</div>
+    <div class="detail-stats">
+      <div class="detail-stat"><div class="detail-stat-val" style="color:${m.color}">${done}</div><div class="detail-stat-lbl">Vistos</div></div>
+      <div class="detail-stat"><div class="detail-stat-val" style="color:#888">${tot-done}</div><div class="detail-stat-lbl">Pendientes</div></div>
+      <div class="detail-stat"><div class="detail-stat-val" style="color:var(--accent)">${Math.round(done/Math.max(tot,1)*100)}%</div><div class="detail-stat-lbl">Progreso</div></div>
+    </div></div></div>
+    <div class="promo-box"><div class="promo-box-title">🎯 Modalidad de examen final</div>
+    <div class="promo-box-body">${m.promocion.desc}</div>
+    ${m.promocion.tiene?`<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+      <span style="font-size:11px;background:rgba(106,247,194,0.06);border:1px solid rgba(106,247,194,0.15);border-radius:6px;padding:5px 10px;color:var(--accent3)">✓ ${m.promocion.condicion}</span>
+      <span style="font-size:11px;background:rgba(124,106,247,0.06);border:1px solid rgba(124,106,247,0.15);border-radius:6px;padding:5px 10px;color:var(--accent)">→ ${m.promocion.beneficio}</span>
+    </div>`:''}
+    </div></div>
+  <div class="section-title">Evaluaciones</div>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:24px;display:flex;flex-direction:column;gap:8px">
+    <div style="font-size:12px;color:var(--text2)">📝 <strong style="color:var(--text)">1° Parcial:</strong> ${m.evaluacion.p1}</div>
+    <div style="font-size:12px;color:var(--text2)">📝 <strong style="color:var(--text)">2° / TP:</strong> ${m.evaluacion.p2}</div>
+    <div style="font-size:12px;color:var(--text2)">🎓 <strong style="color:var(--text)">Final:</strong> ${m.evaluacion.final}</div>
+  </div>
+  ${cronHtml}
+  <div class="section-title">Temario <span style="font-size:11px;font-weight:400;color:var(--text2)">— tocá un tema para herramientas de estudio</span></div><div>`;
+
+  m.temas.forEach(function(u, uIdx){
+    var unlocked=isUnidadUnlocked(m, uIdx);
+    if(unlocked){
+      var examBadge=u.examenAprobado?'<span style="font-size:10px;background:rgba(106,247,194,0.12);border:1px solid rgba(106,247,194,0.25);border-radius:4px;padding:2px 7px;color:var(--accent3);margin-left:8px;font-weight:600">✓ examen aprobado</span>':'';
+      html+=`<div class="unidad-header">${u.unidad}${examBadge}</div>`;
+      u.items.forEach(function(t){
+        var dc=t.dificultad==='alta'?'dif-alta':t.dificultad==='media'?'dif-media':'dif-baja';
+        var ck=t.estado==='done'?'✓':'';
+        html+=`<div class="tema-row ${t.estado}" id="tr-${t.id}" onclick="openTemaPanel(${t.id},${m.id})">
+          <div class="tema-check">${ck}</div>
+          <div class="tema-name">${t.nombre}</div>
+          <span class="tema-dificultad ${dc}">${t.dificultad}</span>
+          ${fmtDeadline(t.deadline)}
+        </div>`;
+      });
+    } else {
+      // Locked unit
+      html+=`<div class="unidad-bloqueada-header"><span class="lock-icon">🔒</span>${u.unidad}</div>`;
+      html+=`<div class="unidad-bloqueada-notice">Aprobá el examen de "${m.temas[uIdx-1]?m.temas[uIdx-1].unidad.split('\u2014')[0].trim():''}" para desbloquear esta unidad.</div>`;
+      u.items.forEach(function(t){
+        html+=`<div class="tema-row-locked"><div class="tema-check"></div><div class="tema-name">${t.nombre}</div></div>`;
+      });
+    }
+  });
+
+  html+=`</div>
+  <div class="section-title" style="margin-top:24px">📁 Mi Material</div>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:24px">
+    <div style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.6">
+      Subí PDFs, apuntes, guías de ejercicios, PPTs del profe. La IA los usa como contexto para generar explicaciones y ejercicios más fieles a tu cursada. Se guardan en la nube.
+    </div>
+    <div id="materiales-panel-${m.id}"><div style="color:var(--text2);font-size:12px;padding:8px 0">Cargando...</div></div>
+  </div>
+  <div class="section-title" style="margin-top:8px">Simulacro</div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:32px">
+    <button class="btn btn-primary" onclick="openExamen(${m.id})">✍️ Simulacro de ${m.nombre}</button>
+  </div>`;
+
+  document.getElementById('detalle-content').innerHTML=html;
+  document.getElementById('back-btn').onclick=()=>showPage('dashboard');
+  // Load materiales panel async
+  renderMaterialesPanel(m.id);
+}
+
+// ── FECHAS ──
+function renderFechas(){ renderCal(); }
+
+// ── SEMANA ──
+function renderSemana(){
+  const c=document.getElementById('week-plan');if(!c)return;
+  c.innerHTML=buildSemana().map(s=>`<div class="week-row ${s.hoy?'today-row':''}">
+    <div class="week-dia ${s.hoy?'hoy':''}">${s.dia}</div>
+    <div class="week-tasks-wrap">${s.tasks.map(t=>`<span class="week-chip">${t}</span>`).join('')}</div>
+    <div class="week-time">${s.hs}</div>
+  </div>`).join('');
+}
+
+// ── PROMOCIONES ──
+function renderPromociones(){
+  const c=document.getElementById('promo-content');if(!c)return;
+  c.innerHTML=MATERIAS.map(m=>`<div style="background:var(--surface);border:1px solid var(--border);border-top:3px solid ${m.color};border-radius:var(--radius);padding:20px;margin-bottom:16px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+      <span style="font-size:20px">${m.icon}</span>
+      <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:${m.color}">${m.nombre}</span>
+      ${m.promocion.tiene?'<span class="promo-badge promo-posible">🎯 Final corto posible</span>':'<span class="promo-badge promo-no">Sin final corto</span>'}
+    </div>
+    <div style="font-size:13px;color:var(--text2);line-height:1.7">${m.promocion.desc}</div>
+    ${m.promocion.tiene?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+      <span style="font-size:11px;background:rgba(106,247,194,0.06);border:1px solid rgba(106,247,194,0.15);border-radius:6px;padding:5px 10px;color:var(--accent3)">Condición: ${m.promocion.condicion}</span>
+      <span style="font-size:11px;background:rgba(124,106,247,0.06);border:1px solid rgba(124,106,247,0.15);border-radius:6px;padding:5px 10px;color:var(--accent)">Beneficio: ${m.promocion.beneficio}</span>
+    </div>`:''}
+  </div>`).join('');
+}
+
+// ── SIMULACRO CON IA ──
+function openExamen(mid) {
+  // Open simulacro modal and preselect materia if given
+  var modal = document.getElementById('modal-examen');
+  document.getElementById('sim-config').style.display='block';
+  document.getElementById('sim-body').style.display='none';
+
+  // Populate materia select
+  var sel = document.getElementById('sim-materia');
+  sel.innerHTML = MATERIAS.map(function(m){
+    return '<option value="'+m.id+'" '+(mid&&m.id===mid?'selected':'')+'>'+m.icon+' '+m.nombre+'</option>';
+  }).join('');
+  simUpdateUnidades();
+  modal.classList.add('open');
+}
+
+function simUpdateUnidades() {
+  var mId = parseInt(document.getElementById('sim-materia').value);
+  var m = MATERIAS.find(function(x){return x.id===mId;});
+  if(!m) return;
+
+  // Unidades checkboxes
+  var uDiv = document.getElementById('sim-unidades');
+  uDiv.innerHTML = m.temas.map(function(u,i){
+    var uid = 'simu_'+i;
+    return '<label style="cursor:pointer;display:inline-flex;align-items:center;gap:4px">'
+      +'<input type="checkbox" id="'+uid+'" value="'+i+'" onchange="simUpdateTemas()" style="accent-color:var(--accent)"/> '
+      +'<span style="font-size:11px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:3px 8px">'+u.unidad.split('—')[0].trim()+'</span>'
+      +'</label>';
+  }).join('');
+
+  simUpdateTemas();
+}
+
+function simUpdateTemas() {
+  var mId = parseInt(document.getElementById('sim-materia').value);
+  var m = MATERIAS.find(function(x){return x.id===mId;});
+  if(!m) return;
+
+  var checkedUnits = [];
+  document.querySelectorAll('#sim-unidades input:checked').forEach(function(cb){
+    checkedUnits.push(parseInt(cb.value));
+  });
+
+  var tDiv = document.getElementById('sim-temas');
+  if(checkedUnits.length === 0){ tDiv.innerHTML='<span style="font-size:12px;color:var(--text2)">Seleccioná al menos una unidad primero</span>'; return; }
+
+  var allTemas = [];
+  checkedUnits.forEach(function(ui){
+    if(m.temas[ui]) m.temas[ui].items.forEach(function(t){ allTemas.push({t:t,u:m.temas[ui]}); });
+  });
+
+  tDiv.innerHTML = allTemas.map(function(item,i){
+    var tid = 'simt_'+i;
+    return '<label style="cursor:pointer;display:inline-flex;align-items:center;gap:4px">'
+      +'<input type="checkbox" id="'+tid+'" value="'+i+'" style="accent-color:var(--accent)"/> '
+      +'<span style="font-size:11px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:3px 8px">'+item.t.nombre+'</span>'
+      +'</label>';
+  }).join('');
+  window._simAllTemas = allTemas;
+}
+
+async function startSimulacro() {
+  var key = getGeminiKey();
+  if(!key){
+    showToast('Configurá tu API key de Groq primero — abrí cualquier tema → Mi material','var(--danger)');
+    return;
+  }
+  var mId = parseInt(document.getElementById('sim-materia').value);
+  var m = MATERIAS.find(function(x){return x.id===mId;});
+  var cantidad = document.getElementById('sim-cantidad').value;
+
+  // Get selected temas
+  var selectedTemas = [];
+  document.querySelectorAll('#sim-temas input:checked').forEach(function(cb){
+    var item = window._simAllTemas && window._simAllTemas[parseInt(cb.value)];
+    if(item) selectedTemas.push(item);
+  });
+  // If none selected, use all from checked unidades
+  if(selectedTemas.length === 0 && window._simAllTemas) selectedTemas = window._simAllTemas;
+  if(selectedTemas.length === 0){ showToast('Seleccioná al menos una unidad','var(--danger)'); return; }
+
+  var temasDesc = selectedTemas.map(function(item){
+    return '"'+item.t.nombre+'": '+item.t.desc;
+  }).join('\n');
+
+  // Show loading
+  document.getElementById('sim-config').style.display='none';
+  document.getElementById('sim-body').style.display='block';
+  document.getElementById('sim-body').innerHTML = '<div style="text-align:center;padding:40px"><div style="display:inline-block;width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:12px"></div><div style="color:var(--text2);font-size:13px">Generando simulacro...</div></div>';
+
+  var prompt = 'Sos un profesor de '+m.nombre+' en Argentina. Generá un simulacro de '+cantidad+' ejercicios para completar (NO multiple choice) sobre estos temas:\n\n'+temasDesc+'\n\nRespondé SOLO con JSON válido:\n{"ejercicios":[{"num":1,"enunciado":"enunciado completo","dificultad":"fácil","respuesta_corta":"resultado final","procedimiento":"solución paso a paso"}]}\n\nVariá la dificultad. Estilo parcial universitario argentino.';
+
+  try {
+    var resp = await callGemini(prompt);
+    var clean = resp.replace(/```json|```/g,'').trim();
+    var data = JSON.parse(clean);
+    window._simData = data.ejercicios;
+    window._simCorrectas = 0;
+    window._simTotal = data.ejercicios.length;
+
+    var html = '<div style="font-size:11px;color:var(--text2);margin-bottom:16px">'+m.icon+' '+m.nombre+' · '+selectedTemas.length+' tema(s) · '+data.ejercicios.length+' ejercicios</div>';
+    data.ejercicios.forEach(function(ej,i){
+      var dc = ej.dificultad==='difícil'?'var(--danger)':ej.dificultad==='medio'?'var(--accent2)':'var(--accent3)';
+      html += '<div class="ejercicio-card"><div class="ejercicio-num">Ejercicio '+ej.num+' · <span style="color:'+dc+'">'+ej.dificultad+'</span></div>'
+        +'<div class="ejercicio-enunciado">'+ej.enunciado+'</div>'
+        +'<textarea class="ejercicio-input" id="sim-inp-'+i+'" placeholder="Tu respuesta..."></textarea>'
+        +'<button class="ejercicio-check-btn" onclick="checkSimEjercicio('+i+')">✓ Verificar</button>'
+        +'<div class="ejercicio-resultado" id="sim-res-'+i+'"></div>'
+        +'</div>';
+    });
+    html += '<button class="tp-gen-btn" style="width:100%;margin-top:12px" onclick="verNotaSimulacro()">📊 Ver resultado final</button>';
+    html += '<button onclick="resetSimulacro()" style="width:100%;margin-top:8px;background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:var(--radius-sm);padding:9px;cursor:pointer;font-family:Inter,sans-serif;font-size:13px">← Nuevo simulacro</button>';
+    document.getElementById('sim-body').innerHTML = html;
+
+  } catch(e) {
+    document.getElementById('sim-body').innerHTML = '<div style="color:var(--danger);padding:20px;text-align:center">'+e.message+'<br><br><button onclick="resetSimulacro()" class="tp-gen-btn">Reintentar</button></div>';
+  }
+}
+
+function checkSimEjercicio(i) {
+  var ej = window._simData && window._simData[i]; if(!ej) return;
+  var input = document.getElementById('sim-inp-'+i).value.trim();
+  var res = document.getElementById('sim-res-'+i);
+  if(!input){ showToast('Escribí tu respuesta primero','var(--accent2)'); return; }
+  res.style.display='block';
+  var norm = function(s){ return s.toLowerCase().replace(/[^a-z0-9.,]/g,' ').replace(/\s+/g,' ').trim(); };
+  var nr=norm(ej.respuesta_corta); var ni=norm(input);
+  var match = ni.includes(nr.slice(0,12)) || nr.includes(ni.slice(0,12)) || (nr.length<6&&ni.includes(nr));
+  if(match){
+    res.className='ejercicio-resultado correcto';
+    res.innerHTML='<strong>✅ Correcto</strong><br><br><strong>Procedimiento:</strong><br>'+ej.procedimiento.replace(/\n/g,'<br>');
+    window._simCorrectas = (window._simCorrectas||0)+1;
+    document.getElementById('sim-inp-'+i).style.borderColor='var(--accent3)';
+  } else {
+    res.className='ejercicio-resultado incorrecto';
+    res.innerHTML='<strong>❌ Incorrecto</strong><br><strong>Respuesta:</strong> '+ej.respuesta_corta+'<br><br><strong>Procedimiento:</strong><br>'+ej.procedimiento.replace(/\n/g,'<br>');
+    document.getElementById('sim-inp-'+i).style.borderColor='var(--danger)';
+  }
+  document.getElementById('sim-inp-'+i).disabled=true;
+  document.querySelector('[onclick="checkSimEjercicio('+i+')"]').disabled=true;
+}
+
+function verNotaSimulacro() {
+  var total = window._simTotal||1;
+  var correctas = window._simCorrectas||0;
+  var pct = Math.round(correctas/total*100);
+  var nota = Math.min(10, Math.round(pct/10));
+  var color = nota>=8?'var(--accent3)':nota>=6?'var(--accent2)':'var(--danger)';
+  var emoji = nota>=8?'🎉':nota>=6?'💪':nota>=4?'📚':'😅';
+  var analisis = nota>=8?'Excelente. Dominás estos temas.':nota>=6?'Buen nivel. Repasá los que fallaste.':nota>=4?'Aprobado, pero hay que reforzar.':'Necesitás repasar antes del parcial.';
+
+  // 85%+ threshold to mark temas as understood
+  var canMark = pct >= 85;
+  var markHtml = canMark
+    ? '<div style="margin-top:12px;padding:12px;background:rgba(106,247,194,0.08);border:1px solid rgba(106,247,194,0.2);border-radius:8px;font-size:12px;color:var(--accent3)">🎯 Superaste el 85% — podés marcar los temas como vistos desde la página de cada tema.</div>'
+    : '<div style="margin-top:12px;font-size:12px;color:var(--text2)">Necesitás 85% o más para que los temas se marquen como dominados.</div>';
+
+  var resultDiv = document.createElement('div');
+  resultDiv.style.cssText='background:linear-gradient(135deg,rgba(124,106,247,0.1),rgba(106,247,194,0.05));border:1px solid rgba(124,106,247,0.2);border-radius:var(--radius);padding:20px;margin-bottom:20px;text-align:center';
+  resultDiv.innerHTML = '<div style="font-size:48px;font-weight:800;font-family:Syne,sans-serif;color:'+color+'">'+emoji+' '+nota+'/10</div>'
+    +'<div style="color:'+color+';margin-bottom:6px">'+correctas+'/'+total+' correctas ('+pct+'%)</div>'
+    +'<div style="font-size:13px;color:var(--text2)">'+analisis+'</div>'
+    +markHtml;
+  document.getElementById('sim-body').insertBefore(resultDiv, document.getElementById('sim-body').firstChild);
+}
+
+function resetSimulacro() {
+  window._simData=null; window._simCorrectas=0; window._simTotal=0;
+  document.getElementById('sim-config').style.display='block';
+  document.getElementById('sim-body').style.display='none';
+  document.getElementById('sim-body').innerHTML='';
+}
+
+function chkOp(){} // kept for compat
+
+// ── NAVEGACIÓN ──
+const PAGES=['dashboard','materias','fechas','semana','promociones','detalle','tema','qcy','tareas'];
+function showPage(p){
+  PAGES.forEach(x=>{const el=document.getElementById(`page-${x}`);if(el)el.style.display=x===p?'':'none';});
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.toggle('active',el.getAttribute('onclick')?.includes(`'${p}'`)));
+  if(p==='fechas'){calYear=new Date().getFullYear();calMonth=new Date().getMonth();renderCal();}
+  if(p==='semana')renderSemana();
+  if(p==='qcy')renderQCY();
+  if(p==='materias')renderMaterias('materias-grid-2');
+  if(p==='promociones')renderPromociones();
+  if(p==='tareas')renderTareasHoy();
+}
+
+
+// ── FECHAS OBJETIVO POR TEMA ──
+// Final el 3 de julio. Calculamos para atrás cuándo debe estar listo cada tema.
+const FINAL_DATE = new Date(2026, 6, 3); // 3 julio 2026
+
+function nextWeekday(d) {
+  // Advance past weekend
+  var r = new Date(d);
+  while(r.getDay()===0||r.getDay()===6) r.setDate(r.getDate()+1);
+  return r;
+}
+
+function distributeDeadlines(items, startDate, deadlineDate) {
+  // Distribute items evenly between start and deadline
+  // Give 3-day buffer before deadline so last item is done 3 days before exam
+  var bufferDays = 3;
+  var end = new Date(deadlineDate);
+  end.setDate(end.getDate() - bufferDays);
+  if(end <= startDate) end = new Date(deadlineDate); // no room, use deadline itself
+
+  var n = items.length;
+  if(n === 0) return;
+
+  var totalMs = end - startDate;
+  var totalDays = Math.max(n, Math.floor(totalMs / 86400000));
+  var step = totalDays / n;
+
+  items.forEach(function(item, i) {
+    var d = new Date(startDate);
+    d.setDate(startDate.getDate() + Math.round(step * i));
+    // Skip weekends
+    d = nextWeekday(d);
+    item.t.deadline = d;
+  });
+}
+
+function calcDeadlines() {
+  var hoy = new Date(); hoy.setHours(0,0,0,0);
+  var start = new Date(Math.max(hoy, new Date(2026,2,31)));
+  start.setHours(0,0,0,0);
+  start = nextWeekday(start);
+
+  // Get all custom events that are parciales/finales with unidades
+  var eventos = getEventos ? getEventos() : [];
+  var examEvents = eventos.filter(function(ev){
+    return (ev.tipo==='parcial'||ev.tipo==='final'||ev.tipo==='recuperatorio') && ev.unidades && ev.unidades.length > 0;
+  });
+
+  MATERIAS.forEach(function(m) {
+    // Collect all pending items in order
+    var allItems = [];
+    m.temas.forEach(function(u) {
+      u.items.forEach(function(t) {
+        allItems.push({t:t, u:u});
+      });
+    });
+    if(allItems.length === 0) return;
+
+    // Find events for this materia
+    var matEvents = examEvents.filter(function(ev){
+      return ev.materia === m.nombre;
+    }).sort(function(a,b){ return a.fecha > b.fecha ? 1 : -1; });
+
+    if(matEvents.length === 0) {
+      // No events loaded yet — use FINAL_DATE as fallback.
+      // Once the user adds exam dates via Calendario, deadlines auto-recalculate.
+      distributeDeadlines(allItems, start, new Date(FINAL_DATE));
+      return;
+    }
+
+    // Group items by which event they belong to (based on unidad name matching)
+    // Items not matched to any event go to the final deadline
+    var assigned = {}; // itemId -> deadline Date
+    var remainingItems = allItems.slice(); // start with all
+
+    matEvents.forEach(function(ev) {
+      var evDate = new Date(ev.fecha + 'T00:00:00');
+      // Find items whose unidad matches the event's unidades
+      var matchedItems = [];
+      var notMatchedItems = [];
+
+      remainingItems.forEach(function(item) {
+        var unidadNombre = item.u.unidad;
+        var matches = ev.unidades.some(function(evU) {
+          // Match if event unidad string is contained in item's unidad or vice versa
+          return unidadNombre.indexOf(evU.split('—')[0].trim()) >= 0 ||
+                 evU.indexOf(unidadNombre.split('—')[0].trim()) >= 0 ||
+                 unidadNombre === evU;
+        });
+        if(matches) matchedItems.push(item);
+        else notMatchedItems.push(item);
+      });
+
+      // Distribute matched items toward this event's date
+      if(matchedItems.length > 0) {
+        // Start from today or after last event
+        var segStart = new Date(start);
+        distributeDeadlines(matchedItems, segStart, evDate);
+      }
+
+      // Remaining items continue to next iteration
+      remainingItems = notMatchedItems;
+    });
+
+    // Items not matched to any event → distribute toward final
+    if(remainingItems.length > 0) {
+      var lastEvDate = new Date(matEvents[matEvents.length-1].fecha + 'T00:00:00');
+      var afterLast = new Date(lastEvDate);
+      afterLast.setDate(afterLast.getDate() + 1);
+      afterLast = nextWeekday(afterLast);
+      var finalDeadline = new Date(FINAL_DATE);
+      distributeDeadlines(remainingItems, afterLast, finalDeadline);
+    }
+  });
+}
+
+function fmtDeadline(d) {
+  if (!d) return '';
+  const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const diff = Math.round((d - hoy) / 86400000);
+  const label = diff < 0 ? 'vencido' : diff === 0 ? 'hoy' : `${diff}d`;
+  const cls = diff < 0 ? 'color:var(--danger)' : diff <= 7 ? 'color:var(--accent2)' : 'color:var(--text2)';
+  return `<span style="font-family:'Space Mono',monospace;font-size:10px;${cls};margin-left:6px;flex-shrink:0">📅 ${d.getDate()} ${meses[d.getMonth()]} (${label})</span>`;
+}
+
+
+// ══════════════════════════════════════
+// ── EVENTOS / CALENDARIO ──
+// ══════════════════════════════════════
+const TIPO_CONFIG = {
+  parcial:      { label:'Parcial',      emoji:'📝', color:'#f76a6a' },
+  final:        { label:'Final',        emoji:'🎓', color:'#7c6af7' },
+  recuperatorio:{ label:'Recuperatorio',emoji:'🔄', color:'#f7c26a' },
+  tarea:        { label:'Tarea/TP',     emoji:'📋', color:'#6af7c2' },
+  otro:         { label:'Otro',         emoji:'📌', color:'#8888a8' },
+};
+
+// Eventos: todos vienen de Supabase (cargados en _eventosCache).
+// Las fechas ya no están hardcodeadas — el usuario las carga desde el Calendario.
+var _eventosCache = null;
+
+function getEventos() {
+  var evs = _eventosCache || JSON.parse(localStorage.getItem('studyos_eventos_backup')||'[]');
+  return evs.slice().sort(function(a,b){return a.fecha>b.fecha?1:-1;});
+}
+
+async function loadEventos(){
+  try {
+    const data = await sbFetch('eventos?select=*&order=fecha.asc');
+    if(data && Array.isArray(data)){ _eventosCache = data; localStorage.setItem('studyos_eventos_backup', JSON.stringify(data)); }
+  } catch(e){ console.warn('loadEventos error', e); }
+}
+
+function saveEventos(evs) {
+  _eventosCache = evs;
+  localStorage.setItem('studyos_eventos_backup', JSON.stringify(evs));
+  syncEventosToSB(evs);
+}
+
+async function syncEventosToSB(custom){
+  try {
+    await sbFetch('eventos?id=neq.xxxxxxxx', { method:'DELETE' });
+    if(custom.length){
+      await sbFetch('eventos', { method:'POST', headers:{'Prefer':'resolution=merge-duplicates'}, body:custom });
+    }
+  } catch(e){ console.warn('syncEventos error', e); }
+}
+
+// ── CALENDARIO STATE ──
+var calYear = new Date().getFullYear();
+var calMonth = new Date().getMonth();
+
+function calPrev(){ calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCal(); }
+function calNext(){ calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCal(); }
+
+function renderCal() {
+  const meses=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  document.getElementById('cal-month-title').textContent = meses[calMonth] + ' ' + calYear;
+
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const firstDay = new Date(calYear, calMonth, 1);
+  // Lunes=0 offset
+  var startOffset = firstDay.getDay() - 1;
+  if(startOffset < 0) startOffset = 6;
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+
+  const eventos = getEventos();
+  // Build event map by date string
+  var evMap = {};
+  eventos.forEach(function(ev){
+    if(!evMap[ev.fecha]) evMap[ev.fecha] = [];
+    evMap[ev.fecha].push(ev);
+  });
+
+  var grid = document.getElementById('cal-grid');
+  grid.innerHTML = '';
+
+  // Empty cells
+  for(var i=0;i<startOffset;i++){
+    var el=document.createElement('div');
+    el.className='cal-day empty'; grid.appendChild(el);
+  }
+
+  for(var d=1;d<=daysInMonth;d++){
+    var dateStr = calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    var dObj = new Date(calYear,calMonth,d);
+    var isToday = dObj.getTime()===hoy.getTime();
+    var dayEvs = evMap[dateStr]||[];
+
+    var el=document.createElement('div');
+    el.className='cal-day'+(isToday?' today':'');
+    var inner='<div class="cal-day-num">'+d+'</div>';
+    dayEvs.slice(0,2).forEach(function(ev){
+      var cfg=TIPO_CONFIG[ev.tipo]||TIPO_CONFIG.otro;
+      var color=ev.color||cfg.color;
+      // Show tipo label, not materia name truncated
+      var label = cfg.emoji+' '+cfg.label;
+      if(ev.materia){
+        // Short materia: first meaningful word
+        var mWords = ev.materia.replace('Introducción a','Intro').replace('Introducción','Intro').split(' ');
+        label = cfg.emoji+' '+mWords.slice(0,2).join(' ');
+      }
+      inner+='<div class="cal-dot-label" style="background:'+color+';color:#fff;font-size:9px;padding:2px 4px;border-radius:3px;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+label+'</div>';
+    });
+    el.innerHTML=inner;
+    grid.appendChild(el);
+  }
+
+  // Legend
+  var legend = document.getElementById('cal-legend');
+  var seen = {};
+  eventos.forEach(function(ev){
+    var cfg=TIPO_CONFIG[ev.tipo]||TIPO_CONFIG.otro;
+    var color=ev.color||cfg.color;
+    var key=ev.tipo+'_'+color;
+    if(!seen[key]){
+      seen[key]=true;
+      legend.innerHTML+='<span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)"><span style="width:10px;height:10px;border-radius:50%;background:'+color+';display:inline-block"></span>'+cfg.emoji+' '+cfg.label+'</span>';
+    }
+  });
+  // Reset legend before re-render
+  legend.innerHTML='';
+  Object.keys(seen).forEach(function(){});
+  // redo
+  seen={};
+  eventos.forEach(function(ev){
+    var cfg=TIPO_CONFIG[ev.tipo]||TIPO_CONFIG.otro;
+    var color=ev.color||cfg.color;
+    var key=cfg.label;
+    if(!seen[key]){
+      seen[key]=color;
+    }
+  });
+  legend.innerHTML='';
+  Object.keys(seen).forEach(function(k){
+    legend.innerHTML+='<span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)"><span style="width:10px;height:10px;border-radius:50%;background:'+seen[k]+';display:inline-block"></span>'+k+'</span>';
+  });
+
+  renderEventosList();
+}
+
+function renderEventosList() {
+  var c = document.getElementById('eventos-lista'); if(!c) return;
+  var hoy = new Date(); hoy.setHours(0,0,0,0);
+  var eventos = getEventos().filter(function(ev){ return new Date(ev.fecha+'T00:00:00') >= hoy; });
+  if(!eventos.length){ c.innerHTML='<div style="color:var(--text2);font-size:13px;padding:16px 0">No hay eventos próximos.</div>'; return; }
+  c.innerHTML = eventos.map(function(ev){
+    var cfg = TIPO_CONFIG[ev.tipo]||TIPO_CONFIG.otro;
+    var color = ev.color||cfg.color;
+    var d = new Date(ev.fecha+'T00:00:00');
+    var dias = Math.round((d-hoy)/86400000);
+    var diasCls = dias>30?'color:var(--accent3)':dias>7?'color:var(--accent2)':'color:var(--danger)';
+    var dsStr = d.toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'long'});
+    var unStr = ev.unidades&&ev.unidades.length?' · '+ev.unidades.join(', '):'';
+    var canDel = true;
+    return '<div class="evento-chip">'
+      +'<div class="evento-chip-dot" style="background:'+color+'"></div>'
+      +'<div class="evento-chip-info">'
+        +'<div class="evento-chip-title">'+cfg.emoji+' '+cfg.label+' — '+(ev.materia||'')+(ev.desc?' · '+ev.desc:'')+'</div>'
+        +'<div class="evento-chip-meta">'+dsStr+unStr+'</div>'
+      +'</div>'
+      +'<div class="evento-chip-dias" style="'+diasCls+'">'+(dias===0?'HOY':dias===1?'MAÑANA':dias+' días')+'</div>'
+      +(canDel?'<button class="ev-delete" onclick="deleteEvento(this)" data-id="'+ev.id+'">✕</button>':'')
+    +'</div>';
+  }).join('');
+}
+
+function deleteEvento(btn) {
+  var id = btn.getAttribute ? btn.getAttribute('data-id') : btn;
+  var evs = getEventos().filter(function(e){return e.id!==id;});
+  saveEventos(evs);
+  renderCal();
+  recalcQCY();
+  showToast('🗑 Evento eliminado');
+}
+
+// ── MODAL AGREGAR EVENTO ──
+function openAddEvent() {
+  // Populate materia select
+  var sel = document.getElementById('ev-materia');
+  sel.innerHTML = MATERIAS.map(function(m){
+    return '<option value="'+m.nombre+'">'+m.icon+' '+m.nombre+'</option>';
+  }).join('');
+  document.getElementById('modal-add-event').style.display='flex';
+  // Set today as default date
+  document.getElementById('ev-fecha').value = new Date().toISOString().slice(0,10);
+  onTipoChange();
+}
+function closeAddEvent() { document.getElementById('modal-add-event').style.display='none'; }
+
+function onTipoChange() {
+  var tipo = document.getElementById('ev-tipo').value;
+  var wrap = document.getElementById('ev-unidades-wrap');
+  if(tipo==='parcial'||tipo==='final'||tipo==='recuperatorio'){
+    wrap.style.display='block';
+    // Build unidades chips from selected materia
+    buildUnidadesChips();
+    document.getElementById('ev-materia').onchange = buildUnidadesChips;
+  } else {
+    wrap.style.display='none';
+    document.getElementById('ev-materia').onchange = null;
+  }
+}
+
+function buildUnidadesChips() {
+  var matNombre = document.getElementById('ev-materia').value;
+  var m = MATERIAS.find(function(x){return x.nombre===matNombre;});
+  var wrap = document.getElementById('ev-unidades-chips');
+  if(!m){ wrap.innerHTML=''; return; }
+  wrap.innerHTML = m.temas.map(function(u){
+    var id='uchip_'+u.unidad.slice(0,20).replace(/[^a-zA-Z0-9]/g,'');
+    return '<label style="cursor:pointer"><input type="checkbox" id="'+id+'" value="'+u.unidad+'" style="margin-right:5px"/>'
+      +'<span style="font-size:12px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:4px 8px;display:inline-block">'+u.unidad.split('—')[0].trim()+'</span></label>';
+  }).join('');
+}
+
+function saveEvent() {
+  var tipo = document.getElementById('ev-tipo').value;
+  var materia = document.getElementById('ev-materia').value;
+  var desc = document.getElementById('ev-desc').value.trim();
+  var fecha = document.getElementById('ev-fecha').value;
+  if(!fecha){ showToast('Seleccioná una fecha','var(--danger)'); return; }
+  
+  var unidades = [];
+  document.querySelectorAll('#ev-unidades-chips input:checked').forEach(function(cb){ unidades.push(cb.value); });
+  
+  var cfg = TIPO_CONFIG[tipo]||TIPO_CONFIG.otro;
+  var m = MATERIAS.find(function(x){return x.nombre===materia;});
+  var color = m?m.color:cfg.color;
+  
+  var ev = {
+    id: 'ev_'+Date.now(),
+    tipo: tipo, materia: materia, desc: desc,
+    fecha: fecha, color: color, unidades: unidades
+  };
+  
+  var evs = getEventos();
+  evs.push(ev);
+  saveEventos(evs);
+  closeAddEvent();
+  renderCal();
+  recalcQCY();
+  showToast('✅ Fecha guardada');
+  
+  // Recalc all deadlines based on new event
+  calcDeadlines();
+  // Show confirmation with impact
+  if(unidades.length > 0) {
+    showToast('✅ Fecha guardada — plan de estudio actualizado', 'var(--accent3)');
+  }
+  recalcQCY();
+}
+
+// ══════════════════════════════════════
+// ── QCY — PLAN SEMANAL ──
+// ══════════════════════════════════════
+var qcyWeekOffset = 0; // 0 = semana actual
+
+function qcyPrev(){ qcyWeekOffset--; renderQCY(); }
+function qcyNext(){ qcyWeekOffset++; renderQCY(); }
+
+function getQCYWeekStart() {
+  var hoy = new Date(); hoy.setHours(0,0,0,0);
+  var dow = hoy.getDay();
+  var lunes = new Date(hoy);
+  lunes.setDate(hoy.getDate() - (dow===0?6:dow-1) + qcyWeekOffset*7);
+  return lunes;
+}
+
+function recalcQCY() { if(document.getElementById('page-qcy').style.display!=='none') renderQCY(); }
+
+function renderQCY() {
+  var lunes = getQCYWeekStart();
+  var hoy = new Date(); hoy.setHours(0,0,0,0);
+  var meses=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  var diasNom=['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'];
+
+  // Week label
+  var dom = new Date(lunes); dom.setDate(lunes.getDate()+6);
+  document.getElementById('qcy-week-label').textContent =
+    lunes.getDate()+' '+meses[lunes.getMonth()]+' — '+dom.getDate()+' '+meses[dom.getMonth()]+' '+dom.getFullYear();
+
+  var eventos = getEventos();
+
+  // Mini calendario
+  var miniCal = document.getElementById('qcy-mini-cal');
+  miniCal.innerHTML = '';
+  for(var i=0;i<7;i++){
+    var d = new Date(lunes); d.setDate(lunes.getDate()+i);
+    var dateStr = d.toISOString().slice(0,10);
+    var isHoy = d.getTime()===hoy.getTime();
+    var dayEvs = eventos.filter(function(ev){return ev.fecha===dateStr;});
+    var el = document.createElement('div');
+    el.className = 'qcy-mini-day'+(isHoy?' today':'')+(dayEvs.length?' has-event':'');
+    el.innerHTML = '<div class="qcy-mini-nombre">'+diasNom[i]+'</div><div class="qcy-mini-num">'+d.getDate()+'</div>';
+    if(dayEvs.length){
+      dayEvs.slice(0,2).forEach(function(ev){
+        var cfg=TIPO_CONFIG[ev.tipo]||TIPO_CONFIG.otro;
+        el.innerHTML+='<div style="font-size:9px;margin-top:2px;padding:1px 4px;border-radius:3px;background:'+(ev.color||cfg.color)+';color:#fff;font-weight:700">'+cfg.emoji+'</div>';
+      });
+    }
+    miniCal.appendChild(el);
+  }
+
+  // Día a día con plan de estudio — SMART SCHEDULER
+  var diasContainer = document.getElementById('qcy-dias');
+  diasContainer.innerHTML = '';
+
+  // Build doneIds map for qcy display
+  var doneIds_qcy = {};
+  MATERIAS.forEach(function(m){ m.temas.forEach(function(u){ u.items.forEach(function(t){ if(t.estado==='done') doneIds_qcy[t.id]=true; }); }); });
+
+  // Build plan for this week using scheduler
+  var plan = buildSchedulePlan(lunes, 7);
+  var log = loadScheduleLog();
+
+  for(var i=0;i<7;i++){
+    var dayPlan = plan[i];
+    var d = dayPlan.d;
+    var dateStr = dayPlan.date;
+    var isHoy = d.getTime()===hoy.getTime();
+    var isPast = d < hoy;
+    var dayEvs = eventos.filter(function(ev){return ev.fecha===dateStr;});
+    var dayLog = log[dateStr]||{};
+
+    var card = document.createElement('div');
+    card.className = 'qcy-dia-card'+(isHoy?' today':'');
+
+    var labelHtml = '<div class="qcy-dia-label"><div class="qcy-dia-nombre">'+diasNom[i]+'</div><div class="qcy-dia-num">'+d.getDate()+'</div></div>';
+    var chips = '<div class="qcy-chips">';
+
+    // Event chips (parciales, etc)
+    dayEvs.forEach(function(ev){
+      var cfg=TIPO_CONFIG[ev.tipo]||TIPO_CONFIG.otro;
+      var color=ev.color||cfg.color;
+      chips+='<span class="qcy-chip qcy-chip-event" style="background:'+color+';color:#fff;border-color:'+color+'">'+cfg.emoji+' '+cfg.label+' '+(ev.materia?ev.materia.split(' ')[0]:'')+'</span>';
+    });
+
+    if(isPast && dayPlan.temas.length===0 && !dayEvs.length){
+      chips+='<span class="qcy-empty">—</span>';
+    } else if(!isPast && dayPlan.temas.length===0 && !dayEvs.length){
+      chips+='<span class="qcy-empty">🎉 Todo visto</span>';
+    }
+
+    // Study chips
+    dayPlan.temas.forEach(function(t){
+      var isDone = t.estado==='done' || dayLog[String(t.tId)]==='done';
+      var isOverdue = isPast && !isDone;
+      var overStyle = isOverdue ? 'border-style:dashed;opacity:0.75;' : '';
+      var overIcon = isOverdue ? '⚠️ ' : '';
+      var checkMark = isDone ? '✅ ' : '';
+      chips += '<span class="qcy-chip" style="'+overStyle+'color:'+t.mColor+';border-color:'+t.mColor+'40;background:'+t.mColor+(isDone?'22':'12')+'">'
+        + overIcon + checkMark + t.mIcon + ' ' + t.mNombre.split(' ')[0]
+        + ' <span style="font-size:11px;opacity:0.8">· '+t.tNombre.slice(0,28)+(t.tNombre.length>28?'…':'')+'</span>'
+        + (isOverdue?'<span style="font-size:10px;background:rgba(247,106,106,0.2);color:var(--danger);border-radius:4px;padding:1px 5px;margin-left:4px">no hecho</span>':'')
+        + '</span>';
+    });
+
+    chips+='</div>';
+    card.innerHTML = labelHtml+chips;
+
+    // Overdue notice for past days with missed temas
+    var missedCount = dayPlan.temas.filter(function(t){ return !doneIds_qcy[String(t.tId)] && dayLog[String(t.tId)]!=='done' && isPast; }).length;
+    if(missedCount>0){
+      card.innerHTML += '<div style="font-size:11px;color:var(--danger);padding:4px 0 0 72px;opacity:0.8">↩ '+missedCount+' tema'+(missedCount>1?'s':'')+' no completado'+(missedCount>1?'s':'')+' — reagendado'+(missedCount>1?'s':'')+' automáticamente</div>';
+    }
+
+    diasContainer.appendChild(card);
+  }
+}
+
+// ── AGREGAR MATERIA (CHANGE 1) ──
+function openAddMateria(){
+  document.getElementById('modal-add-materia').style.display='flex';
+}
+function closeAddMateria(){
+  document.getElementById('modal-add-materia').style.display='none';
+}
+function saveNewMateria(){
+  var nombre=document.getElementById('am-nombre').value.trim();
+  if(!nombre){showToast('Escribí el nombre de la materia','var(--danger)');return;}
+  var codigo=document.getElementById('am-codigo').value.trim()||'Nueva materia';
+  var icon=document.getElementById('am-icon').value.trim()||'📘';
+  var color=document.getElementById('am-color').value||'#7c6af7';
+  var material=document.getElementById('am-material').value.trim();
+  var temasRaw=document.getElementById('am-temas').value.trim();
+  var parcial=document.getElementById('am-parcial').value.trim()||'A confirmar';
+  var tienePromo=document.getElementById('am-promo').value==='si';
+
+  // Parse temas: each line = "U1 — Titulo: Tema1, Tema2, ..."
+  var temas=[];
+  var nextId=Date.now();
+  temasRaw.split('\n').forEach(function(line){
+    line=line.trim();if(!line)return;
+    var colonIdx=line.indexOf(':');
+    var unidadNombre=colonIdx>-1?line.slice(0,colonIdx).trim():line;
+    var temasStr=colonIdx>-1?line.slice(colonIdx+1).trim():'';
+    var items=temasStr?temasStr.split(',').map(function(t){
+      return{id:nextId++,nombre:t.trim(),dificultad:'media',parcial:'P1',estado:'pending',desc:t.trim()};
+    }).filter(function(t){return t.nombre;}):[{id:nextId++,nombre:unidadNombre,dificultad:'media',parcial:'P1',estado:'pending',desc:unidadNombre}];
+    temas.push({unidad:unidadNombre,items:items});
+  });
+  if(temas.length===0) temas=[{unidad:'U1 — Temario',items:[{id:nextId++,nombre:'Pendiente de completar',dificultad:'media',parcial:'P1',estado:'pending',desc:''}]}];
+
+  var newId=MATERIAS.reduce(function(mx,m){return Math.max(mx,m.id);},0)+1;
+  var newMateria={
+    id:newId, nombre:nombre, codigo:codigo, icon:icon, color:color,
+    progreso:0, status:'pending', proxParcial:parcial, hsTotales:null, notebooklm:'',
+    promocion:{tiene:tienePromo, desc:tienePromo?'Condiciones por definir':'Sin modalidad de final corto.',
+      condicion:tienePromo?'Por definir':'—', beneficio:tienePromo?'Por definir':'Sin final corto'},
+    evaluacion:{p1:'Por definir',p2:'Por definir',final:'Por definir'},
+    temas:temas
+  };
+  // Save material if provided
+  if(material) localStorage.setItem('mat_material_'+newId,material);
+
+  MATERIAS.push(newMateria);
+  closeAddMateria();
+  renderMaterias('materias-grid');renderMaterias('materias-grid-2');
+  updateStats();
+  showToast('✅ Materia "'+nombre+'" agregada','var(--accent3)');
+  // Clear inputs
+  ['am-nombre','am-codigo','am-icon','am-temas','am-parcial','am-material'].forEach(function(id){
+    var el=document.getElementById(id);if(el)el.value='';
+  });
+}
+
+// ── MODAL AGREGAR EVENTO: extender para tarea con ejercicios (CHANGE 3) ──
+// Patch the add-event modal to show ejercicios fields when tipo=tarea
+(function patchAddEventModal(){
+  // Will be called after DOM ready
+  window.onTipoChange = function(){
+    var tipo=document.getElementById('ev-tipo').value;
+    var wrap=document.getElementById('ev-unidades-wrap');
+    var ejWrap=document.getElementById('ev-ejercicios-wrap');
+    var fechaFinWrap=document.getElementById('ev-fechafin-wrap');
+    if(tipo==='parcial'||tipo==='final'||tipo==='recuperatorio'){
+      wrap.style.display='block';
+      buildUnidadesChips();
+      document.getElementById('ev-materia').onchange=buildUnidadesChips;
+      if(ejWrap) ejWrap.style.display='none';
+      if(fechaFinWrap) fechaFinWrap.style.display='none';
+    } else if(tipo==='tarea'){
+      wrap.style.display='none';
+      if(ejWrap) ejWrap.style.display='block';
+      if(fechaFinWrap) fechaFinWrap.style.display='block';
+      document.getElementById('ev-materia').onchange=null;
+    } else {
+      wrap.style.display='none';
+      if(ejWrap) ejWrap.style.display='none';
+      if(fechaFinWrap) fechaFinWrap.style.display='none';
+      document.getElementById('ev-materia').onchange=null;
+    }
+  };
+})();
+
+// ── INIT ──
+// ── INIT con Supabase ──
+async function initApp(){
+  try { await loadProgress(); } catch(e){ console.warn('loadProgress failed, using defaults', e); }
+  try { await loadEventos(); } catch(e){}
+  try { await loadScheduleLogFromSB(); } catch(e){}
+  calcDeadlines();
+  setDate();
+  renderTodayCard();
+  renderMaterias('materias-grid');
+  updateStats();
+  // Agregar tablas faltantes si no existen (schedule_log y eventos)
+  // ya se crean en Supabase con el SQL del setup
+}
+initApp();
+
+// Inject ejercicios fields into add-event modal after DOM is ready
+(function injectEjerciciosFields(){
+  var wrap=document.getElementById('ev-unidades-wrap');
+  if(!wrap) return;
+
+  // Add fecha fin field
+  var fechaFinDiv=document.createElement('div');
+  fechaFinDiv.id='ev-fechafin-wrap';
+  fechaFinDiv.style.display='none';
+  fechaFinDiv.innerHTML='<div style="font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Fecha límite para completarla</div>'
+    +'<input id="ev-fechafin" type="date" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-family:\'Inter\',sans-serif;font-size:13px;outline:none"/>';
+
+  // Add ejercicios count field
+  var ejDiv=document.createElement('div');
+  ejDiv.id='ev-ejercicios-wrap';
+  ejDiv.style.display='none';
+  ejDiv.innerHTML='<div style="font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Cantidad de ejercicios</div>'
+    +'<input id="ev-ejercicios-count" type="number" min="1" max="500" placeholder="ej: 20" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-family:\'Inter\',sans-serif;font-size:13px;outline:none"/>'
+    +'<div style="font-size:11px;color:var(--text2);margin-top:5px;line-height:1.5">Se van a repartir automáticamente entre la fecha de inicio y la fecha límite para que puedas llegar justo.</div>';
+
+  wrap.parentNode.insertBefore(fechaFinDiv, wrap);
+  wrap.parentNode.insertBefore(ejDiv, wrap);
+})();
+
+// Override saveEvent to handle tarea con ejercicios
+(function patchSaveEvent(){
+  var _orig = window.saveEvent;
+  window.saveEvent = function(){
+    var tipo=document.getElementById('ev-tipo').value;
+    if(tipo==='tarea'){
+      var materia=document.getElementById('ev-materia').value;
+      var desc=document.getElementById('ev-desc').value.trim()||'Tarea';
+      var fecha=document.getElementById('ev-fecha').value;
+      var fechaFin=document.getElementById('ev-fechafin')&&document.getElementById('ev-fechafin').value;
+      var countEl=document.getElementById('ev-ejercicios-count');
+      var count=countEl?parseInt(countEl.value)||0:0;
+
+      if(!fecha){showToast('Seleccioná una fecha de inicio','var(--danger)');return;}
+      if(!fechaFin||fechaFin<fecha) fechaFin=fecha;
+
+      if(count>0){
+        // Create tarea distribuida
+        var m=MATERIAS.find(function(x){return x.nombre===materia;});
+        var tarea={
+          id:'tarea_'+Date.now(),
+          tipo:'tarea_ejercicios',
+          materia:materia,
+          desc:desc,
+          fechaInicio:fecha,
+          fechaFin:fechaFin,
+          totalEjercicios:count,
+          color:m?m.color:'#6af7c2'
+        };
+        tarea=distribuirTareaEjercicios(tarea);
+        var tareasData=getTareasData();
+        tareasData.push(tarea);
+        saveTareasData(tareasData);
+        closeAddEvent();
+        showToast('✅ Tarea repartida en '+tarea.dayAssignments.length+' días','var(--accent3)');
+        renderTodayCard();
+        return;
+      }
+    }
+    _orig();
+  };
+})();
+</script>
+</body>
+</html>
